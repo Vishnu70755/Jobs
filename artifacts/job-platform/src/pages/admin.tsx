@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useUser } from "@clerk/react";
+import { useLocation } from "wouter";
 import {
   useGetAdminStats,
   useListAdminUsers,
@@ -13,8 +15,10 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Users, Briefcase, FileText, BarChart2, TrendingUp, ShieldAlert, Search, UserX,
+  Users, Briefcase, FileText, BarChart2, TrendingUp, ShieldAlert, Search, UserX, Lock,
 } from "lucide-react";
+
+const ADMIN_EMAIL = "vishnu252223@gmail.com";
 
 function StatCard({ icon: Icon, label, value, sub }: { icon: any; label: string; value: number | string; sub?: string }) {
   return (
@@ -34,6 +38,8 @@ function StatCard({ icon: Icon, label, value, sub }: { icon: any; label: string;
 }
 
 export default function Admin() {
+  const { user, isLoaded } = useUser();
+  const [, setLocation] = useLocation();
   const { data: stats, isLoading: loadingStats } = useGetAdminStats();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -41,6 +47,33 @@ export default function Admin() {
   const suspendUser = useSuspendUser();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  const userEmail = user?.primaryEmailAddress?.emailAddress;
+
+  if (!isLoaded) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Skeleton className="h-10 w-48" />
+      </div>
+    );
+  }
+
+  if (!user || userEmail !== ADMIN_EMAIL) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-4 text-center p-8">
+        <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
+          <Lock className="w-8 h-8 text-destructive" />
+        </div>
+        <h2 className="text-2xl font-bold">Access Denied</h2>
+        <p className="text-muted-foreground max-w-sm">
+          This page is restricted to the platform administrator only.
+        </p>
+        <Button variant="outline" onClick={() => setLocation("/dashboard")}>
+          Back to Dashboard
+        </Button>
+      </div>
+    );
+  }
 
   function handleSuspend(id: string) {
     suspendUser.mutate(

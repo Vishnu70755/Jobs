@@ -103,6 +103,8 @@ export const GetJobStatsResponse = zod.object({
   "newToday": zod.number(),
   "newThisWeek": zod.number().optional(),
   "remoteJobs": zod.number(),
+  "hybridJobs": zod.number().optional(),
+  "inOfficeJobs": zod.number().optional(),
   "sources": zod.array(zod.object({
   "source": zod.string().optional(),
   "count": zod.number().optional()

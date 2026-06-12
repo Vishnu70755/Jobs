@@ -792,6 +792,10 @@ components:
           type: integer
         remoteJobs:
           type: integer
+        hybridJobs:
+          type: integer
+        inOfficeJobs:
+          type: integer
         sources:
           type: array
           items:

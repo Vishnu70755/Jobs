@@ -1,49 +1,35 @@
 import { Router } from "express";
-import { db, aiChatsTable, jobsTable, resumesTable } from "@workspace/db";
+import { db, aiChatsTable } from "@workspace/db";
 import { eq, and, desc } from "drizzle-orm";
 import { resolveUser } from "../middlewares/auth";
+import OpenAI from "openai";
 
 const router = Router();
 
-const AI_RESPONSES: Record<string, string[]> = {
-  resume_review: [
-    "Your resume has strong technical skills but could benefit from more quantified achievements. Try adding metrics like 'increased performance by 40%' or 'reduced load time by 2 seconds'.",
-    "The summary section is compelling. Consider tailoring it more specifically to each job description you apply for. Your experience section could highlight impact over responsibilities.",
-    "Great structure! One suggestion: move your most impressive achievement to the top bullet under each role. Recruiters spend only 6-7 seconds on initial screening.",
-  ],
-  interview_prep: [
-    "For behavioral questions, use the STAR method: Situation, Task, Action, Result. For your background, prepare 2-3 stories that showcase leadership, problem-solving, and collaboration.",
-    "Common technical questions to prepare: system design basics, algorithm complexity, and architecture decisions you've made. Practice explaining your thought process aloud.",
-    "Research the company's engineering blog, recent product updates, and tech stack. Ask thoughtful questions like 'What does your deployment process look like?' or 'How do you handle on-call incidents?'",
-  ],
-  cover_letter: [
-    "Here's a cover letter opening: 'As a passionate software engineer with X years building scalable web applications, I was excited to discover the [Role] position at [Company]. Your focus on [specific value] aligns perfectly with my experience in [relevant skill].'",
-    "A strong cover letter should: 1) Hook with your biggest relevant achievement, 2) Show you understand the company's challenges, 3) Explain specifically how you'll add value. Keep it to 3 paragraphs.",
-    "Avoid starting with 'I am applying for...' Instead, open with your most impressive achievement related to the role. Make it memorable in the first sentence.",
-  ],
-  skill_gap: [
-    "Based on your profile, here are the top skills to develop for senior roles: System Design, Leadership/mentoring, Cloud infrastructure (AWS/GCP), and distributed systems patterns.",
-    "For the current market, I recommend focusing on: TypeScript (if not already strong), testing practices (TDD/integration), CI/CD pipelines, and one cloud platform deeply.",
-    "Learning path suggestion: 1) Complete a cloud certification (AWS Solutions Architect), 2) Contribute to open source, 3) Build a side project demonstrating distributed systems knowledge.",
-  ],
-  general: [
-    "I'm here to help with your job search! I can review your resume, help prepare for interviews, draft cover letters, identify skill gaps, or provide career guidance. What would you like to work on?",
-    "Great question! Based on current market trends, companies are prioritizing candidates with strong fundamentals, system design knowledge, and collaborative soft skills. How can I help you showcase these?",
-    "The job market is competitive right now. Focus on quality over quantity — tailor each application, build genuine connections, and make sure your GitHub/portfolio showcases your best work.",
-  ],
-};
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
-function getAiResponse(message: string, mode: string): string {
-  const responses = AI_RESPONSES[mode] ?? AI_RESPONSES.general;
-  return responses[Math.floor(Math.random() * responses.length)];
-}
+const MODE_SYSTEM_PROMPTS: Record<string, string> = {
+  general: `You are JobQuest AI, a helpful career assistant for job seekers. You give concise, actionable advice about job searching, career development, and the tech industry. Be encouraging, specific, and practical. Keep responses focused and under 300 words unless a longer response is genuinely needed.`,
+  resume_review: `You are a professional resume reviewer and career coach with 10+ years of experience at top tech companies. When reviewing resumes, give specific, actionable feedback: identify strengths, gaps, and concrete improvements. Focus on quantifiable achievements, ATS optimization, and making the resume stand out. Keep feedback structured and practical.`,
+  interview_prep: `You are an expert interview coach who has conducted hundreds of technical and behavioral interviews at FAANG and top startups. Help candidates prepare with STAR method coaching, technical question walkthroughs, and company-specific advice. Be encouraging but realistic about what interviewers look for.`,
+  cover_letter: `You are a skilled copywriter specializing in job application materials. Help candidates write compelling, personalized cover letters that stand out. Focus on the opening hook, demonstrating genuine interest in the company, and connecting their experience to the role's needs. Provide actual draft text when asked.`,
+  skill_gap: `You are a technical talent advisor who understands both the job market and technology trends. Identify skill gaps based on the user's background and target roles, then suggest specific learning paths, resources, and timelines. Be specific about which skills matter most for their goals.`,
+};
 
 // POST /ai/chat
 router.post("/chat", resolveUser, async (req, res) => {
   try {
     const user = (req as any).dbUser;
-    const { message, jobId, resumeId, mode = "general" } = req.body;
+    const { message, jobId, mode = "general" } = req.body;
 
+    if (!message?.trim()) {
+      res.status(400).json({ error: "Message is required" });
+      return;
+    }
+
+    // Save user message
     const [userMsg] = await db.insert(aiChatsTable).values({
       userId: user.id,
       jobId: jobId ?? null,
@@ -52,8 +38,33 @@ router.post("/chat", resolveUser, async (req, res) => {
       mode,
     }).returning();
 
-    const aiContent = getAiResponse(message, mode);
+    // Fetch recent history for context (last 10 messages)
+    const history = await db.select().from(aiChatsTable)
+      .where(eq(aiChatsTable.userId, user.id))
+      .orderBy(desc(aiChatsTable.createdAt))
+      .limit(10);
 
+    const contextMessages = history.reverse().slice(0, -1).map((m) => ({
+      role: m.role as "user" | "assistant",
+      content: m.content,
+    }));
+
+    const systemPrompt = MODE_SYSTEM_PROMPTS[mode] ?? MODE_SYSTEM_PROMPTS.general;
+
+    // Call OpenAI
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      max_tokens: 800,
+      messages: [
+        { role: "system", content: systemPrompt },
+        ...contextMessages,
+        { role: "user", content: message },
+      ],
+    });
+
+    const aiContent = completion.choices[0]?.message?.content ?? "I'm sorry, I couldn't generate a response. Please try again.";
+
+    // Save assistant message
     const [aiMsg] = await db.insert(aiChatsTable).values({
       userId: user.id,
       jobId: jobId ?? null,
@@ -63,9 +74,17 @@ router.post("/chat", resolveUser, async (req, res) => {
     }).returning();
 
     res.json(aiMsg);
-  } catch (err) {
+  } catch (err: any) {
     req.log.error(err);
-    res.status(500).json({ error: "Internal server error" });
+    if (err?.status === 401 || err?.code === "invalid_api_key") {
+      res.status(500).json({ error: "Invalid OpenAI API key. Please check your configuration." });
+      return;
+    }
+    if (err?.status === 429) {
+      res.status(429).json({ error: "Rate limit reached. Please wait a moment and try again." });
+      return;
+    }
+    res.status(500).json({ error: "AI service unavailable. Please try again." });
   }
 });
 

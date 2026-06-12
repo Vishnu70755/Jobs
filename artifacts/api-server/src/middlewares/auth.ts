@@ -38,9 +38,11 @@ export async function resolveUser(req: Request, res: Response, next: NextFunctio
   next();
 }
 
+const ADMIN_EMAIL = "vishnu252223@gmail.com";
+
 export function requireAdmin(req: Request, res: Response, next: NextFunction) {
   const user = (req as any).dbUser;
-  if (!user || user.role !== "admin") {
+  if (!user || user.role !== "admin" || user.email !== ADMIN_EMAIL) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }

@@ -69,6 +69,8 @@ export interface JobStats {
   newToday: number;
   newThisWeek?: number;
   remoteJobs: number;
+  hybridJobs?: number;
+  inOfficeJobs?: number;
   sources: JobStatsSourcesItem[];
 }
 

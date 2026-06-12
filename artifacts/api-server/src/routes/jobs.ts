@@ -59,6 +59,8 @@ router.get("/stats", async (req, res) => {
     const [newTodayRow] = await db.select({ count: sql<number>`count(*)` }).from(jobsTable).where(gte(jobsTable.createdAt, new Date(Date.now() - 24 * 3600 * 1000)));
     const [newWeekRow] = await db.select({ count: sql<number>`count(*)` }).from(jobsTable).where(gte(jobsTable.createdAt, new Date(Date.now() - 7 * 24 * 3600 * 1000)));
     const [remoteRow] = await db.select({ count: sql<number>`count(*)` }).from(jobsTable).where(eq(jobsTable.workMode, "remote"));
+    const [hybridRow] = await db.select({ count: sql<number>`count(*)` }).from(jobsTable).where(eq(jobsTable.workMode, "hybrid"));
+    const [onsiteRow] = await db.select({ count: sql<number>`count(*)` }).from(jobsTable).where(eq(jobsTable.workMode, "onsite"));
 
     const sourceRows = await db.select({ source: jobsTable.source, count: sql<number>`count(*)` }).from(jobsTable).groupBy(jobsTable.source);
 
@@ -67,6 +69,8 @@ router.get("/stats", async (req, res) => {
       newToday: Number(newTodayRow.count),
       newThisWeek: Number(newWeekRow.count),
       remoteJobs: Number(remoteRow.count),
+      hybridJobs: Number(hybridRow.count),
+      inOfficeJobs: Number(onsiteRow.count),
       sources: sourceRows.map(r => ({ source: r.source, count: Number(r.count) })),
     });
   } catch (err) {
