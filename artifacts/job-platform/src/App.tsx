@@ -11,7 +11,16 @@ import NotFound from "@/pages/not-found";
 
 import Dashboard from "@/pages/dashboard";
 import Jobs from "@/pages/jobs";
-import PlaceholderPage from "@/pages/placeholder";
+import JobDetail from "@/pages/job-detail";
+import Tracker from "@/pages/tracker";
+import TrackerDetail from "@/pages/tracker-detail";
+import Resumes from "@/pages/resumes";
+import AtsAnalyzer from "@/pages/ats";
+import Analytics from "@/pages/analytics";
+import AiAssistant from "@/pages/ai";
+import Notifications from "@/pages/notifications";
+import Profile from "@/pages/profile";
+import Admin from "@/pages/admin";
 
 const queryClient = new QueryClient();
 
@@ -51,18 +60,85 @@ function SignUpPage() {
 
 function Home() {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-background text-foreground">
+    <div className="relative min-h-screen w-full flex items-center justify-center bg-background text-foreground">
+      <div className="absolute top-5 right-6 flex items-center gap-3">
+        <a
+          href="/sign-in"
+          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Sign In
+        </a>
+        <a
+          href="/admin-login"
+          className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Admin
+        </a>
+      </div>
+
       <div className="text-center space-y-6 max-w-2xl px-4">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border text-xs text-muted-foreground mb-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+          AI-Powered Job Search Platform
+        </div>
         <h1 className="text-5xl md:text-7xl font-bold tracking-tighter">JobQuest</h1>
-        <p className="text-xl text-muted-foreground">The command center for serious job seekers. Track, analyze, and win your next role with precision.</p>
+        <p className="text-xl text-muted-foreground">
+          The command center for serious job seekers. Track, analyze, and win your next role
+          with precision.
+        </p>
         <div className="flex justify-center gap-4 pt-4">
-          <a href="/sign-in" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-10 px-8 py-2">
+          <a
+            href="/sign-up"
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground shadow hover:bg-primary/90 h-10 px-8 py-2"
+          >
+            Get Started Free
+          </a>
+          <a
+            href="/sign-in"
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-10 px-8 py-2"
+          >
             Sign In
           </a>
-          <a href="/sign-up" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-10 px-8 py-2">
-            Sign Up
-          </a>
         </div>
+
+        <div className="grid grid-cols-3 gap-6 pt-8 text-center">
+          {[
+            { n: "20+", label: "Live Jobs" },
+            { n: "AI", label: "Career Assistant" },
+            { n: "ATS", label: "Resume Scorer" },
+          ].map((item) => (
+            <div key={item.n} className="space-y-1">
+              <p className="text-2xl font-bold text-primary">{item.n}</p>
+              <p className="text-xs text-muted-foreground">{item.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AdminLoginPage() {
+  return (
+    <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4">
+      <div className="w-full max-w-sm space-y-4">
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center gap-2 text-sm text-muted-foreground border border-border rounded-full px-3 py-1 mb-3">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Admin Access
+          </div>
+          <h2 className="text-2xl font-bold">Admin Login</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Sign in with your admin-role account
+          </p>
+        </div>
+        <SignIn
+          routing="path"
+          path={`${basePath}/admin-login`}
+          signUpUrl={`${basePath}/sign-up`}
+          fallbackRedirectUrl="/admin"
+        />
       </div>
     </div>
   );
@@ -134,20 +210,21 @@ function ClerkProviderWithRoutes() {
           <Route path="/" component={HomeRedirect} />
           <Route path="/sign-in/*?" component={SignInPage} />
           <Route path="/sign-up/*?" component={SignUpPage} />
-          
+          <Route path="/admin-login/*?" component={AdminLoginPage} />
+
           <Route path="/dashboard"><ProtectedRoute><Dashboard /></ProtectedRoute></Route>
           <Route path="/jobs"><ProtectedRoute><Jobs /></ProtectedRoute></Route>
-          <Route path="/jobs/:id"><ProtectedRoute><PlaceholderPage title="Job Details" /></ProtectedRoute></Route>
-          <Route path="/tracker"><ProtectedRoute><PlaceholderPage title="Application Tracker" /></ProtectedRoute></Route>
-          <Route path="/tracker/:id"><ProtectedRoute><PlaceholderPage title="Application Details" /></ProtectedRoute></Route>
-          <Route path="/resumes"><ProtectedRoute><PlaceholderPage title="Resumes" /></ProtectedRoute></Route>
-          <Route path="/ats"><ProtectedRoute><PlaceholderPage title="ATS Analyzer" /></ProtectedRoute></Route>
-          <Route path="/analytics"><ProtectedRoute><PlaceholderPage title="Analytics" /></ProtectedRoute></Route>
-          <Route path="/ai"><ProtectedRoute><PlaceholderPage title="AI Assistant" /></ProtectedRoute></Route>
-          <Route path="/notifications"><ProtectedRoute><PlaceholderPage title="Notifications" /></ProtectedRoute></Route>
-          <Route path="/profile"><ProtectedRoute><PlaceholderPage title="Profile" /></ProtectedRoute></Route>
-          <Route path="/admin"><ProtectedRoute><PlaceholderPage title="Admin" /></ProtectedRoute></Route>
-          
+          <Route path="/jobs/:id"><ProtectedRoute><JobDetail /></ProtectedRoute></Route>
+          <Route path="/tracker"><ProtectedRoute><Tracker /></ProtectedRoute></Route>
+          <Route path="/tracker/:id"><ProtectedRoute><TrackerDetail /></ProtectedRoute></Route>
+          <Route path="/resumes"><ProtectedRoute><Resumes /></ProtectedRoute></Route>
+          <Route path="/ats"><ProtectedRoute><AtsAnalyzer /></ProtectedRoute></Route>
+          <Route path="/analytics"><ProtectedRoute><Analytics /></ProtectedRoute></Route>
+          <Route path="/ai"><ProtectedRoute><AiAssistant /></ProtectedRoute></Route>
+          <Route path="/notifications"><ProtectedRoute><Notifications /></ProtectedRoute></Route>
+          <Route path="/profile"><ProtectedRoute><Profile /></ProtectedRoute></Route>
+          <Route path="/admin"><ProtectedRoute><Admin /></ProtectedRoute></Route>
+
           <Route component={NotFound} />
         </Switch>
       </QueryClientProvider>
