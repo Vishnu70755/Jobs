@@ -2,12 +2,12 @@ import { Router } from "express";
 import { db, aiChatsTable } from "@workspace/db";
 import { eq, and, desc } from "drizzle-orm";
 import { resolveUser } from "../middlewares/auth";
-import OpenAI from "openai";
+import { GoogleGenAI } from "@google/genai";
 
 const router = Router();
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY!,
 });
 
 const MODE_SYSTEM_PROMPTS: Record<string, string> = {
@@ -30,61 +30,81 @@ router.post("/chat", resolveUser, async (req, res) => {
     }
 
     // Save user message
-    const [userMsg] = await db.insert(aiChatsTable).values({
+    await db.insert(aiChatsTable).values({
       userId: user.id,
       jobId: jobId ?? null,
       role: "user",
       content: message,
       mode,
-    }).returning();
+    });
 
-    // Fetch recent history for context (last 10 messages)
-    const history = await db.select().from(aiChatsTable)
+    // Fetch recent history
+    const history = await db
+      .select()
+      .from(aiChatsTable)
       .where(eq(aiChatsTable.userId, user.id))
       .orderBy(desc(aiChatsTable.createdAt))
       .limit(10);
 
-    const contextMessages = history.reverse().slice(0, -1).map((m) => ({
-      role: m.role as "user" | "assistant",
-      content: m.content,
-    }));
+    const contextMessages = history
+      .reverse()
+      .slice(0, -1)
+      .map((m) => `${m.role}: ${m.content}`)
+      .join("\n");
 
-    const systemPrompt = MODE_SYSTEM_PROMPTS[mode] ?? MODE_SYSTEM_PROMPTS.general;
+    const systemPrompt =
+      MODE_SYSTEM_PROMPTS[mode] ?? MODE_SYSTEM_PROMPTS.general;
 
-    // Call OpenAI
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      max_tokens: 800,
-      messages: [
-        { role: "system", content: systemPrompt },
-        ...contextMessages,
-        { role: "user", content: message },
-      ],
+    // Call Gemini
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: `
+${systemPrompt}
+
+Previous conversation:
+${contextMessages}
+
+User: ${message}
+`,
     });
 
-    const aiContent = completion.choices[0]?.message?.content ?? "I'm sorry, I couldn't generate a response. Please try again.";
+    const aiContent =
+      response.text ??
+      "I'm sorry, I couldn't generate a response. Please try again.";
 
-    // Save assistant message
-    const [aiMsg] = await db.insert(aiChatsTable).values({
-      userId: user.id,
-      jobId: jobId ?? null,
-      role: "assistant",
-      content: aiContent,
-      mode,
-    }).returning();
+    // Save assistant response
+    const [aiMsg] = await db
+      .insert(aiChatsTable)
+      .values({
+        userId: user.id,
+        jobId: jobId ?? null,
+        role: "assistant",
+        content: aiContent,
+        mode,
+      })
+      .returning();
 
     res.json(aiMsg);
   } catch (err: any) {
     req.log.error(err);
-    if (err?.status === 401 || err?.code === "invalid_api_key") {
-      res.status(500).json({ error: "Invalid OpenAI API key. Please check your configuration." });
+
+    if (err?.status === 401) {
+      res
+        .status(500)
+        .json({ error: "Invalid Gemini API key. Please check your configuration." });
       return;
     }
+
     if (err?.status === 429) {
-      res.status(429).json({ error: "Rate limit reached. Please wait a moment and try again." });
+      res
+        .status(429)
+        .json({ error: "Rate limit reached. Please wait a moment and try again." });
       return;
     }
-    res.status(500).json({ error: "AI service unavailable. Please try again." });
+
+    res.status(500).json({
+      error: "AI service unavailable. Please try again.",
+    });
   }
 });
 
@@ -92,12 +112,19 @@ router.post("/chat", resolveUser, async (req, res) => {
 router.get("/chat/history", resolveUser, async (req, res) => {
   try {
     const user = (req as any).dbUser;
-    const jobId = req.query.jobId ? parseInt(req.query.jobId as string) : undefined;
+    const jobId = req.query.jobId
+      ? parseInt(req.query.jobId as string)
+      : undefined;
 
-    const history = await db.select().from(aiChatsTable)
+    const history = await db
+      .select()
+      .from(aiChatsTable)
       .where(
         jobId
-          ? and(eq(aiChatsTable.userId, user.id), eq(aiChatsTable.jobId, jobId))
+          ? and(
+              eq(aiChatsTable.userId, user.id),
+              eq(aiChatsTable.jobId, jobId)
+            )
           : eq(aiChatsTable.userId, user.id)
       )
       .orderBy(desc(aiChatsTable.createdAt))
