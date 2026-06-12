@@ -1,0 +1,345 @@
+Act as a world-class software architect, senior full-stack engineer, AI engineer, database expert, and UI/UX designer.
+
+Build a production-ready AI-powered Job Search and Application Tracking SaaS platform similar to LinkedIn Jobs, Simplify, Teal, and Huntr.
+
+# Main Goal
+
+Create a centralized platform where users can:
+
+* Discover jobs from multiple job portals.
+* Track applications.
+* Analyze resumes.
+* Receive notifications.
+* Use AI assistance.
+* Get live updates without refreshing the website.
+
+The system should support thousands of users and continuously update job listings.
+
+---
+
+# Automatic Job Synchronization Engine
+
+Implement a distributed background synchronization system.
+
+## Refresh Schedule
+
+* LinkedIn jobs: every 15 minutes.
+* Naukri jobs: every 15 minutes.
+* Foundit jobs: every 15 minutes.
+* Indeed jobs: every 20 minutes.
+* Wellfound jobs: every 15 minutes.
+* Internshala jobs: every 20 minutes.
+* Company career pages: every 30 minutes.
+* RSS feeds: every 30 minutes.
+
+The website must automatically update itself without requiring users to refresh the page.
+
+---
+
+# Smart Incremental Updates
+
+Do NOT re-fetch everything.
+
+Instead:
+
+* Fetch only newly posted jobs.
+* Detect updated jobs.
+* Update changed records.
+* Mark expired jobs automatically.
+* Remove duplicates.
+* Store previous sync timestamps.
+* Use caching to reduce API usage.
+
+---
+
+# Real-Time UI
+
+Use:
+
+* Redis
+* BullMQ
+* Socket.io
+* WebSockets
+* Cron Jobs
+
+When new jobs arrive:
+
+* Push them automatically to users.
+* Update job counters instantly.
+* Refresh statistics.
+* Show notifications.
+* Do not require manual page reload.
+
+---
+
+# New Job Filter
+
+Add filters:
+
+* Show only jobs posted within:
+
+  * Last 1 hour
+  * Last 6 hours
+  * Last 12 hours
+  * Last 24 hours
+  * Last 3 days
+  * Last week
+
+Provide:
+
+* New Jobs badge
+* Recently Updated badge
+* Hot Jobs badge
+
+Sort by:
+
+* Latest jobs
+* Match score
+* Salary
+* Company
+* Experience
+* Date posted
+
+---
+
+# Sources
+
+Continuously collect jobs from:
+
+* LinkedIn
+* Naukri
+* Foundit
+* Indeed
+* Glassdoor
+* Wellfound
+* Internshala
+* Cutshort
+* Dice
+* RemoteOK
+* AngelList
+* ZipRecruiter
+* Hacker News Jobs
+* Company career pages
+
+Store:
+
+* Company name
+* Logo
+* Role
+* Location
+* Work mode
+* Experience
+* Salary
+* Skills required
+* Job description
+* Source portal
+* Posted date
+* Expiry date
+* Apply URL
+
+---
+
+# Notifications
+
+Notify users instantly when:
+
+* New jobs matching their profile are found.
+* Remote jobs are available.
+* Jobs matching their skills appear.
+* Companies they follow post openings.
+
+Support:
+
+* Browser notifications
+* Email notifications
+* Push notifications
+
+---
+
+# Application Tracker
+
+Statuses:
+
+* Saved
+* Applied
+* Under Review
+* Pending
+* Interview Scheduled
+* In Process
+* Rejected
+* Ghosted
+* Offer Received
+* Accepted
+* Declined
+
+Store:
+
+* Company
+* Role
+* Applied date
+* Resume used
+* Notes
+* Interview dates
+* Recruiter information
+* Salary offered
+
+---
+
+# Analytics Dashboard
+
+Generate:
+
+* Pie charts
+* Bar charts
+* Line charts
+* Weekly reports
+* Monthly reports
+
+Show:
+
+* Total applications
+* Response rate
+* Rejections
+* Pending applications
+* Offers received
+* Interview success rate
+* Applications by source
+* Applications by role
+
+Allow export to:
+
+* PDF
+* Excel
+* CSV
+
+---
+
+# Resume Management
+
+Support:
+
+* Multiple resumes
+* Resume versions
+* Upload PDF and DOCX
+* Resume history
+* Download
+* Delete
+* Secure storage
+
+---
+
+# ATS Resume Analyzer
+
+Generate:
+
+* ATS score
+* Match percentage
+* Missing keywords
+* Skills analysis
+* Strengths
+* Weaknesses
+* Improvement suggestions
+
+Compare resumes against a Job Description.
+
+---
+
+# AI Assistant
+
+Place an AI chatbot in the bottom-left corner.
+
+Features:
+
+* Resume review
+* Job recommendations
+* Interview preparation
+* Cover letter generation
+* Email drafting
+* Skill gap analysis
+* Career guidance
+
+When a user opens chat for a specific job:
+
+Display the Job Description on the right side and allow questions about that JD.
+
+---
+
+# Admin Dashboard
+
+Allow admins to:
+
+* View total users.
+* Compare user performance.
+* Monitor activity.
+* Export user data.
+* Suspend users.
+* Manage roles.
+* View ATS reports.
+* View applications and statistics.
+
+---
+
+# Database
+
+Use PostgreSQL and Prisma.
+
+Tables:
+
+* Users
+* Roles
+* Jobs
+* Companies
+* Applications
+* Resumes
+* ATS Reports
+* AI Chats
+* Notifications
+* Interviews
+* Saved Jobs
+* Activity Logs
+* Job Sync Logs
+
+---
+
+# Backend
+
+Use:
+
+* Node.js
+* Express
+* TypeScript
+* Redis
+* BullMQ
+
+---
+
+# Frontend
+
+Use:
+
+* Next.js
+* React
+* TypeScript
+* Tailwind CSS
+* Shadcn UI
+* Framer Motion
+
+---
+
+# Deployment
+
+Use:
+
+* Docker
+* Vercel
+* Railway
+
+---
+
+# User Experience
+
+Users should experience the platform as if jobs are updated live.
+
+Every 15–30 minutes, new jobs should automatically appear and the website should update itself without requiring page refresh.
+
+Design the UI similar to Linear, Vercel, Stripe, Notion, and Apple with dark mode and premium animations.
