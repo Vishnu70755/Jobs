@@ -4,6 +4,8 @@ import { publishableKeyFromHost } from "@clerk/shared/keys";
 import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { ThemeProvider } from "./components/theme-provider";
+import { setBaseUrl } from "@workspace/api-client-react";
+
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/layout";
@@ -31,6 +33,8 @@ const clerkPubKey = publishableKeyFromHost(
 
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+setBaseUrl(import.meta.env.VITE_API_URL);
 
 function stripBase(path: string): string {
   return basePath && path.startsWith(basePath)
