@@ -22,6 +22,7 @@ const TYPE_COLORS: Record<string, string> = {
 
 export default function Notifications() {
   const { data: notifications, isLoading } = useListNotifications({});
+  console.log("notifications =", notifications);
   const markRead = useMarkNotificationRead();
   const markAll = useMarkAllNotificationsRead();
   const queryClient = useQueryClient();
