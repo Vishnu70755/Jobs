@@ -118,17 +118,17 @@ export default function Admin() {
 
   const handleToggleImport = () => {
     // If currently importing or starting to import, stop it
-    if (isAnyImportRunning || startImportMutation.isLoading) {
+    if (isAnyImportRunning || startImportMutation.isPending) {
       // Provide immediate feedback for stopping
       stopImportMutation.mutate(undefined, {
         onSuccess: () => {
-          toast.success('Import stopped successfully');
+          toast({ title: "Import stopped successfully" });
         },
         onError: (error: any) => {
           const errorMessage = error?.response?.data?.error ||
                              error?.message ||
                              'Unknown error';
-          toast.error(`Failed to stop import: ${errorMessage}`);
+          toast({ title: `Failed to stop import: ${errorMessage}`, variant: "destructive" });
         },
         onSettled: () => {
           // This will run on both success and error
@@ -140,13 +140,13 @@ export default function Admin() {
       // Otherwise, start the import
       startImportMutation.mutate(undefined, {
         onSuccess: () => {
-          toast.success('Import started successfully');
+          toast({ title: "Import started successfully" });
         },
         onError: (error: any) => {
           const errorMessage = error?.response?.data?.error ||
                              error?.message ||
                              'Unknown error';
-          toast.error(`Failed to start import: ${errorMessage}`);
+          toast({ title: `Failed to start import: ${errorMessage}`, variant: "destructive" });
         },
         onSettled: () => {
           // This will run on both success and error
@@ -321,6 +321,7 @@ export default function Admin() {
                 <span>Jobs Imported: {getImportedJobsCount()}</span>
               </div>
             </div>
+          </div>
         </div>
 
         {/* Stats Grid */}
