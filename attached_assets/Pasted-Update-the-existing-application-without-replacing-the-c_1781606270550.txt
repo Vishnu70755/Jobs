@@ -1,0 +1,134 @@
+Update the existing application without replacing the current architecture. Reuse existing APIs, database models, and UI components wherever possible.
+
+# Google Calendar Integration
+
+Fix the interview scheduling system.
+
+Requirements:
+
+* Whenever a user creates or updates an interview date in the Tracker section, automatically create or update the corresponding Google Calendar event.
+* Changes to interview date, time, company name, role, or notes should immediately synchronize with Google Calendar.
+* Deleting an interview should remove the event from Google Calendar.
+* Prevent duplicate calendar events.
+* Store the Google Calendar event ID in the database.
+* Show a confirmation message when synchronization succeeds.
+* Handle failures gracefully with error notifications.
+* Use Indian timezone (Asia/Kolkata).
+
+The calendar event should contain:
+
+* Company Name
+* Job Role
+* Interview Date and Time
+* Interview Mode (Online/Offline)
+* Location or Meeting Link
+* Notes and Preparation Tips
+
+# Indian Localization
+
+Convert the entire website to Indian standards.
+
+### Currency
+
+* Use Indian Rupees (₹).
+* Format numbers using Indian numbering system.
+* Examples:
+
+  * ₹50,000
+  * ₹3,50,000
+  * ₹12,50,000
+  * ₹25 LPA
+  * ₹1.2 Cr
+
+### Date Format
+
+Use Indian date format:
+
+* DD/MM/YYYY
+
+Examples:
+
+* 16/06/2026
+* 25/06/2026
+
+### Time Format
+
+Use IST (Asia/Kolkata).
+
+### Locations
+
+Prefer Indian states and cities.
+
+Examples:
+
+* Hyderabad, Telangana
+* Bengaluru, Karnataka
+* Chennai, Tamil Nadu
+* Pune, Maharashtra
+* Mumbai, Maharashtra
+
+### Salary Display
+
+Replace USD and western formats with:
+
+* ₹8 LPA
+* ₹12 LPA
+* ₹18 LPA
+* ₹25 LPA
+
+Show:
+
+* Minimum Salary
+* Maximum Salary
+* Average Salary
+
+### Analytics and Dashboard
+
+Display:
+
+* State-wise application statistics.
+* City-wise application statistics.
+* Salary trends in INR.
+* Job distribution by Indian states.
+* Interview timelines in IST.
+
+### Find Jobs
+
+Prioritize Indian locations and companies.
+
+Examples:
+
+* TCS
+* Infosys
+* Wipro
+* HCL
+* Tech Mahindra
+* Accenture India
+* Cognizant
+* Amazon India
+* Google India
+* Microsoft India
+
+### Notifications
+
+Display dates and times in Indian format.
+
+### Charts and Reports
+
+Show:
+
+* Salary values in INR.
+* Indian date format.
+* Indian state names.
+
+### Database
+
+Ensure all newly stored salary values and dates follow Indian standards.
+
+### General Requirements
+
+* Maintain backward compatibility.
+* Do not create duplicate pages.
+* Ensure all changes are reflected in the Admin Dashboard.
+* Optimize for mobile, tablet, laptop, desktop, and large screens.
+* Keep the application production-ready and scalable.

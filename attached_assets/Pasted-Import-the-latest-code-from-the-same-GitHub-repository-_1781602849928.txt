@@ -1,0 +1,85 @@
+Import the latest code from the same GitHub repository and implement all changes using clean, scalable, and production-ready architecture.
+
+### Analytics
+
+* Fix pie chart label overlapping and ensure charts are responsive on mobile and desktop.
+
+### User Profile
+
+* Add complete profile fields (name, email, profile picture, and required details).
+* Add a circular profile completion indicator around the profile icon that fills based on completed fields.
+* Persist user data across sessions.
+
+### Tracker
+
+* After clicking "Save Changes", update data immediately and redirect back to the Tracker page.
+* Improve the UI to match the modern "Find Jobs" style.
+
+### Authentication & Security
+
+* Only admins can access the admin dashboard.
+* Unauthorized users must be redirected to Sign In with the message: "Only admin access allowed".
+* Prevent automatic creation of admin accounts.
+
+### Admin Dashboard
+
+* Add comparison between 2 or more users.
+* Show total users, active users, activity logs, engagement, and user analytics.
+* Create a "Users Data" page under Notifications where admins can view and analyze all user activities.
+* Ensure all user changes are visible to admins.
+* Add an activity timeline for each user.
+* Add an error logging/debug dashboard.
+
+### Resume Analyzer
+
+* Accept Resume and Job Description inputs.
+* Generate match score, skill-gap analysis, and improvement suggestions.
+* Rank jobs based on resume compatibility.
+
+### ATS Resume Builder
+
+* Create a new page that allows users to build ATS-friendly resumes.
+* Take user inputs and generate downloadable PDF resumes.
+* Allow PDF export of reports and analytics.
+
+### Interview Tracker
+
+* Sync interview dates with Google Calendar.
+* Show website notifications starting 2 days before interviews.
+* Send email reminders every 6 hours until the interview.
+
+### Job Search Control
+
+* Add Start/Stop buttons in the admin dashboard.
+* Job scraping/searching should begin only when Start is clicked.
+* Stop should disable searching.
+* Results must be visible on both admin and user dashboards.
+
+### UI Improvements
+
+* Remove all "development mode" text.
+* Add footer: "All rights reserved © Vishnu".
+* Ensure full responsiveness for mobile and desktop.
+* Add loading skeletons for better UX.
+* Add dark mode and light mode.
+
+### Additional Features
+
+* Implement role-based access control (admin, user, guest).
+* Add real-time notifications using WebSockets/Socket.IO.
+* Track user activities and interactions.
+* Optimize performance and eliminate duplicate code.
+* Use reusable components and maintain a production-ready structure.
+
+### Required Integrations/Dependencies
+
+* socket.io (real-time notifications)
+* node-cron (scheduled reminders)
+* googleapis (Google Calendar sync)
+* bcrypt + JWT (authentication)
+* chart.js + react-chartjs-2 (analytics)
+* jsPDF/PDFKit (PDF export)
+* react-loading-skeleton (loading states)
+* nodemailer (email reminders)
+
+Ensure all features are fully functional, synchronized with the database, and visible to the admin dashboard where applicable.

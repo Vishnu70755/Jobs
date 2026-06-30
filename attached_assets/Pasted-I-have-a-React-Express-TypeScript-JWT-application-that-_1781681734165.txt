@@ -1,0 +1,184 @@
+I have a React + Express + TypeScript + JWT application that uses HTTP-only cookies for authentication. Please analyze my existing codebase and make the following changes.
+
+## 1. Remove Seed Demo Tracker Data Section
+
+In the Profile section/dashboard, completely remove the card that displays:
+
+* "Seed Demo Tracker Data"
+* "Add 5 sample applications (Google, Microsoft, Amazon, TCS, Infosys) to your Tracker."
+* The "Add Demo Data" button.
+
+Requirements:
+
+* Remove the entire UI component and all related functionality.
+* Remove any API calls, hooks, state variables, event handlers, and backend endpoints associated with this feature.
+* Ensure there are no references left in the codebase.
+* Maintain the existing layout and spacing after removal.
+
+---
+
+## 2. Fix Authentication and Authorization Flow
+
+### Current Problem
+
+* A normal user logs in successfully.
+* When the user manually tries to access an admin-only page (such as `/admin`), access is denied.
+* However, the user is redirected back to the user dashboard and remains logged in because the authentication cookies are still active.
+
+This behavior is incorrect.
+
+---
+
+## Required Behavior
+
+### Admin Authorization
+
+Every admin route must verify:
+
+```ts
+user.role === "admin"
+```
+
+### If a non-admin user attempts to access an admin page:
+
+#### Backend
+
+Immediately:
+
+1. Invalidate the JWT session.
+2. Clear all authentication cookies.
+3. Destroy any session data.
+4. Return HTTP 401 Unauthorized.
+5. Never redirect to the user dashboard.
+
+Example:
+
+```ts
+return res.status(401).json({
+    success: false,
+    message: "Unauthorized",
+    redirect: "/signin"
+});
+```
+
+---
+
+### Frontend
+
+When receiving a 401 response:
+
+1. Clear localStorage.
+2. Clear sessionStorage.
+3. Remove any cached user data.
+4. Reset auth context/state.
+5. Force logout.
+6. Redirect to:
+
+```ts
+/signin
+```
+
+The user must not be sent to the dashboard.
+
+---
+
+## Browser Refresh Behavior
+
+After unauthorized admin access:
+
+* Refreshing the page must not restore the previous session.
+* Cookies must not persist.
+* The user must always authenticate again.
+
+---
+
+## Apply to All Admin Routes
+
+Protect every route such as:
+
+```ts
+/admin
+/admin/dashboard
+/admin/users
+/admin/jobs
+/admin/settings
+```
+
+using middleware.
+
+Example:
+
+```ts
+requireAuth
+requireAdmin
+```
+
+---
+
+## Axios Interceptor
+
+Create or update an Axios interceptor so that:
+
+```ts
+if (error.response?.status === 401) {
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.href = "/signin";
+}
+```
+
+This behavior should work globally.
+
+---
+
+## Route Guards
+
+Update React route guards so that:
+
+* Non-admin users can never access admin pages.
+* Unauthorized users are redirected only to `/signin`.
+* They must sign in again.
+* The dashboard should never automatically reopen.
+
+---
+
+## Security Requirements
+
+Use production-ready best practices:
+
+* JWT authentication
+* HTTP-only cookies
+* SameSite protection
+* Secure cookies in production
+* Proper logout flow
+* Role-based middleware
+* Prevent session restoration
+
+---
+
+## Cleanup
+
+Remove:
+
+* Any automatic redirects to the user dashboard after failed admin access.
+* Any code that preserves cookies after unauthorized access.
+* Any logic that silently keeps the user logged in.
+
+---
+
+## Output Requirements
+
+Provide:
+
+1. Exact files that need modification.
+2. Complete production-ready code.
+3. Before and after code changes.
+4. Backend middleware updates.
+5. Logout endpoint changes.
+6. React route guard changes.
+7. Auth context changes.
+8. Axios interceptor changes.
+9. Cookie-clearing logic.
+10. Any additional files that should be added or removed.
+
+Analyze the current codebase and implement all necessary changes instead of giving high-level explanations.

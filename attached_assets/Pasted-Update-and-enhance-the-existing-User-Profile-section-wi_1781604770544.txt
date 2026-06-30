@@ -1,0 +1,80 @@
+Update and enhance the existing User Profile section without creating duplicate components or replacing the current architecture. Reuse the existing database schema, authentication system, and UI components wherever possible.
+
+### Profile Information
+
+Expand the profile page to include:
+
+* Full Name
+* Email (read-only if taken from authentication)
+* Profile Picture upload with preview
+* Phone Number
+* Location
+* Date of Birth
+* Gender
+* LinkedIn URL
+* GitHub URL
+* Portfolio Website
+* Skills
+* Education
+* Experience
+* Resume Upload
+* Bio/About Me
+
+### Profile Completion System
+
+Implement a dynamic profile completion percentage based on required fields. Display the percentage as a circular progress ring around the profile avatar.
+
+Requirements:
+
+* 0-100% completion calculation.
+* Progress updates automatically when fields are edited.
+* Green color when profile completion reaches 100%.
+* Show "Profile Incomplete" when below 100%.
+* Show "Profile Complete" when all required fields are filled.
+* Display the completion percentage numerically inside the circle.
+* Animate progress changes smoothly.
+
+### User Interface
+
+Improve the profile page with:
+
+* Modern card-based layout.
+* Responsive design for desktop and mobile.
+* Profile image preview and change option.
+* Edit and Save buttons.
+* Loading skeletons while fetching data.
+* Form validation with user-friendly error messages.
+* Success toast notification after saving.
+* Unsaved changes warning before leaving the page.
+* Tabs for Personal Info, Skills, Education, Experience, and Resume.
+
+### Data Persistence
+
+Ensure:
+
+* Profile data is saved in the database.
+* Existing user data is preserved.
+* Data persists across refreshes and sessions.
+* Profile picture URL/path is stored correctly.
+* Changes are reflected immediately throughout the application.
+* Admin dashboard can view all profile information and profile completion percentage.
+
+### Additional Features
+
+* Dark mode compatibility.
+* Image compression before upload.
+* Default avatar when no image exists.
+* Last updated timestamp.
+* Account creation date display.
+* View Profile mode and Edit Profile mode.
+* Export profile as PDF.
+* Activity timeline showing profile updates.
+
+### Performance and Architecture
+
+* Do not create duplicate pages or APIs.
+* Extend existing components and database models.
+* Maintain backward compatibility.
+* Use reusable components.
+* Optimize rendering and state updates.
+* Ensure production-ready code quality.

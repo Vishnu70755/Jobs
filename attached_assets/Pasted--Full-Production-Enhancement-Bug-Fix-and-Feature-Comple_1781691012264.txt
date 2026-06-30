@@ -1,0 +1,595 @@
+# Full Production Enhancement, Bug Fix, and Feature Completion Task for Existing Job Tracker Application
+
+Analyze the **entire existing codebase** before making any changes.
+
+This is an existing production application built with:
+
+* React
+* TypeScript
+* Express
+* Node.js
+* MongoDB
+* JWT Authentication
+* HTTP-only Cookies
+
+## Critical Instructions
+
+* **DO NOT create a new project.**
+* **DO NOT rewrite the application.**
+* Modify only the existing code.
+* Preserve the existing architecture, folder structure, naming conventions, coding style, and business logic.
+* Reuse existing components, hooks, services, utilities, APIs, middleware, and database models wherever possible.
+* Before creating any new component, hook, utility, API, service, controller, model, middleware, or page, search the project to determine whether an equivalent implementation already exists. Extend or reuse existing code whenever possible.
+* Analyze all frontend and backend files that are related to each feature before making modifications.
+* Remove duplicate code, duplicate rendering, unused components, unused APIs, unused imports, dead code, obsolete files, and unnecessary dependencies.
+* Fix every TypeScript error, ESLint error, console warning, runtime error, build error, and broken import.
+* The final project must build successfully with **zero TypeScript errors, zero ESLint errors, zero runtime errors, zero console errors, and zero broken functionality.**
+* Every implementation must be production-ready, scalable, secure, optimized, and maintainable.
+
+---
+
+# Phase 1 — Complete Codebase Analysis
+
+Before changing any code, analyze the entire repository and identify:
+
+* Complete frontend architecture
+* Complete backend architecture
+* Folder structure
+* Pages
+* Components
+* Layouts
+* Hooks
+* Context providers
+* API services
+* Express routes
+* Controllers
+* Services
+* Models
+* Middlewares
+* Utilities
+* Authentication flow
+* Authorization flow
+* Resume Builder flow
+* Notification system
+* Analytics system
+* AI Assistant
+* Admin Dashboard
+* Job Search system
+* Interview Scheduler
+* Email system
+* Database schema
+
+Also identify:
+
+* Duplicate components
+* Duplicate APIs
+* Duplicate models
+* Dead code
+* Broken routes
+* Missing validation
+* Missing indexes
+* Missing error handling
+* Missing pages
+* Missing components
+* Performance bottlenecks
+* Security issues
+
+Do not implement anything until the entire project has been analyzed.
+
+---
+
+# 1. Resume Builder & PDF Export
+
+Fix every Resume Builder issue.
+
+The generated PDF must never contain:
+
+* Current Date
+* Current Time
+* Browser header
+* Browser footer
+* UserName - Resume
+* Page number
+* about:blank
+
+Do NOT use the browser print dialog.
+
+Generate PDFs using a professional library such as:
+
+* html2pdf.js
+* jsPDF
+* html2canvas
+* react-pdf
+
+Ensure:
+
+* Only the resume is exported.
+* High-resolution PDF.
+* Professional formatting.
+* A4 page size.
+* Correct margins.
+* Automatic page breaks.
+* No clipped content.
+* No overflow.
+* No duplicate pages.
+* No duplicate resume preview.
+* No floating overlay.
+* Only one resume component is rendered.
+* Correct export container selection.
+
+Investigate duplicate rendering caused by:
+
+* Duplicate React components
+* Duplicate DOM nodes
+* Hidden preview containers
+* Portals
+* html2canvas target selection
+* Duplicate export wrappers
+
+---
+
+# 2. Global Date Handling
+
+Search the entire project and replace every date implementation with one centralized utility.
+
+Create reusable utilities:
+
+* formatDate()
+* formatTime()
+* formatDateTime()
+* formatRelative()
+
+Store all dates internally as ISO format.
+
+Display dates professionally.
+
+Examples:
+
+* 15 Jul 2026
+* Jul 15, 2026
+* Monday, 15 July 2026
+
+Display time separately:
+
+* 10:30 AM
+
+Never display raw ISO strings.
+
+Apply to:
+
+* Dashboard
+* Tracker
+* Resume Builder
+* Notifications
+* Analytics
+* Job Details
+* Interview Scheduler
+* Emails
+* Admin Dashboard
+* User Profile
+* Activity Logs
+* Every other page
+
+---
+
+## Date Inputs
+
+Replace every manual date input with a proper date picker.
+
+Requirements:
+
+* Prevent typing alphabetic characters.
+* Prevent invalid dates.
+* Validate frontend.
+* Validate backend.
+* Store ISO.
+* Display formatted dates.
+
+---
+
+# 3. Admin Job Search Engine
+
+Implement a complete production Job Search Management system.
+
+Add an Admin section with:
+
+* Start Job Search
+* Stop Job Search
+* Search Status
+* Scheduler Status
+* Last Search Time
+* Next Scheduled Search
+* Jobs Imported
+* Duplicate Jobs Skipped
+* Queue Status
+* Platform Statistics
+* Scheduler Health
+
+When Start Job Search is clicked:
+
+Automatically collect jobs from:
+
+* LinkedIn
+* Indeed
+* Glassdoor
+* Naukri
+* Internshala
+* Wellfound
+* RemoteOK
+* Greenhouse
+* Lever
+* Company career pages
+
+Requirements:
+
+* Import only new jobs.
+* Skip duplicates.
+* Continue automatically every 15–30 minutes.
+* Persist across server restarts.
+* Use BullMQ, Agenda, or another production-ready scheduler with Redis.
+* Worker separation.
+* Retry strategy.
+* Queue monitoring.
+
+When Stop Job Search is clicked:
+
+* Stop all scheduled jobs immediately.
+
+Display live status in Admin Dashboard.
+
+---
+
+# 4. User Monitoring Dashboard
+
+Create a complete Admin User Monitoring system.
+
+Display:
+
+* Registered users
+* Active users
+* Online users
+* Last login
+* Login history
+* Session history
+* Device information
+* Browser information
+* IP Address (where appropriate)
+* User profile
+* Jobs viewed
+* Jobs saved
+* Jobs tracked
+* Applications submitted
+* Resume downloads
+* Resume creations
+* ATS Analyzer usage
+* AI Assistant usage
+* Interview schedules
+* Notification history
+* Account creation date
+* User activity timeline
+
+Include:
+
+* Search
+* Filters
+* Sorting
+* Pagination
+* User detail page
+
+Charts:
+
+* Daily Active Users
+* Monthly Active Users
+* User Growth
+* Device Statistics
+* Browser Statistics
+* Login Frequency
+
+---
+
+# 5. Notification System
+
+Improve notifications.
+
+When unread notifications exist:
+
+Display:
+
+* Red badge
+* Notification count
+* Dot indicator
+* Highlight sidebar icon
+
+Support:
+
+* Real-time updates using Socket.io
+* Read
+* Unread
+* Mark one as read
+* Mark all as read
+* Remove unread indicator automatically
+
+---
+
+# 6. Interview Reminder Emails
+
+Automatically send reminder emails.
+
+Reminder schedule:
+
+* 48 hours
+* 42 hours
+* 36 hours
+* 30 hours
+* 24 hours
+* 18 hours
+* 12 hours
+* 6 hours
+
+Email should include:
+
+* Company
+* Position
+* Date
+* Time
+* Meeting Link
+* Interview Type
+* Notes
+* Good luck message
+
+Requirements:
+
+* Professional HTML template
+* Queue emails
+* Prevent duplicate reminders
+* Cancel reminders if interview deleted
+* Reschedule reminders if interview changes
+
+---
+
+# 7. Analytics Dashboard
+
+Fix all analytics.
+
+Charts must display real MongoDB data.
+
+Charts:
+
+* Applications Over Time
+* Saved Jobs
+* Tracked Jobs
+* Interviews
+* Offers
+* Rejections
+* Resume Downloads
+* ATS Scores
+* Monthly Activity
+* Daily Activity
+* Job Sources
+* User Growth (Admin)
+
+Requirements:
+
+* Aggregation optimization
+* Automatic updates
+* Memoized charts
+* Lazy loading
+* Empty-state handling
+
+---
+
+# 8. AI Assistant
+
+Fix AI Assistant completely.
+
+Analyze frontend and backend.
+
+Fix:
+
+* API routes
+* Authentication
+* Authorization
+* Prompt processing
+* Streaming responses
+* Conversation history
+* Error handling
+* Rate limiting
+* Loading indicators
+* Retry handling
+* Conversation persistence
+
+Ensure responses always return correctly.
+
+---
+
+# 9. Find Jobs Page
+
+Current buttons:
+
+* Apply Externally
+* Track Application
+
+Add:
+
+* Save Job
+
+Requirements:
+
+Save Job:
+
+* Save into Saved Jobs collection
+* Change button to Saved
+* Disable duplicate saves
+* Persist after refresh
+
+Track Application:
+
+* Add to Tracker
+* Change button to Tracked
+* Prevent duplicates
+* Persist after refresh
+
+A job can be both Saved and Tracked independently.
+
+Synchronize button state with backend.
+
+Optimistically update UI with rollback on failure.
+
+---
+
+# 10. Performance Optimization
+
+Optimize:
+
+* MongoDB queries
+* Aggregation pipelines
+* Database indexes
+* API responses
+* Pagination
+* Lazy loading
+* React.memo
+* useMemo
+* useCallback
+* Code splitting
+* Virtualized tables
+* Image optimization
+* API caching
+* Component rendering
+
+---
+
+# 11. Security
+
+Implement production-grade security.
+
+Include:
+
+* JWT Authentication
+* Refresh Tokens
+* Refresh Token Rotation
+* HTTP-only Cookies
+* Secure Cookies
+* SameSite Protection
+* Helmet
+* CSP Headers
+* CSRF Protection (where applicable)
+* Role-Based Authorization
+* Input Validation using Zod or Joi
+* Mongo Sanitization
+* XSS Prevention
+* NoSQL Injection Prevention
+* Rate Limiting
+* Secure Logout
+* Session Invalidation
+* Prevent Session Restoration
+* Proper authentication middleware
+* Proper authorization middleware
+
+---
+
+# 12. Missing Components & Missing Features
+
+Analyze the entire project and implement every missing component, feature, page, route, API, and backend functionality required for a complete production application.
+
+This includes missing:
+
+* Pages
+* Components
+* Dialogs
+* Modals
+* Hooks
+* Context providers
+* Services
+* APIs
+* Controllers
+* Models
+* Middleware
+* Utilities
+* Email templates
+* Queue workers
+* Scheduler workers
+* Dashboard widgets
+* Empty states
+* Skeleton loaders
+* Error boundaries
+* Pagination
+* Filters
+* Search
+* Icons
+* Loading states
+* Missing admin pages
+* Missing user pages
+* Missing backend endpoints
+* Missing frontend integrations
+
+Ensure there are:
+
+* No broken imports
+* No placeholder code
+* No TODO implementations
+* No unused files
+* No missing dependencies
+* No incomplete pages
+
+---
+
+# 13. Final Verification
+
+Verify all functionality.
+
+Checklist:
+
+* Resume preview
+* Resume PDF
+* No browser headers
+* No browser footers
+* No duplicate resume
+* A4 formatting
+* Date formatting everywhere
+* Date picker validation
+* Admin Job Search Start/Stop
+* Automatic scheduler
+* Queue persistence
+* User Monitoring Dashboard
+* Notification badges
+* Real-time notifications
+* Reminder emails
+* Analytics
+* AI Assistant
+* Save Job
+* Track Application
+* Persistent button states
+* Authentication
+* Authorization
+* Secure Logout
+* Session invalidation
+* Production build
+
+Fix every issue discovered during testing.
+
+---
+
+# Deliverables
+
+Provide:
+
+1. Complete list of modified files.
+2. Complete list of newly added files.
+3. Complete list of removed files.
+4. Before and after code for every modified file.
+5. Database schema changes.
+6. API changes.
+7. Environment variables required.
+8. Redis configuration.
+9. BullMQ/Agenda configuration.
+10. Email configuration.
+11. Google Calendar configuration (if applicable).
+12. Scheduler configuration.
+13. Security improvements summary.
+14. Performance improvements summary.
+15. Database optimization summary.
+16. Testing checklist.
+17. Build verification report.
+18. Confirmation that the application builds successfully with zero TypeScript errors, zero ESLint errors, zero runtime errors, zero console errors, and no broken functionality.
+
+Do not provide high-level explanations. Analyze the entire existing project first, then implement every required change directly within the current codebase while preserving all existing functionality and architecture.

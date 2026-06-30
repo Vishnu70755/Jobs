@@ -1,0 +1,1273 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: JobQuest API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: jobs
+    description: Job listings
+  - name: applications
+    description: Application tracking
+  - name: resumes
+    description: Resume management
+  - name: ats
+    description: ATS analysis
+  - name: ai
+    description: AI assistant
+  - name: notifications
+    description: Notifications
+  - name: analytics
+    description: Analytics and statistics
+  - name: users
+    description: User profiles
+  - name: admin
+    description: Admin operations
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # ─── JOBS ───────────────────────────────────────────────────────────────────
+
+  /jobs:
+    get:
+      operationId: listJobs
+      tags: [jobs]
+      summary: List jobs with filters
+      parameters:
+        - name: search
+          in: query
+          schema: { type: string }
+        - name: location
+          in: query
+          schema: { type: string }
+        - name: workMode
+          in: query
+          schema: { type: string, enum: [remote, hybrid, onsite] }
+        - name: source
+          in: query
+          schema: { type: string }
+        - name: experience
+          in: query
+          schema: { type: string }
+        - name: salaryMin
+          in: query
+          schema: { type: integer }
+        - name: postedWithin
+          in: query
+          schema: { type: string, enum: [1h, 6h, 12h, 24h, 3d, 7d] }
+        - name: skills
+          in: query
+          schema: { type: string }
+        - name: sortBy
+          in: query
+          schema: { type: string, enum: [latest, salary, company, matchScore] }
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+      responses:
+        "200":
+          description: List of jobs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobListResponse"
+
+  /jobs/featured:
+    get:
+      operationId: getFeaturedJobs
+      tags: [jobs]
+      summary: Get featured/hot jobs
+      responses:
+        "200":
+          description: Featured jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Job"
+
+  /jobs/stats:
+    get:
+      operationId: getJobStats
+      tags: [jobs]
+      summary: Get job statistics summary
+      responses:
+        "200":
+          description: Job stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobStats"
+
+  /jobs/{id}:
+    get:
+      operationId: getJob
+      tags: [jobs]
+      summary: Get a single job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Job details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "404":
+          description: Not found
+
+  /jobs/{id}/similar:
+    get:
+      operationId: getSimilarJobs
+      tags: [jobs]
+      summary: Get similar jobs
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Similar jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Job"
+
+  /jobs/{id}/save:
+    post:
+      operationId: saveJob
+      tags: [jobs]
+      summary: Save a job for later
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SavedJobResult"
+
+    delete:
+      operationId: unsaveJob
+      tags: [jobs]
+      summary: Remove job from saved
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Removed
+
+  /jobs/saved:
+    get:
+      operationId: getSavedJobs
+      tags: [jobs]
+      summary: Get user's saved jobs
+      responses:
+        "200":
+          description: Saved jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Job"
+
+  # ─── APPLICATIONS ────────────────────────────────────────────────────────────
+
+  /applications:
+    get:
+      operationId: listApplications
+      tags: [applications]
+      summary: List user's applications
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string }
+        - name: sortBy
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Applications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Application"
+
+    post:
+      operationId: createApplication
+      tags: [applications]
+      summary: Create an application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplicationInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+
+  /applications/board:
+    get:
+      operationId: getApplicationBoard
+      tags: [applications]
+      summary: Get applications grouped by status for kanban board
+      responses:
+        "200":
+          description: Kanban board data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationBoard"
+
+  /applications/pipeline:
+    get:
+      operationId: getApplicationPipeline
+      tags: [applications]
+      summary: Get application funnel metrics
+      responses:
+        "200":
+          description: Pipeline data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationPipeline"
+
+  /applications/{id}:
+    get:
+      operationId: getApplication
+      tags: [applications]
+      summary: Get a single application
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Application
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+
+    patch:
+      operationId: updateApplication
+      tags: [applications]
+      summary: Update application
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplicationUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+
+    delete:
+      operationId: deleteApplication
+      tags: [applications]
+      summary: Delete application
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── RESUMES ────────────────────────────────────────────────────────────────
+
+  /resumes:
+    get:
+      operationId: listResumes
+      tags: [resumes]
+      summary: List user's resumes
+      responses:
+        "200":
+          description: Resumes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Resume"
+
+    post:
+      operationId: createResume
+      tags: [resumes]
+      summary: Create/upload a resume record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResumeInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resume"
+
+  /resumes/{id}:
+    get:
+      operationId: getResume
+      tags: [resumes]
+      summary: Get resume details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Resume
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resume"
+
+    patch:
+      operationId: updateResume
+      tags: [resumes]
+      summary: Update resume
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResumeUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resume"
+
+    delete:
+      operationId: deleteResume
+      tags: [resumes]
+      summary: Delete resume
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── ATS ────────────────────────────────────────────────────────────────────
+
+  /ats/analyze:
+    post:
+      operationId: analyzeResume
+      tags: [ats]
+      summary: Analyze resume against a job description
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AtsAnalyzeInput"
+      responses:
+        "200":
+          description: ATS analysis result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AtsReport"
+
+  /ats/reports:
+    get:
+      operationId: listAtsReports
+      tags: [ats]
+      summary: List ATS reports for user
+      responses:
+        "200":
+          description: Reports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AtsReport"
+
+  /ats/reports/{id}:
+    get:
+      operationId: getAtsReport
+      tags: [ats]
+      summary: Get ATS report
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AtsReport"
+
+  # ─── AI ASSISTANT ────────────────────────────────────────────────────────────
+
+  /ai/chat:
+    post:
+      operationId: sendAiMessage
+      tags: [ai]
+      summary: Send message to AI assistant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiMessageInput"
+      responses:
+        "200":
+          description: AI response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiMessage"
+
+  /ai/chat/history:
+    get:
+      operationId: getAiChatHistory
+      tags: [ai]
+      summary: Get AI chat history
+      parameters:
+        - name: jobId
+          in: query
+          schema: { type: ["integer", "null"] }
+      responses:
+        "200":
+          description: Chat history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AiMessage"
+
+  # ─── ANALYTICS ───────────────────────────────────────────────────────────────
+
+  /analytics/overview:
+    get:
+      operationId: getAnalyticsOverview
+      tags: [analytics]
+      summary: Get application analytics overview
+      responses:
+        "200":
+          description: Analytics overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsOverview"
+
+  /analytics/timeline:
+    get:
+      operationId: getApplicationTimeline
+      tags: [analytics]
+      summary: Get applications over time (weekly/monthly)
+      parameters:
+        - name: period
+          in: query
+          schema: { type: string, enum: [weekly, monthly] }
+      responses:
+        "200":
+          description: Timeline data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TimelinePoint"
+
+  /analytics/by-source:
+    get:
+      operationId: getApplicationsBySource
+      tags: [analytics]
+      summary: Get applications grouped by source
+      responses:
+        "200":
+          description: Source breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SourceBreakdown"
+
+  /analytics/by-status:
+    get:
+      operationId: getApplicationsByStatus
+      tags: [analytics]
+      summary: Get applications grouped by status
+      responses:
+        "200":
+          description: Status breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StatusBreakdown"
+
+  # ─── NOTIFICATIONS ──────────────────────────────────────────────────────────
+
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: List notifications
+      parameters:
+        - name: unreadOnly
+          in: query
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+
+  /notifications/{id}/read:
+    patch:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark notification as read
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+
+  /notifications/read-all:
+    patch:
+      operationId: markAllNotificationsRead
+      tags: [notifications]
+      summary: Mark all notifications read
+      responses:
+        "200":
+          description: Done
+
+  # ─── USER PROFILE ────────────────────────────────────────────────────────────
+
+  /users/me:
+    get:
+      operationId: getMyProfile
+      tags: [users]
+      summary: Get current user profile
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+
+    patch:
+      operationId: updateMyProfile
+      tags: [users]
+      summary: Update user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserProfileUpdate"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+
+  # ─── ADMIN ──────────────────────────────────────────────────────────────────
+
+  /admin/stats:
+    get:
+      operationId: getAdminStats
+      tags: [admin]
+      summary: Get platform-wide admin statistics
+      responses:
+        "200":
+          description: Admin stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+
+  /admin/users:
+    get:
+      operationId: listAdminUsers
+      tags: [admin]
+      summary: List all users (admin)
+      parameters:
+        - name: search
+          in: query
+          schema: { type: string }
+        - name: page
+          in: query
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUserList"
+
+  /admin/users/{id}/suspend:
+    patch:
+      operationId: suspendUser
+      tags: [admin]
+      summary: Suspend a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Suspended
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    # ─── JOB ────────────────────────────────────────────────────────────────
+    Job:
+      type: object
+      required: [id, title, company, location, source, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        company:
+          type: string
+        companyLogo:
+          type: ["string", "null"]
+        location:
+          type: string
+        workMode:
+          type: string
+          enum: [remote, hybrid, onsite]
+        experienceLevel:
+          type: ["string", "null"]
+        salaryMin:
+          type: ["integer", "null"]
+        salaryMax:
+          type: ["integer", "null"]
+        salaryCurrency:
+          type: ["string", "null"]
+        description:
+          type: ["string", "null"]
+        skills:
+          type: array
+          items:
+            type: string
+        source:
+          type: string
+        applyUrl:
+          type: ["string", "null"]
+        isNew:
+          type: boolean
+        isHot:
+          type: boolean
+        matchScore:
+          type: ["integer", "null"]
+        postedAt:
+          type: ["string", "null"]
+        expiresAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        isSaved:
+          type: boolean
+
+    JobListResponse:
+      type: object
+      required: [jobs, total, page, limit]
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Job"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    JobStats:
+      type: object
+      required: [totalJobs, newToday, remoteJobs, sources]
+      properties:
+        totalJobs:
+          type: integer
+        newToday:
+          type: integer
+        newThisWeek:
+          type: integer
+        remoteJobs:
+          type: integer
+        hybridJobs:
+          type: integer
+        inOfficeJobs:
+          type: integer
+        sources:
+          type: array
+          items:
+            type: object
+            properties:
+              source: { type: string }
+              count: { type: integer }
+
+    SavedJobResult:
+      type: object
+      properties:
+        saved:
+          type: boolean
+        jobId:
+          type: integer
+
+    # ─── APPLICATION ─────────────────────────────────────────────────────────
+    Application:
+      type: object
+      required: [id, userId, company, role, status, appliedAt, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+        jobId:
+          type: ["integer", "null"]
+        company:
+          type: string
+        role:
+          type: string
+        status:
+          type: string
+          enum: [saved, applied, under_review, pending, interview_scheduled, in_process, rejected, ghosted, offer_received, accepted, declined]
+        appliedAt:
+          type: ["string", "null"]
+        resumeId:
+          type: ["integer", "null"]
+        notes:
+          type: ["string", "null"]
+        interviewDate:
+          type: ["string", "null"]
+        recruiterName:
+          type: ["string", "null"]
+        recruiterEmail:
+          type: ["string", "null"]
+        salaryOffered:
+          type: ["integer", "null"]
+        source:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        job:
+          $ref: "#/components/schemas/Job"
+
+    ApplicationInput:
+      type: object
+      required: [company, role, status]
+      properties:
+        jobId:
+          type: ["integer", "null"]
+        company:
+          type: string
+        role:
+          type: string
+        status:
+          type: string
+          enum: [saved, applied, under_review, pending, interview_scheduled, in_process, rejected, ghosted, offer_received, accepted, declined]
+        appliedAt:
+          type: ["string", "null"]
+        resumeId:
+          type: ["integer", "null"]
+        notes:
+          type: ["string", "null"]
+        source:
+          type: ["string", "null"]
+
+    ApplicationUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [saved, applied, under_review, pending, interview_scheduled, in_process, rejected, ghosted, offer_received, accepted, declined]
+        notes:
+          type: ["string", "null"]
+        interviewDate:
+          type: ["string", "null"]
+        recruiterName:
+          type: ["string", "null"]
+        recruiterEmail:
+          type: ["string", "null"]
+        salaryOffered:
+          type: ["integer", "null"]
+
+    ApplicationBoard:
+      type: object
+      properties:
+        columns:
+          type: array
+          items:
+            type: object
+            properties:
+              status: { type: string }
+              label: { type: string }
+              count: { type: integer }
+              applications:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Application"
+
+    ApplicationPipeline:
+      type: object
+      properties:
+        stages:
+          type: array
+          items:
+            type: object
+            properties:
+              stage: { type: string }
+              count: { type: integer }
+              conversionRate: { type: number }
+
+    # ─── RESUME ──────────────────────────────────────────────────────────────
+    Resume:
+      type: object
+      required: [id, userId, name, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+        name:
+          type: string
+        fileName:
+          type: ["string", "null"]
+        fileUrl:
+          type: ["string", "null"]
+        fileType:
+          type: ["string", "null"]
+        version:
+          type: integer
+        isDefault:
+          type: boolean
+        content:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    ResumeInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        fileName:
+          type: ["string", "null"]
+        fileUrl:
+          type: ["string", "null"]
+        fileType:
+          type: ["string", "null"]
+        content:
+          type: ["string", "null"]
+        isDefault:
+          type: boolean
+
+    ResumeUpdate:
+      type: object
+      properties:
+        name:
+          type: ["string", "null"]
+        isDefault:
+          type: ["boolean", "null"]
+        content:
+          type: ["string", "null"]
+
+    # ─── ATS ─────────────────────────────────────────────────────────────────
+    AtsAnalyzeInput:
+      type: object
+      required: [resumeId, jobDescription]
+      properties:
+        resumeId:
+          type: integer
+        jobDescription:
+          type: string
+        jobId:
+          type: ["integer", "null"]
+
+    AtsReport:
+      type: object
+      required: [id, resumeId, score, createdAt]
+      properties:
+        id:
+          type: integer
+        resumeId:
+          type: integer
+        jobId:
+          type: ["integer", "null"]
+        score:
+          type: integer
+        matchPercentage:
+          type: integer
+        missingKeywords:
+          type: array
+          items:
+            type: string
+        presentKeywords:
+          type: array
+          items:
+            type: string
+        strengths:
+          type: array
+          items:
+            type: string
+        weaknesses:
+          type: array
+          items:
+            type: string
+        suggestions:
+          type: array
+          items:
+            type: string
+        skillsAnalysis:
+          type: object
+          properties:
+            matched: { type: array, items: { type: string } }
+            missing: { type: array, items: { type: string } }
+        createdAt:
+          type: string
+
+    # ─── AI ──────────────────────────────────────────────────────────────────
+    AiMessageInput:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+        jobId:
+          type: ["integer", "null"]
+        resumeId:
+          type: ["integer", "null"]
+        mode:
+          type: string
+          enum: [general, resume_review, interview_prep, cover_letter, email_draft, skill_gap, career_guidance]
+
+    AiMessage:
+      type: object
+      required: [id, role, content, createdAt]
+      properties:
+        id:
+          type: integer
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+        jobId:
+          type: ["integer", "null"]
+        mode:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    # ─── NOTIFICATIONS ───────────────────────────────────────────────────────
+    Notification:
+      type: object
+      required: [id, userId, type, title, isRead, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+        type:
+          type: string
+          enum: [new_job_match, remote_job, company_posting, application_update, ats_complete]
+        title:
+          type: string
+        message:
+          type: ["string", "null"]
+        jobId:
+          type: ["integer", "null"]
+        isRead:
+          type: boolean
+        createdAt:
+          type: string
+
+    # ─── ANALYTICS ───────────────────────────────────────────────────────────
+    AnalyticsOverview:
+      type: object
+      properties:
+        totalApplications:
+          type: integer
+        responseRate:
+          type: number
+        interviewRate:
+          type: number
+        offerRate:
+          type: number
+        rejections:
+          type: integer
+        pending:
+          type: integer
+        offersReceived:
+          type: integer
+        thisWeekApplications:
+          type: integer
+        lastWeekApplications:
+          type: integer
+
+    TimelinePoint:
+      type: object
+      properties:
+        date:
+          type: string
+        count:
+          type: integer
+        interviews:
+          type: integer
+        offers:
+          type: integer
+
+    SourceBreakdown:
+      type: object
+      properties:
+        source:
+          type: string
+        count:
+          type: integer
+        percentage:
+          type: number
+
+    StatusBreakdown:
+      type: object
+      properties:
+        status:
+          type: string
+        count:
+          type: integer
+        percentage:
+          type: number
+
+    # ─── USER ────────────────────────────────────────────────────────────────
+    UserProfile:
+      type: object
+      required: [id, clerkId, email, createdAt]
+      properties:
+        id:
+          type: integer
+        clerkId:
+          type: string
+        email:
+          type: string
+        name:
+          type: ["string", "null"]
+        title:
+          type: ["string", "null"]
+        location:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        bio:
+          type: ["string", "null"]
+        dateOfBirth:
+          type: ["string", "null"]
+        gender:
+          type: ["string", "null"]
+        portfolio:
+          type: ["string", "null"]
+        skills:
+          type: array
+          items:
+            type: string
+        experience:
+          type: ["string", "null"]
+        targetRole:
+          type: ["string", "null"]
+        linkedinUrl:
+          type: ["string", "null"]
+        githubUrl:
+          type: ["string", "null"]
+        role:
+          type: string
+          enum: [user, admin]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    UserProfileUpdate:
+      type: object
+      properties:
+        name:
+          type: ["string", "null"]
+        title:
+          type: ["string", "null"]
+        location:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        bio:
+          type: ["string", "null"]
+        dateOfBirth:
+          type: ["string", "null"]
+        gender:
+          type: ["string", "null"]
+        portfolio:
+          type: ["string", "null"]
+        skills:
+          type: array
+          items:
+            type: string
+        experience:
+          type: ["string", "null"]
+        targetRole:
+          type: ["string", "null"]
+        linkedinUrl:
+          type: ["string", "null"]
+        githubUrl:
+          type: ["string", "null"]
+
+    # ─── ADMIN ───────────────────────────────────────────────────────────────
+    AdminStats:
+      type: object
+      properties:
+        totalUsers:
+          type: integer
+        activeUsers:
+          type: integer
+        totalApplications:
+          type: integer
+        totalJobs:
+          type: integer
+        totalResumes:
+          type: integer
+        totalAtsReports:
+          type: integer
+        newUsersThisWeek:
+          type: integer
+        applicationsThisWeek:
+          type: integer
+
+    AdminUser:
+      type: object
+      properties:
+        id:
+          type: integer
+        clerkId:
+          type: string
+        email:
+          type: string
+        name:
+          type: ["string", "null"]
+        role:
+          type: string
+        applicationCount:
+          type: integer
+        resumeCount:
+          type: integer
+        createdAt:
+          type: string
+
+    AdminUserList:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminUser"
+        total:
+          type: integer
+        page:
+          type: integer
