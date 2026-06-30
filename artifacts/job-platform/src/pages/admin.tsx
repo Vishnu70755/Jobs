@@ -457,7 +457,7 @@ export default function Admin() {
                           )}
                         </td>
                       </tr>
-                    ))}}
+                    ))
                   ) : (
                     <tr>
                       <td colSpan={8} className="py-12 text-center text-muted-foreground">
