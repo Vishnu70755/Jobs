@@ -116,44 +116,115 @@ export default function Admin() {
         .reduce((soonest, date) => (date < soonest ? date : soonest), new Date(8640000000000000)) // Far future
     : null;
 
-  const handleStartImport = () => {
-    // Provide immediate feedback
-    startImportMutation.mutate(undefined, {
-      onSuccess: () => {
-        toast.success('Import started successfully');
-      },
-      onError: (error: any) => {
-        const errorMessage = error?.response?.data?.error ||
-                           error?.message ||
-                           'Unknown error';
-        toast.error(`Failed to start import: ${errorMessage}`);
-      },
-      onSettled: () => {
-        // This will run on both success and error
-        // Refetch status to update UI
-        queryClient.invalidateQueries({ queryKey: ['import', 'status'] });
-      }
-    });
+  const handleToggleImport = () => {
+    // If currently importing or starting to import, stop it
+    if (isAnyImportRunning || startImportMutation.isLoading) {
+      // Provide immediate feedback for stopping
+      stopImportMutation.mutate(undefined, {
+        onSuccess: () => {
+          toast.success('Import stopped successfully');
+        },
+        onError: (error: any) => {
+          const errorMessage = error?.response?.data?.error ||
+                             error?.message ||
+                             'Unknown error';
+          toast.error(`Failed to stop import: ${errorMessage}`);
+        },
+        onSettled: () => {
+          // This will run on both success and error
+          // Refetch status to update UI
+          queryClient.invalidateQueries({ queryKey: ['import', 'status'] });
+        }
+      });
+    } else {
+      // Otherwise, start the import
+      startImportMutation.mutate(undefined, {
+        onSuccess: () => {
+          toast.success('Import started successfully');
+        },
+        onError: (error: any) => {
+          const errorMessage = error?.response?.data?.error ||
+                             error?.message ||
+                             'Unknown error';
+          toast.error(`Failed to start import: ${errorMessage}`);
+        },
+        onSettled: () => {
+          // This will run on both success and error
+          // Refetch status to update UI
+          queryClient.invalidateQueries({ queryKey: ['import', 'status'] });
+        }
+      });
+    }
   };
 
-  const handleStopImport = () => {
-    // Provide immediate feedback
-    stopImportMutation.mutate(undefined, {
-      onSuccess: () => {
-        toast.success('Import stopped successfully');
-      },
-      onError: (error: any) => {
-        const errorMessage = error?.response?.data?.error ||
-                           error?.message ||
-                           'Unknown error';
-        toast.error(`Failed to stop import: ${errorMessage}`);
-      },
-      onSettled: () => {
-        // This will run on both success and error
-        // Refetch status to update UI
-        queryClient.invalidateQueries({ queryKey: ['import', 'status'] });
-      }
-    });
+  // Helper function to determine current import status text
+  const getImportStatus = (): string => {
+    // Check for loading states first
+    if (startImportMutation.isPending) return 'Starting';
+    if (stopImportMutation.isPending) return 'Stopping';
+
+    // Check if any import is currently running
+    const isAnyImportRunning = Array.isArray(importStatus)
+      ? importStatus.some(status => status.isRunning)
+      : false;
+
+    if (isAnyImportRunning) return 'Importing';
+
+    // Check for recent errors in logs
+    if (Array.isArray(importStatus) && importStatus.length > 0) {
+      const recentLogs = importStatus.flatMap(status => status.logs || []);
+      const hasError = recentLogs.some(log => log.level === 'error');
+      if (hasError) return 'Failed';
+    }
+
+    // Check if we have completed successfully (was running, now not with success)
+    if (Array.isArray(importStatus) && importStatus.length > 0) {
+      const recentlyCompleted = importStatus.some(status =>
+        !status.isRunning &&
+        status.lastRunAt &&
+        new Date(status.lastRunAt).getTime() > Date.now() - 300000 && // Last 5 minutes
+        status.logs?.some(log => log.level === 'success')
+      );
+      if (recentlyCompleted) return 'Completed';
+    }
+
+    // Check if we have a stopped state
+    if (Array.isArray(importStatus) && importStatus.length > 0) {
+      const recentlyStopped = importStatus.some(status =>
+        !status.isRunning &&
+        status.lastRunAt &&
+        new Date(status.lastRunAt).getTime() > Date.now() - 300000 && // Last 5 minutes
+        !status.logs?.some(log => log.level === 'error')
+      );
+      if (recentlyStopped) return 'Stopped';
+    }
+
+    // Default to idle
+    return 'Idle';
+  };
+
+  const getStatusColor = (status: string): string => {
+    const statusLower = status.toLowerCase();
+    switch (statusLower) {
+      case 'idle':
+        return 'text-muted-foreground';
+      case 'starting':
+      case 'stopping':
+        return 'text-amber-600';
+      case 'importing':
+      case 'completed':
+        return 'text-emerald-600';
+      case 'stopped':
+        return 'text-amber-600';
+      case 'failed':
+        return 'text-destructive';
+      default:
+        return 'text-muted-foreground';
+    }
+  };
+
+  const getImportedJobsCount = (): number => {
+    return importStats?.totalImportedJobs ?? 0;
   };
 
   if (!isLoaded) {
@@ -181,6 +252,7 @@ export default function Admin() {
     );
   }
 
+  
   return (
     <div className="p-8 space-y-8 max-w-7xl mx-auto w-full">
       <div className="flex items-center gap-3">
@@ -197,40 +269,58 @@ export default function Admin() {
       <section className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold">Job Import Control</h2>
-          <div className="flex gap-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="default"
-                  onClick={handleStartImport}
-                  disabled={startImportMutation.isLoading || isAnyImportRunning}
-                  className={cn(startImportMutation.isLoading ? 'opacity-50' : '')}
-                >
-                  {startImportMutation.isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Starting...
-                    </>
-                  ) : (
-                    <>
-                      Start Import
-                    </>
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">
-                Start importing jobs
-              </TooltipContent>
-            </Tooltip>
-            <Button
-              variant="destructive"
-              onClick={handleStopImport}
-              disabled={stopImportMutation.isLoading || !isAnyImportRunning}
-              className={cn(stopImportMutation.isLoading ? 'opacity-50' : '')}
-            >
-              {stopImportMutation.isLoading ? 'Stopping...' : 'Stop Import'}
-            </Button>
-          </div>
+          <div>
+            {/* Dynamic Import Button */}
+            <div className="mb-4">
+              <Button
+                variant={isAnyImportRunning || startImportMutation.isLoading ? 'destructive' : 'default'}
+                className={`w-full ${
+                  // Override default variant to be green for start button
+                  !(isAnyImportRunning || startImportMutation.isLoading)
+                    ? 'bg-green-600 text-green-foreground hover:bg-green-700 border-green-600 hover:border-green-700'
+                    : ''  // Use default destructive styling for stop button
+                }`}
+                onClick={handleToggleImport}
+                disabled={isAnyImportRunning || startImportMutation.isLoading ? stopImportMutation.isLoading : startImportMutation.isLoading}
+              >
+                {startImportMutation.isLoading ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Starting...
+                  </div>
+                ) : stopImportMutation.isLoading ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Stopping...
+                  </div>
+                ) : isAnyImportRunning ? (
+                  <div className="flex items-center justify-center gap-2">
+                    Stop Import
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center gap-2">
+                    Start Import
+                  </div>
+                )}
+              </Button>
+            </div>
+
+            {/* Import Status and Statistics */}
+            <div className="space-y-3 text-sm">
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full"
+                  style={{
+                    backgroundColor: getStatusColor(getImportStatus())
+                  }}
+                ></div>
+                <span className="font-medium">{getImportStatus()}</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                <span>Jobs Imported: {getImportedJobsCount()}</span>
+              </div>
+            </div>
         </div>
 
         {/* Stats Grid */}
