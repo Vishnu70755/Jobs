@@ -464,6 +464,16 @@ function JobDetailPanel({
       {/* CTA */}
       <div className="flex gap-3">
         <Button
+          onClick={handleToggleSave}
+          disabled={saveJobMutation.isPending || unsaveJobMutation.isPending}
+          variant={job.isSaved ? "default" : "outline"}
+          size="lg"
+          className={job.isSaved ? "bg-green-600 hover:bg-green-700 text-white border-green-600" : ""}
+        >
+          <BookmarkIcon className={`w-4 h-4 mr-2 ${job.isSaved ? 'fill-current' : ''}`} />
+          {saveJobMutation.isPending ? "Saving…" : unsaveJobMutation.isPending ? "Unsaving…" : job.isSaved ? 'Saved' : 'Save'}
+        </Button>
+        <Button
           onClick={handleTrack}
           disabled={applying || isTracked}
           variant={isTracked ? "default" : "outline"}

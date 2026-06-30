@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { db, usersTable } from "@workspace/db";
-import { eq, gt } from "drizzle-orm";
+import { resumesTable } from "@workspace/db";
+import { savedJobsTable } from "@workspace/db";
+import { applicationsTable } from "@workspace/db";
+import { eq, gt, desc, and, count } from "drizzle-orm";
 import { resolveUser } from "../middlewares/auth";
 import { mailService } from "../lib/mail";
 import { clerkClient } from "@clerk/express";
@@ -12,6 +15,38 @@ const router = Router();
 router.get("/me", resolveUser, async (req, res) => {
   try {
     const user = (req as any).dbUser;
+
+    // Fetch Clerk profile for avatar URL
+    const clerkUser = await clerkClient.users.getUser(user.clerkId);
+    const avatarUrl = clerkUser?.profileImageUrl ?? null;
+
+    // Fetch the user's resume (prefer default, otherwise most recent)
+    const resume = await db.query.resumesTable.findFirst({
+      where: (resumesTable, { eq }) => eq(resumesTable.userId, user.id),
+      orderBy: (resumesTable, { desc }) => [desc(resumesTable.isDefault), desc(resumesTable.updatedAt)],
+    });
+    const resumeUrl = resume?.fileUrl ?? null;
+    const resumeFileName = resume?.fileName ?? null;
+
+    // Count saved jobs
+    const [savedJobsCountResult] = await db
+      .select({ count: count() })
+      .from(savedJobsTable)
+      .where(eq(savedJobsTable.userId, user.id));
+    const savedJobsCount = Number(savedJobsCountResult.count) || 0;
+
+    // Count tracked applications (where isTracked = true)
+    const [trackedJobsCountResult] = await db
+      .select({ count: count() })
+      .from(applicationsTable)
+      .where(
+        and(
+          eq(applicationsTable.userId, user.id),
+          eq(applicationsTable.isTracked, true)
+        )
+      );
+    const trackedJobsCount = Number(trackedJobsCountResult.count) || 0;
+
     res.json({
       id: user.id,
       clerkId: user.clerkId,
@@ -29,6 +64,12 @@ router.get("/me", resolveUser, async (req, res) => {
       targetRole: user.targetRole,
       linkedinUrl: user.linkedinUrl,
       githubUrl: user.githubUrl,
+      // New fields
+      avatarUrl,
+      resumeUrl,
+      resumeFileName,
+      savedJobsCount,
+      trackedJobsCount,
       role: user.role,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,

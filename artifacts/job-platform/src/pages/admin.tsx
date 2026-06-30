@@ -273,22 +273,22 @@ export default function Admin() {
             {/* Dynamic Import Button */}
             <div className="mb-4">
               <Button
-                variant={isAnyImportRunning || startImportMutation.isLoading ? 'destructive' : 'default'}
+                variant={isAnyImportRunning || startImportMutation.isPending ? 'destructive' : 'default'}
                 className={`w-full ${
                   // Override default variant to be green for start button
-                  !(isAnyImportRunning || startImportMutation.isLoading)
+                  !(isAnyImportRunning || startImportMutation.isPending)
                     ? 'bg-green-600 text-green-foreground hover:bg-green-700 border-green-600 hover:border-green-700'
                     : ''  // Use default destructive styling for stop button
                 }`}
                 onClick={handleToggleImport}
-                disabled={isAnyImportRunning || startImportMutation.isLoading ? stopImportMutation.isLoading : startImportMutation.isLoading}
+                disabled={isAnyImportRunning || startImportMutation.isPending ? stopImportMutation.isPending : startImportMutation.isPending}
               >
-                {startImportMutation.isLoading ? (
+                {startImportMutation.isPending ? (
                   <div className="flex items-center justify-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Starting...
                   </div>
-                ) : stopImportMutation.isLoading ? (
+                ) : stopImportMutation.isPending ? (
                   <div className="flex items-center justify-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Stopping...
@@ -507,9 +507,13 @@ export default function Admin() {
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-3">
                             <div className="relative w-8 h-8 flex-shrink-0">
-                              <div className="flex h-full w-full items-center justify-center rounded-full bg-primary/10 text-primary">
-                                {(u.name || u.email || "?")[0].toUpperCase()}
-                              </div>
+                              {u.avatarUrl ? (
+                                <img src={u.avatarUrl} alt={u.name || "Avatar"} className="rounded-full w-8 h-8 object-cover" />
+                              ) : (
+                                <div className="flex h-full w-full items-center justify-center rounded-full bg-primary/10 text-primary">
+                                  {(u.name || u.email || "?")[0].toUpperCase()}
+                                </div>
+                              )}
                             </div>
                             <div>
                               <p className="font-medium">{u.name || "—"}</p>

@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db, usersTable, applicationsTable, jobsTable, resumesTable, atsReportsTable, importJobsTable, importSourceConfigsTable } from "@workspace/db";
-import { eq, ilike, desc, sql } from "drizzle-orm";
+import { db, usersTable, applicationsTable, jobsTable, resumesTable, atsReportsTable, importJobsTable, importSourceConfigsTable, savedJobsTable } from "@workspace/db";
+import { eq, ilike, desc, sql, and } from "drizzle-orm";
 import { resolveUser, requireAdmin } from "../middlewares/auth";
 import importRoutes from "./admin/import";
 
@@ -59,16 +59,46 @@ router.get("/users", resolveUser, requireAdmin, async (req, res) => {
       .where(search ? ilike(usersTable.email, `%${search}%`) : undefined);
 
     const enriched = await Promise.all(users.map(async u => {
-      const [{ appCount }] = await db.select({ appCount: sql<number>`count(*)` }).from(applicationsTable).where(eq(applicationsTable.userId, u.id));
-      const [{ resumeCount }] = await db.select({ resumeCount: sql<number>`count(*)` }).from(resumesTable).where(eq(resumesTable.userId, u.id));
+      // Fetch Clerk profile for avatar
+      const clerkUser = await clerkClient.users.getUser(u.clerkId);
+      const avatarUrl = clerkUser?.profileImageUrl ?? null;
+
+      // Fetch latest resume (prefer default, then most recent)
+      const resume = await db.query.resumesTable.findFirst({
+        where: (resumesTable, { eq }) => eq(resumesTable.userId, u.id),
+        orderBy: (resumesTable, { desc }) => [desc(resumesTable.isDefault), desc(resumesTable.updatedAt)],
+      });
+      const resumeUrl = resume?.fileUrl ?? null;
+      const resumeFileName = resume?.fileName ?? null;
+
+      // Counts
+      const [
+        { appCount },
+        { resumeCount: resumeCountResult },
+        { savedJobsCount },
+        { atsReportsCount }
+      ] = await Promise.all([
+        db.select({ appCount: sql<number>`count(*)` }).from(applicationsTable).where(eq(applicationsTable.userId, u.id)),
+        db.select({ resumeCount: sql<number>`count(*)` }).from(resumesTable).where(eq(resumesTable.userId, u.id)),
+        db.select({ savedJobsCount: sql<number>`count(*)` }).from(savedJobsTable).where(eq(savedJobsTable.userId, u.id)),
+        db.select({ atsReportsCount: sql<number>`count(*)` }).from(atsReportsTable).where(eq(atsReportsTable.userId, u.id)),
+      ]);
+
       return {
         id: u.id,
         clerkId: u.clerkId,
         email: u.email,
         name: u.name,
         role: u.role,
+        // Existing fields (maybe keep for compatibility)
         applicationCount: Number(appCount),
-        resumeCount: Number(resumeCount),
+        resumeCount: Number(resumeCountResult),
+        // New fields
+        avatarUrl,
+        resumeUrl,
+        resumeFileName,
+        savedJobsCount: Number(savedJobsCount),
+        atsReportsCount: Number(atsReportsCount),
         createdAt: u.createdAt,
       };
     }));

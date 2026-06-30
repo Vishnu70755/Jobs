@@ -191,9 +191,10 @@ export default function Profile() {
     githubUrl: "",
     skills: [] as string[],
     role: "",
-    resumeCount: 0,
+    resumeUrl: "",
+    resumeFileName: "",
     savedJobsCount: 0,
-    applicationCount: 0,
+    trackedJobsCount: 0,
   });
   const [skillInput, setSkillInput] = useState("");
   const [initialized, setInitialized] = useState(false);
@@ -209,16 +210,17 @@ export default function Profile() {
         bio: (profile as any).bio ?? "",
         dateOfBirth: (profile as any).dateOfBirth ?? "",
         gender: (profile as any).gender ?? "",
-        portfolio: (profile as any).portfolio ?? "",
+        portfolio: (profile as any).profile ?? "",
         experience: profile.experience ?? "",
         targetRole: profile.targetRole ?? "",
         linkedinUrl: profile.linkedinUrl ?? "",
         githubUrl: profile.githubUrl ?? "",
         skills: (profile.skills as string[]) ?? [],
         role: (profile as any).role ?? "",
-        resumeCount: (profile as any).resumeCount ?? 0,
-        savedJobsCount: (profile as any).savedJobsCount ?? 0,
-        applicationCount: (profile as any).applicationCount ?? 0,
+        resumeUrl: profile.resumeUrl ?? "",
+        resumeFileName: profile.resumeFileName ?? "",
+        savedJobsCount: profile.savedJobsCount ?? 0,
+        trackedJobsCount: profile.trackedJobsCount ?? 0,
       });
       setInitialized(true);
     }
@@ -420,7 +422,13 @@ export default function Profile() {
                 <span className="font-medium">Resume</span>
               </div>
               <p className="text-sm">
-                {(form.resumeCount ?? 0) > 0 ? 'Available' : 'Not set'}
+                {form.resumeFileName ? (
+                  <a href={form.resumeUrl} target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                    {form.resumeFileName}
+                  </a>
+                ) : (
+                  <span className="text-muted-foreground italic">Not set</span>
+                )}
               </p>
             </div>
 
@@ -437,7 +445,7 @@ export default function Profile() {
                 <Briefcase className="w-5 h-5" />
                 <span className="font-medium">Tracked Jobs</span>
               </div>
-              <p className="text-sm">{form.applicationCount ?? 0}</p>
+              <p className="text-sm">{form.trackedJobsCount ?? 0}</p>
             </div>
 
             <div className="bg-muted p-4 rounded-lg">

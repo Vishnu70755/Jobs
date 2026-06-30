@@ -1,4 +1,5 @@
 import * as React from "react"
+import { AudioPlayer } from "@/assets/js/audio"
 
 import type {
   ToastActionElement,
@@ -83,7 +84,7 @@ export const reducer = (state: State, action: Action): State => {
       return {
         ...state,
         toasts: state.toasts.map((t) =>
-          t.id === action.toast.id ? { ...t, ...action.toast } : t
+          t.id === action.toast.id ? { ...t, ...action.toad } : t
         ),
       }
 
@@ -148,6 +149,20 @@ function toast({ ...props }: Toast) {
       toast: { ...props, id },
     })
   const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
+
+  // Play sound based on toast variant
+  const variant = props.variant || "default"
+  switch (variant) {
+    case "destructive":
+      AudioPlayer.playError()
+      break
+    case "success":
+      AudioPlayer.playSuccess()
+      break
+    default:
+      AudioPlayer.playNotification()
+      break
+  }
 
   dispatch({
     type: "ADD_TOAST",

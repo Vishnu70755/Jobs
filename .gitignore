@@ -47,18 +47,12 @@ Thumbs.db
 # Replit
 .cache/
 .local/
-#Environment Variables
+
+# Environment Variables
 .env
 .env.*
 !.env.example
-
 .env.local
-
-
-# Environment
-.env
-.env.*
-!.env.example
 
 # Dependencies
 node_modules/
@@ -80,3 +74,120 @@ coverage/
 # OS
 .DS_Store
 Thumbs.db
+
+# ── Project-specific additions ──────────────────────────
+
+# Replit internals (this project's .replit, .replitignore, .replit-artifact folders)
+.replit
+.replitignore
+.replit-artifact/
+**/.replit-artifact/
+artifacts/api-server/.replit-artifact/
+artifacts/job-platform/.replit-artifact/
+artifacts/mockup-sandbox/.replit-artifact/
+
+# Internal notes / prompt history (this project's attached_assets folder, replit.md)
+attached_assets/
+replit.md
+
+# Redundant lockfile (this project uses pnpm-lock.yaml via pnpm-workspace.yaml)
+package-lock.json
+
+# Sandbox/scratch app (remove this line if you want mockup-sandbox versioned)
+artifacts/mockup-sandbox/
+
+
+new ==================================================================
+
+# ==========================================
+# Additional Ignore Rules
+# ==========================================
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Framework caches
+.next/
+.turbo/
+
+# Temporary files
+temp/
+*.tmp
+
+# Deployment folders
+.vercel/
+.render/
+
+# Replit
+.replit
+.replitignore
+
+# Optional generated artifacts (ignore ONLY if not used)
+artifacts/
+
+# Package manager logs
+pnpm-debug.log*
+lerna-debug.log*
+
+# ESLint cache
+.eslintcache
+
+# Stylelint cache
+.stylelintcache
+
+# Parcel cache
+.parcel-cache/
+
+# Rollup cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Vite cache
+.vite/
+
+# Yarn
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# npm cache
+.npm/
+
+# pnpm cache
+.pnpm-store/
+
+# Optional lock files (ignore only if your team doesn't commit them)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+*.swp
+*.swo
+*~
+
+# Mac metadata
+.AppleDouble
+.LSOverride
+
+# Windows metadata
+Desktop.ini
+
+# Linux temporary files
+*~
+
+# Generated archives
+*.zip
+*.tar
+*.gz
+*.7z
+*.rar
