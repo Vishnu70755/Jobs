@@ -219,11 +219,11 @@ export default function Jobs() {
       </div>
 
       {/* ── Main two-column body ── */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden flex-col md:flex-row">
         {/* Left: jobs list */}
         <div className={cn(
-          "flex-none overflow-y-auto border-r border-border",
-          selectedJobId ? "w-[420px]" : "w-full"
+          "flex-none overflow-y-auto border-r border-border mb-4 md:mb-0",
+          selectedJobId ? "md:w-[420px]" : ""
         )}>
           {isLoading ? (
             <div className="p-4 space-y-3">
@@ -315,7 +315,7 @@ export default function Jobs() {
 
         {/* Right: job detail panel */}
         {selectedJobId && (
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto w-full">
             {loadingDetail ? (
               <div className="p-8 space-y-4">
                 <Skeleton className="h-8 w-2/3" />
@@ -335,7 +335,7 @@ export default function Jobs() {
 
         {/* Right: empty state when nothing selected */}
         {!selectedJobId && !isLoading && jobs.length > 0 && (
-          <div className="hidden lg:flex flex-1 items-center justify-center text-center px-8 border-l border-border">
+          <div className="hidden md:flex flex-1 items-center justify-center text-center px-8 border-l border-border">
             <div>
               <ChevronRight className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
               <p className="text-muted-foreground text-sm">Select a job to see details</p>
