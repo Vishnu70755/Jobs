@@ -231,20 +231,6 @@ app.listen(port, async (err) => {
 
   logger.info({ port }, "Server listening");
 
-  // Run migrations automatically on startup
-  try {
-    const { migrate } = await import("drizzle-orm/node-postgres/migrator");
-    const path = await import("path");
-    const { fileURLToPath } = await import("url");
-    const __dirname = path.dirname(fileURLToPath(import.meta.url));
-    await migrate(db, {
-      migrationsFolder: path.join(__dirname, "../../../lib/db/migrations"),
-    });
-    logger.info("Database migrations completed");
-  } catch (err) {
-    logger.warn({ err }, "Migration failed or already up to date");
-  }
-
   await seedIndianJobs();
   startScheduler();
 });
