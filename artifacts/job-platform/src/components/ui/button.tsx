@@ -5,23 +5,22 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0" +
-" hover-elevate active-elevate-2",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium ring-offset-[hsl(var(--background))] transition-all duration-200 ease-out-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:scale-[1.02] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 disabled:hover:-translate-y-0 disabled:hover:scale-[1] disabled:active:scale-[1] [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground border border-primary-border hover:bg-primary/90",
-        destructive: "bg-destructive text-destructive-foreground shadow-sm border-destructive-border hover:bg-destructive/90",
-        outline: " border [border-color:var(--button-outline)] shadow-xs active:shadow-none hover:bg-[var(--secondary)] hover:bg-opacity-10",
-        secondary: "border bg-secondary text-secondary-foreground border border-secondary-hover:bg-secondary/80",
-        ghost: "border border-transparent hover:bg-accent hover:bg-opacity-10",
-        link: "text-primary underline-offset-4 hover:underline",
+        default: "bg-gradient-to-t from-emerald-500 to-emerald-600 text-white hover:from-emerald-400 hover:to-emerald-500 active:from-emerald-600 active:to-emerald-700 shadow-sm hover:shadow-md transition-shadow duration-200",
+        destructive: "bg-gradient-to-t from-red-500 to-red-600 text-white hover:from-red-400 hover:to-red-500 active:from-red-600 active:to-red-700 shadow-sm hover:shadow-md transition-shadow duration-200 border border-transparent",
+        outline: "border-[var(--button-outline)] bg-background hover:bg-[var(--background)] hover:bg-opacity-5 hover:shadow-sm transition-all duration-200 ease-out-[cubic-bezier(0.16,1,0.3,1)]",
+        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 active:bg-secondary/90 border border-secondary-hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:bg-opacity-10 hover:shadow-sm transition-all duration-200 ease-out-[cubic-bezier(0.16,1,0.3,1)]",
+        link: "text-primary underline-offset-4 hover:underline hover:no-underline-hover",
       },
       size: {
-        default: "min-h-9 px-4 py-2",
-        sm: "min-h-8 rounded-md px-3 text-xs",
-        lg: "min-h-10 rounded-md px-8",
-        icon: "h-9 w-9",
+        default: "h-10 px-4 py-2",
+        sm: "h-9 px-3 text-xs",
+        lg: "h-11 px-6 py-3",
+        icon: "h-10 w-10",
       },
     },
     defaultVariants: {
