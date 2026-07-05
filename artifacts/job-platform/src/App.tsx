@@ -5,7 +5,8 @@ import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from "wo
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { ThemeProvider } from "./components/theme-provider";
 import { setBaseUrl } from "@workspace/api-client-react";
-
+import { useAuth } from "@clerk/react";
+import { setAuthTokenGetter } from "@workspace/api-client-react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/layout";
@@ -213,6 +214,22 @@ function ClerkQueryClientCacheInvalidator() {
   return null;
 }
 
+// Registers Clerk's getToken() with the API client so every request to the
+// backend carries an `Authorization: Bearer <token>` header. This is required
+// because the frontend (Vercel) and backend (Render) live on different
+// domains, so Clerk's session cookie set on the frontend domain never reaches
+// the backend on its own — without this, every authenticated API call
+// (including the admin import) fails with 401 Unauthorized.
+function AuthTokenBridge() {
+  const { getToken } = useAuth();
+
+  useEffect(() => {
+    setAuthTokenGetter(() => getToken());
+  }, [getToken]);
+
+  return null;
+}
+
 function ClerkProviderWithRoutes() {
   const [, setLocation] = useLocation();
 
@@ -227,6 +244,7 @@ function ClerkProviderWithRoutes() {
     >
       <QueryClientProvider client={queryClient}>
         <ClerkQueryClientCacheInvalidator />
+        <AuthTokenBridge />
         <Switch>
           <Route path="/" component={HomeRedirect} />
           <Route path="/sign-in/*?" component={SignInPage} />
