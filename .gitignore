@@ -1,4 +1,4 @@
-# See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
 
 # compiled output
 dist
@@ -123,9 +123,6 @@ temp/
 # Replit
 .replit
 .replitignore
-
-# Optional generated artifacts (ignore ONLY if not used)
-artifacts/
 
 # Package manager logs
 pnpm-debug.log*
