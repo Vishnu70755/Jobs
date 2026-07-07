@@ -1,7 +1,6 @@
 import express, { Router } from "express";
 import { importServiceManager } from "../../services/import";
 import { resolveUser, requireAdmin } from "../../middlewares/auth";
-import { logger } from "../../lib/logger";
 import { eq, sql } from "drizzle-orm";
 import { db, importJobsTable, importSourceConfigsTable } from "@workspace/db";
 
@@ -14,7 +13,7 @@ router.use(express.urlencoded({ extended: true }));
 // POST /admin/import/start - Start import process for a source or all sources
 router.post("/start", resolveUser, requireAdmin, async (req, res) => {
   try {
-    const { source } = req.body;
+    const source = req.body?.source;
 
     if (source) {
       // Start import for specific source
@@ -34,7 +33,7 @@ router.post("/start", resolveUser, requireAdmin, async (req, res) => {
 // POST /admin/import/stop - Stop import process for a source or all sources
 router.post("/stop", resolveUser, requireAdmin, async (req, res) => {
   try {
-    const { source } = req.body;
+    const source = req.body?.source;
 
     if (source) {
       // Stop import for specific source
