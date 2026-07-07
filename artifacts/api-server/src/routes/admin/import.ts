@@ -62,7 +62,7 @@ router.get("/status", resolveUser, requireAdmin, async (req, res) => {
 router.get("/stats", resolveUser, requireAdmin, async (req, res) => {
   try {
     // Get total imported jobs (sum of all newJobsAdded)
-    const [[{ totalImportedJobs }]] = await db
+    const [{ totalImportedJobs }] = await db
       .select({ totalImportedJobs: sql<number>`coalesce(sum(${importJobsTable.newJobsAdded}), 0)` })
       .from(importJobsTable);
 
