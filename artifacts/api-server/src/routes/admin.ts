@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { clerkClient } from "@clerk/express";
 import { db, usersTable, applicationsTable, jobsTable, resumesTable, atsReportsTable, importJobsTable, importSourceConfigsTable, savedJobsTable } from "@workspace/db";
 import { eq, ilike, desc, sql, and } from "drizzle-orm";
 import { resolveUser, requireAdmin } from "../middlewares/auth";
