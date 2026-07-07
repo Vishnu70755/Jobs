@@ -62,7 +62,8 @@ router.get("/status", resolveUser, requireAdmin, async (req, res) => {
 router.get("/stats", resolveUser, requireAdmin, async (req, res) => {
   try {
     // Get total imported jobs (sum of all newJobsAdded)
-    const [{ jobsImportedToday }] = await db
+    // Get total imported jobs (sum of all newJobsAdded)
+    const [{ totalImportedJobs }] = await db
       .select({ totalImportedJobs: sql<number>`coalesce(sum(${importJobsTable.newJobsAdded}), 0)` })
       .from(importJobsTable);
 
@@ -72,7 +73,7 @@ router.get("/stats", resolveUser, requireAdmin, async (req, res) => {
     const endOfToday = new Date();
     endOfToday.setUTCHours(23, 59, 59, 999);
 
-    const [[{ jobsImportedToday }]] = await db
+    const [{ jobsImportedToday }] = await db
       .select({ jobsImportedToday: sql<number>`coalesce(sum(${importJobsTable.newJobsAdded}), 0)` })
       .from(importJobsTable)
       .where(
