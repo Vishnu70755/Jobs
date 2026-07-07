@@ -1,4 +1,4 @@
-import { Router } from "express";
+import express, { Router } from "express";
 import { importServiceManager } from "../../services/import";
 import { resolveUser, requireAdmin } from "../../middlewares/auth";
 import { logger } from "../../lib/logger";
@@ -6,6 +6,10 @@ import { eq, sql } from "drizzle-orm";
 import { db, importJobsTable, importSourceConfigsTable } from "@workspace/db";
 
 const router = Router();
+
+// Parse JSON bodies for routes that need it
+router.use(express.json());
+router.use(express.urlencoded({ extended: true }));
 
 // POST /admin/import/start - Start import process for a source or all sources
 router.post("/start", resolveUser, requireAdmin, async (req, res) => {
