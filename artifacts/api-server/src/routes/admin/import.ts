@@ -15,6 +15,12 @@ router.post("/start", resolveUser, requireAdmin, async (req, res) => {
   try {
     const source = req.body?.source;
 
+    // Validate source if provided
+    if (source !== undefined && (typeof source !== "string" || source.trim() === "")) {
+      res.status(400).json({ error: "Source must be a non-empty string" });
+      return;
+    }
+
     if (source) {
       // Start import for specific source
       await importServiceManager.startImport(source as any);
@@ -34,6 +40,12 @@ router.post("/start", resolveUser, requireAdmin, async (req, res) => {
 router.post("/stop", resolveUser, requireAdmin, async (req, res) => {
   try {
     const source = req.body?.source;
+
+    // Validate source if provided
+    if (source !== undefined && (typeof source !== "string" || source.trim() === "")) {
+      res.status(400).json({ error: "Source must be a non-empty string" });
+      return;
+    }
 
     if (source) {
       // Stop import for specific source
