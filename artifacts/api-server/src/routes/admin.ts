@@ -60,9 +60,16 @@ router.get("/users", resolveUser, requireAdmin, async (req, res) => {
       .where(search ? ilike(usersTable.email, `%${search}%`) : undefined);
 
     const enriched = await Promise.all(users.map(async u => {
-      // Fetch Clerk profile for avatar
-      const clerkUser = await clerkClient.users.getUser(u.clerkId);
-      const avatarUrl = clerkUser?.profileImageUrl ?? null;
+      // Fetch Clerk profile for avatar — wrapped in try/catch so a single
+      // failure (rate limit, stale clerkId, network hiccup) doesn't take
+      // down the entire user list request.
+      let avatarUrl: string | null = null;
+      try {
+        const clerkUser = await clerkClient.users.getUser(u.clerkId);
+        avatarUrl = clerkUser?.profileImageUrl ?? null;
+      } catch (clerkErr) {
+        req.log.warn({ userId: u.id, err: clerkErr }, "Failed to fetch Clerk profile for user");
+      }
 
       // Fetch latest resume (prefer default, then most recent)
       const resume = await db.query.resumesTable.findFirst({
@@ -99,7 +106,8 @@ router.get("/users", resolveUser, requireAdmin, async (req, res) => {
         resumeUrl,
         resumeFileName,
         savedJobsCount: Number(savedJobsCount),
-        atsReportsCount: Number(atsReportsCount),
+        // Renamed to match frontend's expected field name (was atsReportsCount)
+        atsReportCount: Number(atsReportsCount),
         createdAt: u.createdAt,
       };
     }));

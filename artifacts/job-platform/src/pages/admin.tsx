@@ -110,10 +110,15 @@ function AccessDenied() {
 
 export default function Admin() {
   const { user, isLoaded } = useUser();
-  const { data: stats, isLoading: loadingStats } = useGetAdminStats();
+  const { data: stats, isLoading: loadingStats } = useGetAdminStats({
+    query: { refetchInterval: 15000 },
+  });
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const { data: usersData, isLoading: loadingUsers } = useListAdminUsers({ search: search || undefined, page });
+  const { data: usersData, isLoading: loadingUsers } = useListAdminUsers(
+    { search: search || undefined, page },
+    { query: { refetchInterval: 15000 } }
+  );
   const suspendUser = useSuspendUser();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -136,18 +141,18 @@ export default function Admin() {
     : false;
 
   const mostRecentLastRun = Array.isArray(importStatus) && importStatus.length > 0
-    ? importStatus
-        .map(status => status.lastRunAt ? new Date(status.lastRunAt) : null)
-        .filter((date): date is Date => date !== null)
-        .reduce((latest, date) => (date > latest ? date : latest), new Date(0))
-    : null;
+  ? importStatus
+      .map(status => status.lastRun ? new Date(status.lastRun) : null)
+      .filter((date): date is Date => date !== null)
+      .reduce((latest, date) => (date > latest ? date : latest), new Date(0))
+  : null;
 
-  const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
-    ? importStatus
-        .map(status => status.nextRunAt ? new Date(status.nextRunAt) : null)
-        .filter((date): date is Date => date !== null)
-        .reduce((soonest, date) => (date < soonest ? date : soonest), new Date(8640000000000000)) // Far future
-    : null;
+const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
+  ? importStatus
+      .map(status => status.nextScheduledRun ? new Date(status.nextScheduledRun) : null)
+      .filter((date): date is Date => date !== null)
+      .reduce((soonest, date) => (date < soonest ? date : soonest), new Date(8640000000000000))
+  : null;
 
   // Calculate how many times import started today
   const importsStartedToday = Array.isArray(importStatus)

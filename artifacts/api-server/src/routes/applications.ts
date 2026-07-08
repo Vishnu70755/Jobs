@@ -3,6 +3,7 @@ import { db, applicationsTable, jobsTable, insertApplicationSchema } from "@work
 import { eq, and, desc, sql } from "drizzle-orm";
 import { resolveUser } from "../middlewares/auth";
 import { z } from "zod";
+import { logger } from "../lib/logger";
 
 const router = Router();
 
@@ -92,15 +93,16 @@ router.post("/", resolveUser, async (req, res) => {
 
     // Validate request body using Zod schema
     const validatedData = insertApplicationSchema.parse({
-      jobId: req.body.jobId,
-      company: req.body.company,
-      role: req.body.role,
-      status: req.body.status,
-      appliedAt: req.body.appliedAt,
-      resumeId: req.body.resumeId,
-      notes: req.body.notes,
-      source: req.body.source,
-    });
+  userId: user.id,
+  jobId: req.body.jobId,
+  company: req.body.company,
+  role: req.body.role,
+  status: req.body.status,
+  appliedAt: req.body.appliedAt,
+  resumeId: req.body.resumeId,
+  notes: req.body.notes,
+  source: req.body.source,
+});
 
     const [app] = await db.insert(applicationsTable).values({
       userId: user.id,
