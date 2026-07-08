@@ -20,8 +20,49 @@ import {
 import { useImportStatusQuery, useImportStatsQuery, useStartImportMutation, useStopImportMutation, ImportStatus, ImportStats } from "@/hooks/useImportControl";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { mailService } from "@/lib/mail"; // Import mail service for email notifications
 
 const ADMIN_EMAIL = "vishnu252223@gmail.com";
+
+// Helper function to format dates in IST (Indian Standard Time)
+function formatIST(date: Date): string {
+  return new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
+}
+
+// Helper function to format time only in IST
+function formatISTTime(date: Date): string {
+  return new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
+}
+
+// Helper function to get next 7:00 AM IST
+function getNext7amIST(): Date {
+  const now = new Date();
+  const nowInIST = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+
+  let next7am = new Date(nowInIST);
+  next7am.setHours(7, 0, 0, 0); // Set to 7:00:00.000
+
+  // If it's already past 7 AM today, schedule for tomorrow
+  if (nowInIST.getHours() > 7 || (nowInIST.getHours() === 7 && nowInIST.getMinutes() > 0)) {
+    next7am.setDate(next7am.getDate() + 1);
+  }
+
+  // Convert back to local time for display/storage
+  return new Date(next7am.toLocaleString("en-US", { timeZone: "UTC" }));
+}
 
 function StatCard({ icon: Icon, label, value, sub }: { icon: any; label: string; value: number | string; sub?: string }) {
   return (
@@ -104,7 +145,7 @@ export default function Admin() {
 
   const mostRecentLastRun = Array.isArray(importStatus) && importStatus.length > 0
     ? importStatus
-        .map(status => status.lastRun ? new Date(status.lastRun) : null)
+        .map(status => status.lastRunAt ? new Date(status.lastRunAt) : null)
         .filter((date): date is Date => date !== null)
         .reduce((latest, date) => (date > latest ? date : latest), new Date(0))
     : null;
@@ -116,12 +157,45 @@ export default function Admin() {
         .reduce((soonest, date) => (date < soonest ? date : soonest), new Date(8640000000000000)) // Far future
     : null;
 
+  // Calculate how many times import started today
+  const importsStartedToday = Array.isArray(importStatus)
+    ? importStatus.reduce((count, status) => {
+        // Count imports that started today (based on lastRunAt)
+        if (status.lastRunAt) {
+          const lastRun = new Date(status.lastRunAt);
+          const today = new Date();
+          // Check if lastRun is today (same year, month, and day)
+          if (
+            lastRun.getFullYear() === today.getFullYear() &&
+            lastRun.getMonth() === today.getMonth() &&
+            lastRun.getDate() === today.getDate()
+          ) {
+            return count + 1;
+          }
+        }
+        return count;
+      }, 0)
+    : 0;
+
+  // Calculate next 7:00 AM IST
+  const next7amIst = getNext7amIST();
+
   const handleToggleImport = () => {
     // If currently importing or starting to import, stop it
     if (isAnyImportRunning || startImportMutation.isPending) {
       // Provide immediate feedback for stopping
       stopImportMutation.mutate(undefined, {
         onSuccess: () => {
+          // Send email notification
+          const adminEmail = "vishnu252223@gmail.com"; // Hardcoded admin email from the admin check
+          mailService.sendMail(
+            adminEmail,
+            "Import Jobs Stopped",
+            `The import jobs have been stopped by the administrator at ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST.\n\nPlease check the admin panel for more details.`
+          ).catch(err => {
+            console.error("Failed to send stop import email:", err);
+          });
+
           toast({ title: "Import stopped successfully" });
         },
         onError: (error: any) => {
@@ -140,6 +214,16 @@ export default function Admin() {
       // Otherwise, start the import
       startImportMutation.mutate(undefined, {
         onSuccess: () => {
+          // Send email notification
+          const adminEmail = "vishnu252223@gmail.com"; // Hardcoded admin email from the admin check
+          mailService.sendMail(
+            adminEmail,
+            "Import Jobs Started",
+            `The import jobs have been started by the administrator at ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST.\n\nThe import process is now running and will import jobs from configured sources.`
+          ).catch(err => {
+            console.error("Failed to send start import email:", err);
+          });
+
           toast({ title: "Import started successfully" });
         },
         onError: (error: any) => {
@@ -356,7 +440,7 @@ export default function Admin() {
               {loadingImportStatus ? (
                 <Skeleton className="h-8 w-24" />
               ) : (
-                <span>{mostRecentLastRun ? new Date(mostRecentLastRun).toLocaleString() : 'Never'}</span>
+                <span>{mostRecentLastRun ? formatIST(mostRecentLastRun) : 'Never'}</span>
               )}
             </CardContent>
           </Card>
@@ -370,8 +454,18 @@ export default function Admin() {
               {loadingImportStatus ? (
                 <Skeleton className="h-8 w-24" />
               ) : (
-                <span>{soonestNextRun ? new Date(soonestNextRun).toLocaleString() : 'Not scheduled'}</span>
+                <span>{soonestNextRun ? formatIST(soonestNextRun) : 'Not scheduled'}</span>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Next 7:00 AM IST */}
+          <Card className="border">
+            <CardHeader className="pb-2">
+              <h3 className="text-sm font-medium text-muted-foreground">Next 7:00 AM IST</h3>
+            </CardHeader>
+            <CardContent className="text-lg font-semibold">
+              <span>{formatIST(next7amIst)}</span>
             </CardContent>
           </Card>
 
@@ -385,6 +479,20 @@ export default function Admin() {
                 <Skeleton className="h-8 w-24" />
               ) : (
                 <span>{importStats?.totalImportedJobs ?? 0}</span>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Import Started Today */}
+          <Card className="border">
+            <CardHeader className="pb-2">
+              <h3 className="text-sm font-medium text-muted-foreground">Import Started Today</h3>
+            </CardHeader>
+            <CardContent className="text-2xl font-bold">
+              {loadingImportStats ? (
+                <Skeleton className="h-8 w-24" />
+              ) : (
+                <span>{importsStartedToday}</span>
               )}
             </CardContent>
           </Card>

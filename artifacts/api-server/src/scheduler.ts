@@ -125,6 +125,17 @@ async function cleanupOldJobs(): Promise<void> {
   }
 }
 
+// Function to trigger import at 7 AM IST daily
+async function triggerDailyImport(): Promise<void> {
+  try {
+    logger.info({ time: new Date().toISOString() }, "Triggering daily 7 AM IST import");
+    await importServiceManager.startAllImports();
+    logger.info("Daily 7 AM IST import completed successfully");
+  } catch (error) {
+    logger.error(error, "Failed to execute daily 7 AM IST import");
+  }
+}
+
 export function startScheduler(): void {
   // Initialize import service manager (create default configs if needed)
   importServiceManager.initializeDefaultConfigs().catch(err => {
@@ -141,9 +152,16 @@ export function startScheduler(): void {
     logger.error(err, "Startup reminder check failed"),
   );
 
-  // Start import scheduler
+  // Start import scheduler based on individual source configurations
   importServiceManager.startScheduler().catch(err => {
     logger.error(err, "Failed to start import scheduler");
+  });
+
+  // Schedule daily import at 7:00 AM IST (which is 1:30 AM UTC)
+  cron.schedule("30 1 * * *", () => {
+    triggerDailyImport().catch((err) =>
+      logger.error(err, "Failed to trigger daily 7 AM IST import"),
+    );
   });
 
   // Schedule daily cleanup of old jobs (2:00 AM server time)
@@ -155,6 +173,7 @@ export function startScheduler(): void {
 
   logger.info("Interview reminder scheduler started (runs every hour)");
   logger.info("Import scheduler started");
+  logger.info("Daily 7 AM IST import scheduler started");
   logger.info("Old jobs cleanup scheduler started (runs daily at 2:00 AM)");
 }
 
