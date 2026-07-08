@@ -137,20 +137,50 @@ router.post("/", resolveUser, async (req, res) => {
           const companyName = job?.company ?? "a company";
 
           const subject = `Your application to ${jobTitle} at ${companyName} was received`;
-          const body = `Hello ${user.name ?? "there"},\n\n`
-                     + `Thank you for applying to "${jobTitle}" at "${companyName}".\n`
-                     + `We have received your application and will review it shortly.\n\n`
-                     + `Good luck!\n`
-                     + ` — The Job Aggregator Team`;
+          const body = `Welcome to Vishnu's Job Quest - Find Jobs
 
-          await mailService.sendMail(userEmail, subject, body);
+Hello ${user.name ?? "there"},
+
+Thank you for applying to "${jobTitle}" at "${companyName}".
+We have received your application and will review it shortly.
+
+Good luck!
+
+Thank you for using Vishnu's Job Quest!`;
+
+          try {
+            await mailService.sendMail(userEmail, subject, body);
+          // Log successful email send
+          logger.info({
+            userId: user.id,
+            email: userEmail,
+            subject: subject,
+            timestamp: new Date().toISOString(),
+            event: 'application_confirmation_sent'
+          }, "Application confirmation email sent successfully");
+            // Log successful email send
+            logger.info({
+              userId: user.id,
+              email: userEmail,
+              subject: subject,
+              timestamp: new Date().toISOString(),
+              event: 'application_confirmation_email_sent'
+            }, "Application confirmation email sent successfully");
+          } catch (emailErr) {
+            // Log email error but don't fail the whole request – application was saved successfully
+            logger.error({
+              userId: user.id,
+              email: userEmail,
+              subject: subject,
+              err: emailErr.message,
+              timestamp: new Date().toISOString(),
+              event: 'application_confirmation_email_failed'
+            }, "Failed to send application confirmation e‑mail");
+          }
         } else {
           // If we don't have email, log warning but don't fail the request
           logger.warn({ userId: user.id }, "Could not determine e‑mail address for application confirmation");
         }
-      } catch (emailErr) {
-        // Log email error but don't fail the whole request – application was saved successfully
-        logger.error({ userId: user.id, err: emailErr }, "Failed to send application confirmation e‑mail");
       }
     }
 

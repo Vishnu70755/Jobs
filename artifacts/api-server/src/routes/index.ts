@@ -9,6 +9,7 @@ import analyticsRouter from "./analytics";
 import notificationsRouter from "./notifications";
 import usersRouter from "./users";
 import adminRouter from "./admin";
+import webhookRouter from "./webhooks";
 
 const router: IRouter = Router();
 
@@ -22,5 +23,6 @@ router.use("/analytics", analyticsRouter);
 router.use("/notifications", notificationsRouter);
 router.use("/users", usersRouter);
 router.use("/admin", adminRouter);
+router.use("/webhooks", webhookRouter);
 
 export default router;

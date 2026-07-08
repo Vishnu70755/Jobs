@@ -136,11 +136,35 @@ router.post("/request-verification", resolveUser, async (req, res) => {
 
     // Send verification email
     const verificationUrl = `${process.env.BASE_URL || "http://localhost:3000"}/verify-email/${verificationToken}`;
-    await mailService.sendMail(
-      user.email,
-      "Verify your email address",
-      `Please click the following link to verify your email address: ${verificationUrl}\n\nThis link will expire in 24 hours.`
-    );
+    try {
+      await mailService.sendMail(
+        user.email,
+        "Verify your email address",
+        `Welcome to Vishnu's Job Quest - Find Jobs
+
+Please click the following link to verify your email address: ${verificationUrl}
+
+This link will expire in 24 hours.
+
+Thank you for using Vishnu's Job Quest!`
+      );
+      // Log success with timestamp
+      req.log.info({
+        to: user.email,
+        subject: "Verify your email address",
+        timestamp: new Date().toISOString(),
+        event: 'email_verification_sent'
+      }, "Verification email sent successfully");
+    } catch (emailError) {
+      // Log email error but don't fail the request
+      req.log.error({
+        error: emailError.message,
+        to: user.email,
+        subject: "Verify your email address",
+        timestamp: new Date().toISOString(),
+        event: 'email_verification_failed'
+      }, "Failed to send verification email");
+    }
 
     res.json({ message: "Verification email sent" });
   } catch (err) {
@@ -217,11 +241,35 @@ router.post("/forgot-password", async (req, res) => {
 
     // Send reset email
     const resetUrl = `${process.env.BASE_URL || "http://localhost:3000"}/reset-password/${resetToken}`;
-    await mailService.sendMail(
-      user.email,
-      "Reset your password",
-      `Please click the following link to reset your password: ${resetUrl}\n\nThis link will expire in 1 hour.`
-    );
+    try {
+      await mailService.sendMail(
+        user.email,
+        "Reset your password",
+        `Welcome to Vishnu's Job Quest - Find Jobs
+
+Please click the following link to reset your password: ${resetUrl}
+
+This link will expire in 1 hour.
+
+Thank you for using Vishnu's Job Quest!`
+      );
+      // Log success with timestamp
+      req.log.info({
+        to: user.email,
+        subject: "Reset your password",
+        timestamp: new Date().toISOString(),
+        event: 'email_password_reset_sent'
+      }, "Reset email sent successfully");
+    } catch (emailError) {
+      // Log email error but don't fail the request
+      req.log.error({
+        error: emailError.message,
+        to: user.email,
+        subject: "Reset your password",
+        timestamp: new Date().toISOString(),
+        event: 'email_password_reset_failed'
+      }, "Failed to send reset email");
+    }
 
     res.json({ message: "If the email exists, a reset link has been sent" });
   } catch (err) {

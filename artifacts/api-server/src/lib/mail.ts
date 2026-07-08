@@ -10,6 +10,16 @@ export class MailService {
   private transporter: nodemailer.Transporter;
 
   constructor() {
+    // Validate required environment variables
+    const requiredEnvVars = ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASS'];
+    const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+    if (missingEnvVars.length > 0) {
+      const errorMsg = `Missing required SMTP environment variables: ${missingEnvVars.join(', ')}`;
+      logger.error(new Error(errorMsg), "SMTP configuration error");
+      // We still create the transporter to avoid breaking the app, but it will fail when used
+    }
+
     this.transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: Number(process.env.SMTP_PORT || 587),
@@ -38,7 +48,7 @@ export class MailService {
    */
   async sendMail(to: string, subject: string, body: string): Promise<void> {
     const mailOptions = {
-      from: process.env.SMTP_FROM || '"Job Aggregator" <no-reply@example.com>',
+      from: process.env.SMTP_FROM || '"Vishnu\'s Job Quest" <no-reply@example.com>',
       to,
       subject,
       text: body,
@@ -46,10 +56,59 @@ export class MailService {
 
     try {
       await this.transporter.sendMail(mailOptions);
-      logger.info({ to, subject }, "E‑mail sent successfully");
+      logger.info({
+        to,
+        subject,
+        timestamp: new Date().toISOString(),
+        event: 'email_sent'
+      }, "Plain-text e‑mail sent successfully");
     } catch (err) {
-      logger.error({ to, subject, err }, "Failed to send e‑mail");
+      logger.error({
+        to,
+        subject,
+        timestamp: new Date().toISOString(),
+        event: 'email_failed',
+        error: err.message
+      }, "Failed to send plain-text e‑mail");
       throw err; // let the caller decide whether to fail the request
+    }
+  }
+
+  /**
+   * Sends an HTML e‑mail (with optional plain‑text fallback).
+   * @param to      Recipient e‑mail address
+   * @param subject Subject line
+   * @param html    Body (HTML)
+   */
+  async sendHtmlMail(to: string, subject: string, html: string): Promise<void> {
+    // Generate a simple plain-text version by stripping HTML tags (naive)
+    const text = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+
+    const mailOptions = {
+      from: process.env.SMTP_FROM || '"Vishnu\'s Job Quest" <no-reply@example.com>',
+      to,
+      subject,
+      html,
+      text, // fallback for clients that don't render HTML
+    };
+
+    try {
+      await this.transporter.sendMail(mailOptions);
+      logger.info({
+        to,
+        subject,
+        timestamp: new Date().toISOString(),
+        event: 'html_email_sent'
+      }, "HTML e‑mail sent successfully");
+    } catch (err) {
+      logger.error({
+        to,
+        subject,
+        timestamp: new Date().toISOString(),
+        event: 'html_email_failed',
+        error: err.message
+      }, "Failed to send HTML e‑mail");
+      throw err;
     }
   }
 }
