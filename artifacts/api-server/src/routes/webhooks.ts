@@ -164,10 +164,10 @@ Visit Your Dashboard: ${process.env.BASE_URL || "http://localhost:3000"}
 function escapeHtml(text: string): string {
   if (!text) return "";
   return text
-    .replace(/&/g, "&")
-    .replace(/</g, "<")
-    .replace(/>/g, ">")
-    .replace(/"/g, """)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
 

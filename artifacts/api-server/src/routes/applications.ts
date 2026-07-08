@@ -150,14 +150,6 @@ Thank you for using Vishnu's Job Quest!`;
 
           try {
             await mailService.sendMail(userEmail, subject, body);
-          // Log successful email send
-          logger.info({
-            userId: user.id,
-            email: userEmail,
-            subject: subject,
-            timestamp: new Date().toISOString(),
-            event: 'application_confirmation_sent'
-          }, "Application confirmation email sent successfully");
             // Log successful email send
             logger.info({
               userId: user.id,
@@ -181,6 +173,14 @@ Thank you for using Vishnu's Job Quest!`;
           // If we don't have email, log warning but don't fail the request
           logger.warn({ userId: user.id }, "Could not determine e‑mail address for application confirmation");
         }
+      } catch (err) {
+        // Log any error in fetching user email or job details, but don't fail the request
+        logger.error({
+          userId: user.id,
+          err: err.message,
+          timestamp: new Date().toISOString(),
+          event: 'application_confirmation_error'
+        }, "Failed to prepare application confirmation email");
       }
     }
 
