@@ -19,8 +19,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const ADMIN_EMAIL = "vishnu252223@gmail.com";
-
 const navItems = [
   { href: "/dashboard",     label: "Dashboard",     icon: LayoutDashboard },
   { href: "/jobs",          label: "Find Jobs",     icon: Briefcase },
@@ -74,8 +72,7 @@ export function Sidebar({ onClose }: SidebarProps) {
   const { theme, setTheme } = useTheme();
   const { data: profile } = useGetMyProfile();
 
-  const userEmail = user?.primaryEmailAddress?.emailAddress;
-  const isAdmin = userEmail === ADMIN_EMAIL;
+  const isAdmin = profile?.role === 'admin';
 
   // Profile completion — includes new extended fields
   const fields = [

@@ -6,6 +6,7 @@ import {
   useListAdminUsers,
   useSuspendUser,
   getListAdminUsersQueryKey,
+  useGetMyProfile
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,9 +21,6 @@ import {
 import { useImportStatusQuery, useImportStatsQuery, useStartImportMutation, useStopImportMutation, ImportStatus, ImportStats } from "@/hooks/useImportControl";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { mailService } from "@/lib/mail"; // Import mail service for email notifications
-
-const ADMIN_EMAIL = "vishnu252223@gmail.com";
 
 // Helper function to format dates in IST (Indian Standard Time)
 function formatIST(date: Date): string {
@@ -31,16 +29,6 @@ function formatIST(date: Date): string {
     year: "numeric",
     month: "short",
     day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  }).format(date);
-}
-
-// Helper function to format time only in IST
-function formatISTTime(date: Date): string {
-  return new Intl.DateTimeFormat("en-IN", {
-    timeZone: "Asia/Kolkata",
     hour: "2-digit",
     minute: "2-digit",
     hour12: true,
@@ -136,7 +124,11 @@ export default function Admin() {
   const startImportMutation = useStartImportMutation();
   const stopImportMutation = useStopImportMutation();
 
-  const userEmail = user?.primaryEmailAddress?.emailAddress;
+  // Get user profile to check role
+  const { data: profile, isLoading: loadingProfile } = useGetMyProfile();
+
+  // Check if user is admin based on role from our backend
+  const isAdmin = profile?.role === 'admin';
 
   // Compute import status values from the array (handle undefined/empty cases safely)
   const isAnyImportRunning = Array.isArray(importStatus)
@@ -186,16 +178,6 @@ export default function Admin() {
       // Provide immediate feedback for stopping
       stopImportMutation.mutate(undefined, {
         onSuccess: () => {
-          // Send email notification
-          const adminEmail = "vishnu252223@gmail.com"; // Hardcoded admin email from the admin check
-          mailService.sendMail(
-            adminEmail,
-            "Import Jobs Stopped",
-            `The import jobs have been stopped by the administrator at ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST.\n\nPlease check the admin panel for more details.`
-          ).catch(err => {
-            console.error("Failed to send stop import email:", err);
-          });
-
           toast({ title: "Import stopped successfully" });
         },
         onError: (error: any) => {
@@ -214,16 +196,6 @@ export default function Admin() {
       // Otherwise, start the import
       startImportMutation.mutate(undefined, {
         onSuccess: () => {
-          // Send email notification
-          const adminEmail = "vishnu252223@gmail.com"; // Hardcoded admin email from the admin check
-          mailService.sendMail(
-            adminEmail,
-            "Import Jobs Started",
-            `The import jobs have been started by the administrator at ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST.\n\nThe import process is now running and will import jobs from configured sources.`
-          ).catch(err => {
-            console.error("Failed to send start import email:", err);
-          });
-
           toast({ title: "Import started successfully" });
         },
         onError: (error: any) => {
@@ -319,7 +291,7 @@ export default function Admin() {
     );
   }
 
-  if (!user || userEmail !== ADMIN_EMAIL) {
+  if (!isAdmin) {
     return <AccessDenied />;
   }
 

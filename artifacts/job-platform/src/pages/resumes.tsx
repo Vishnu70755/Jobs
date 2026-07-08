@@ -24,8 +24,6 @@ import { useToast } from "@/hooks/use-toast";
 import { FileText, Plus, Trash2, Star, Upload, Edit2, File, FileType } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const ADMIN_EMAIL = "vishnu252223@gmail.com";
-
 export default function Resumes() {
   const { data: resumes, isLoading } = useListResumes();
   const createResume = useCreateResume();

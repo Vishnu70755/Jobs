@@ -3,6 +3,7 @@ import { importServiceManager } from "../../services/import";
 import { resolveUser, requireAdmin } from "../../middlewares/auth";
 import { eq, sql } from "drizzle-orm";
 import { db, importJobsTable, importSourceConfigsTable } from "@workspace/db";
+import { mailService } from "../../lib/mail";
 
 const router = Router();
 
@@ -24,10 +25,38 @@ router.post("/start", resolveUser, requireAdmin, async (req, res) => {
     if (source) {
       // Start import for specific source
       await importServiceManager.startImport(source as any);
+
+      // Send email notification
+      try {
+        const adminEmail = process.env.ADMIN_EMAIL;
+        await mailService.sendMail(
+          adminEmail,
+          "Import Jobs Started",
+          `The import jobs have been started for source: ${source}.\n\nTime: ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST\n\nThe import process is now running and will import jobs from the configured source.\n\nYou can monitor the progress in the admin panel.`
+        );
+      } catch (emailError) {
+        // Log email error but don't fail the request
+        req.log.error({ error: emailError }, "Failed to send start import email notification");
+      }
+
       res.json({ success: true, message: `Import started for ${source}` });
     } else {
       // Start import for all sources
       await importServiceManager.startAllImports();
+
+      // Send email notification
+      try {
+        const adminEmail = process.env.ADMIN_EMAIL;
+        await mailService.sendMail(
+          adminEmail,
+          "Import Jobs Started",
+          `The import jobs have been started for all sources.\n\nTime: ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST\n\nThe import process is now running and will import jobs from all configured sources.\n\nYou can monitor the progress in the admin panel.`
+        );
+      } catch (emailError) {
+        // Log email error but don't fail the request
+        req.log.error({ error: emailError }, "Failed to send start import email notification");
+      }
+
       res.json({ success: true, message: "Import started for all sources" });
     }
   } catch (err) {
@@ -50,10 +79,38 @@ router.post("/stop", resolveUser, requireAdmin, async (req, res) => {
     if (source) {
       // Stop import for specific source
       await importServiceManager.stopImport(source as any);
+
+      // Send email notification
+      try {
+        const adminEmail = process.env.ADMIN_EMAIL;
+        await mailService.sendMail(
+          adminEmail,
+          "Import Jobs Stopped",
+          `The import jobs have been stopped for source: ${source}.\n\nTime: ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST\n\nPlease check the admin panel for more details.`
+        );
+      } catch (emailError) {
+        // Log email error but don't fail the request
+        req.log.error({ error: emailError }, "Failed to send stop import email notification");
+      }
+
       res.json({ success: true, message: `Import stopped for ${source}` });
     } else {
       // Stop import for all sources
       await importServiceManager.stopAllImports();
+
+      // Send email notification
+      try {
+        const adminEmail = process.env.ADMIN_EMAIL;
+        await mailService.sendMail(
+          adminEmail,
+          "Import Jobs Stopped",
+          `The import jobs have been stopped for all sources.\n\nTime: ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST\n\nPlease check the admin panel for more details.`
+        );
+      } catch (emailError) {
+        // Log email error but don't fail the request
+        req.log.error({ error: emailError }, "Failed to send stop import email notification");
+      }
+
       res.json({ success: true, message: "Import stopped for all sources" });
     }
   } catch (err) {
