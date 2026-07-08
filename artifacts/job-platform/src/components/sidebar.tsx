@@ -72,6 +72,8 @@ export function Sidebar({ onClose }: SidebarProps) {
   const { theme, setTheme } = useTheme();
   const { data: profile } = useGetMyProfile();
 
+
+const userEmail = user?.primaryEmailAddress?.emailAddress;
   const isAdmin = profile?.role === 'admin';
 
   // Profile completion — includes new extended fields
