@@ -154,8 +154,8 @@ export abstract class BaseImportService {
         }
 
         // Check for duplicates (based on source + applyUrl or title+company+location)
-        const existing = await db.query.jobsTable.findFirst({
-          where: (jobsTable, { eq, and }) => {
+                const existing = await db.query.jobsTable.findFirst({
+          where: (jobsTable, { eq, and, or }) => {
             const conditions = [];
             if (validatedJob.applyUrl) {
               conditions.push(eq(jobsTable.applyUrl, validatedJob.applyUrl));
@@ -168,9 +168,9 @@ export abstract class BaseImportService {
                 eq(jobsTable.location, validatedJob.location)
               )
             );
-            return sql`(${conditions.map(c => `${c}`).join(" OR ")})`;
+            return or(...conditions);
           },
-        });
+        });   
 
         if (existing) {
           duplicates++;
