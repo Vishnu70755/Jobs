@@ -173,7 +173,7 @@ export const DateTimePicker = React.forwardRef(
                         const today = new Date();
                         setDateValue(today);
                         onDateOrTimeChange(today);
-                      }}
+                      },
                     }}
                   />
                 </div>
@@ -207,7 +207,6 @@ export const DateTimePicker = React.forwardRef(
                       setTimeValue(`${hour}:${minute}`);
                       onDateOrTimeChange(dateValue);
                     }}
-                    className="block w-full rounded-md border border-input bg-background px-                    }}
                     className="block w-full rounded-md border border-input bg-background px-3 py-1 text-base text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {[0, 15, 30, 45].map((m) => (
