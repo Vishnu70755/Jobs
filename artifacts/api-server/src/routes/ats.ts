@@ -1,9 +1,11 @@
-import { Router } from "express";
+import { Router, Request, Response } from "express";
 import { db, atsReportsTable, resumesTable } from "@workspace/db";
 import { eq, and, desc } from "drizzle-orm";
 import { resolveUser } from "../middlewares/auth";
 import { mailService } from "../lib/mail";
 import { getATSAnalysisEmailTemplate } from "../lib/email-templates";
+
+const router = Router();
 
 function generateAtsAnalysis(resumeContent: string, jobDescription: string) {
   const jdWords = jobDescription.toLowerCase().split(/\W+/).filter(w => w.length > 3);
@@ -49,7 +51,7 @@ function generateAtsAnalysis(resumeContent: string, jobDescription: string) {
 }
 
 // POST /ats/analyze
-router.post("/analyze", resolveUser, async (req, res) => {
+router.post("/analyze", resolveUser, async (req: Request, res: Response) => {
   try {
     const user = (req as any).dbUser;
     const { resumeId, jobDescription, jobId } = req.body;
@@ -94,7 +96,7 @@ router.post("/analyze", resolveUser, async (req, res) => {
       // Log email error but don't fail the request
       req.log.error({
         userId: user.id,
-        error: errorError.message,
+        error: emailError.message,
         timestamp: new Date().toISOString(),
         event: 'ats_analysis_email_failed'
       }, "Failed to send ATS analysis email");
@@ -108,7 +110,7 @@ router.post("/analyze", resolveUser, async (req, res) => {
 });
 
 // GET /ats/reports
-router.get("/reports", resolveUser, async (req, res) => {
+router.get("/reports", resolveUser, async (req: Request, res: Response) => {
   try {
     const user = (req as any).dbUser;
     const reports = await db.select().from(atsReportsTable)
@@ -122,11 +124,11 @@ router.get("/reports", resolveUser, async (req, res) => {
 });
 
 // GET /ats/reports/:id
-router.get("/reports/:id", resolveUser, async (req, res) => {
+router.get("/reports/:id", resolveUser, async (req: Request, res: Response) => {
   try {
     const user = (req as any).dbUser;
     const id = parseInt(req.params["id"] as string);
-    const [report] = await db.select().from(atsReportsTable).where(and(atsReportsTable.id, id), eq(atsReportsTable.userId, user.id));
+    const [report] = await db.select().from(atsReportsTable).where(and(eq(atsReportsTable.id, id), eq(atsReportsTable.userId, user.id)));
     if (!report) { res.status(404).json({ error: "Not found" }); return; }
     res.json(report);
   } catch (err) {
