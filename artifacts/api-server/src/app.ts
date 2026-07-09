@@ -4,6 +4,8 @@ import pinoHttp from "pino-http";
 import { clerkMiddleware } from "@clerk/express";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { mailService } from "./lib/mail";
+import { getSystemErrorEmailTemplate } from "./lib/email-templates";
 
 const app: Express = express();
 
@@ -39,5 +41,34 @@ app.use(express.urlencoded({ extended: true }));
 app.use(clerkMiddleware());
 
 app.use("/api", router);
+
+// Error handling middleware
+app.use((err: any, req: any, res: any, next: any) => {
+  // Log error
+  logger.error({ err, url: req.originalUrl, method: req.method, headers: req.headers }, "Unhandled error");
+  // Determine status code
+  const status = err.status || err.statusCode || 500;
+  // Send email for server errors (status >= 500)
+  if (status >= 500) {
+    try {
+      const adminEmail = process.env.ADMIN_EMAIL;
+      if (adminEmail) {
+        const emailTemplate = getSystemErrorEmailTemplate(
+          err.message || "Unknown error",
+          new Date().toISOString(),
+          req.path || "Unknown"
+        );
+        // Send email (fire and forget, but log if fails)
+        mailService.sendTemplateEmail(adminEmail, emailTemplate).catch(emailErr => {
+          logger.error({ err: emailErr }, "Failed to send system error email");
+        });
+      }
+    } catch (emailErr) {
+      logger.error({ err: emailErr }, "Failed to send system error email");
+    }
+  }
+  // Return error response
+  res.status(status).json({ error: err.message || "Internal Server Error" });
+});
 
 export default app;

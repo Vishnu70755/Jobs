@@ -3,12 +3,15 @@ import { clerkClient } from "@clerk/express";
 import { db, usersTable, applicationsTable, jobsTable, resumesTable, atsReportsTable, importJobsTable, importSourceConfigsTable, savedJobsTable } from "@workspace/db";
 import { eq, ilike, desc, sql, and } from "drizzle-orm";
 import { resolveUser, requireAdmin } from "../middlewares/auth";
-import importRoutes from "./admin/import";
+import importRoutes from "./import";
+import sourceRoutes from "./source"; // <-- added
 
 const router = Router();
 
 // Import routes
 router.use("/import", importRoutes);
+// Sources routes
+router.use("/sources", sourceRoutes); // <-- added
 
 // GET /admin/stats
 router.get("/stats", resolveUser, requireAdmin, async (req, res) => {

@@ -2,6 +2,11 @@ import { logger } from "../../lib/logger";
 import { db, importJobsTable, importJobStatsTable, importSourceConfigsTable, jobsTable } from "@workspace/db";
 import { eq, sql, desc } from "drizzle-orm";
 import { ImportSourceEnum } from "@workspace/db";
+import { mailService } from "../../lib/mail";
+import {
+  getImportCompletedEmailTemplate,
+  getImportFailedEmailTemplate
+} from "../../lib/email-templates";
 
 /**
  * Base class for all import services
@@ -41,6 +46,9 @@ export abstract class BaseImportService {
         startedAt: new Date(),
       })
       .returning();
+
+    let success = false;
+    let errorMessage = "";
 
     try {
       logger.info({ source: this.source, importJobId: importJob.id }, "Starting import job");
@@ -100,6 +108,8 @@ export abstract class BaseImportService {
         },
         "Import job completed"
       );
+
+      success = true;
     } catch (error) {
       logger.error({ source: this.source, error }, "Import job failed");
 
@@ -125,8 +135,67 @@ export abstract class BaseImportService {
         durationMs: Date.now() - startTime,
         errorMessage: error instanceof Error ? error.message : String(error),
       });
+
+      errorMessage = error instanceof Error ? error.message : String(error);
     } finally {
       this.isRunning = false;
+    }
+
+    // Send email notification to admin
+    try {
+      const adminEmail = process.env.ADMIN_EMAIL;
+      if (adminEmail) {
+        const startedAt = new Date(startTime).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
+        const completedAt = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
+
+        if (success) {
+          const emailTemplate = getImportCompletedEmailTemplate(
+            this.source,
+            startedAt,
+            completedAt,
+            // We need to get the stats from the importJob record or compute again.
+            // For simplicity, we can fetch the updated importJob.
+            // Let's fetch it.
+            0, 0, 0, 0 // placeholder, we will update after fetching
+          );
+
+          // Fetch the updated importJob to get actual numbers
+          const [jobRecord] = await db
+            .select()
+            .from(importJobsTable)
+            .where(eq(importJobsTable.id, importJob.id));
+
+          if (jobRecord) {
+            const finalTemplate = getImportCompletedEmailTemplate(
+              this.source,
+              startedAt,
+              completedAt,
+              jobRecord.totalJobsFound ?? 0,
+              jobRecord.newJobsAdded ?? 0,
+              jobRecord.duplicateJobsSkipped ?? 0,
+              jobRecord.failedJobs ?? 0
+            );
+            await mailService.sendTemplateEmail(adminEmail, finalTemplate);
+            logger.info({ to: adminEmail, subject: finalTemplate.subject }, "Import completion email sent successfully");
+          } else {
+            // fallback to placeholder
+            await mailService.sendTemplateEmail(adminEmail, emailTemplate);
+            logger.info({ to: adminEmail, subject: emailTemplate.subject }, "Import completion email sent (placeholder)");
+          }
+        } else {
+          const emailTemplate = getImportFailedEmailTemplate(
+            this.source,
+            errorMessage,
+            startedAt
+          );
+          await mailService.sendTemplateEmail(adminEmail, emailTemplate);
+          logger.info({ to: adminEmail, subject: emailTemplate.subject }, "Import failure email sent successfully");
+        }
+      } else {
+        logger.warn({ source: this.source }, "ADMIN_EMAIL not set; skipping import email notification");
+      }
+    } catch (emailError) {
+      logger.error({ error: emailError.message, to: process.env.ADMIN_EMAIL, subject: "Import Job Notification" }, "Failed to send import email notification");
     }
   }
 
@@ -170,7 +239,7 @@ export abstract class BaseImportService {
             );
             return or(...conditions);
           },
-        });   
+        });
 
         if (existing) {
           duplicates++;
