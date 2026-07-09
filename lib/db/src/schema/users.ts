@@ -28,6 +28,10 @@ export const usersTable = pgTable("users", {
   passwordResetExpires: timestamp("password_reset_expires"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  // Track last session ID for login notifications
+  lastSessionId: text("last_session_id"),
+  // Track if admin notification has been sent for this user
+  adminNotificationSent: boolean("admin_notification_sent").notNull().default(false),
 });
 
 export const insertUserSchema = createInsertSchema(usersTable).omit({ id: true, createdAt: true, updatedAt: true });

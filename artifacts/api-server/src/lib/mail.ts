@@ -71,7 +71,7 @@ export class MailService {
    */
   async sendTemplateEmail(to: string, template: { subject: string; html: string; text: string }): Promise<void> {
     const mailOptions = {
-      from: process.env.SMTP_FROM || '"Vishnu\'s Job Quest" <no-reply@example.com>',
+      from: process.env.SMTP_FROM || `"Vishnu's Job Quest" <vishnu252223@gmail.com>"`,
       to,
       subject: template.subject,
       html: template.html,
@@ -106,7 +106,7 @@ export class MailService {
    */
   async sendMail(to: string, subject: string, body: string): Promise<void> {
     const mailOptions = {
-      from: process.env.SMTP_FROM || '"Vishnu\'s Job Quest" <no-reply@example.com>',
+      from: process.env.SMTP_FROM || `"Vishnu's Job Quest" <vishnu252223@gmail.com>"`,
       to,
       subject,
       text: body,
@@ -143,7 +143,7 @@ export class MailService {
     const text = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 
     const mailOptions = {
-      from: process.env.SMTP_FROM || '"Vishnu\'s Job Quest" <no-reply@example.com>',
+      from: process.env.SMTP_FROM || `"Vishnu's Job Quest" <vishnu252223@gmail.com>"`,
       to,
       subject,
       html,
