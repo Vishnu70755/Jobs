@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -98,6 +98,9 @@ async function updateSource(id: number, data: Partial<Source>): Promise<Source> 
 export default function SourcesPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<'all' | 'enabled' | 'disabled'>('all');
+  const [sourceTypeFilter, setSourceTypeFilter] = useState<string>('');
+  const [sourceTypeOptions, setSourceTypeOptions] = useState<string[]>(['']);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editSourceId, setEditSourceId] = useState<number | null>(null);
@@ -119,6 +122,19 @@ export default function SourcesPage() {
     queryKey: ["sources"],
     queryFn: fetchSources,
   });
+
+  // Populate source type options when sources change
+  useEffect(() => {
+    if (sources.length > 0) {
+      // Get unique source types
+      const uniqueTypes = [...new Set(sources.map(source => source.sourceType))];
+      // Sort alphabetically for better UX
+      uniqueTypes.sort();
+      setSourceTypeOptions(['', ...uniqueTypes]);
+    } else {
+      setSourceTypeOptions(['']);
+    }
+  }, [sources]);
 
   // Mutations
   const createMutation = useMutation({
@@ -355,18 +371,23 @@ export default function SourcesPage() {
     disableMutation.mutate(id);
   };
 
-  // Filter sources based on search
+  // Filter sources based on search and filters
   const filteredSources = sources.filter((source) => {
-    const searchLower = search.toLowerCase();
-    return (
-      source.name.toLowerCase().includes(searchLower) ||
-      (source.url && source.url.toLowerCase().includes(searchLower)) ||
-      source.sourceType.toLowerCase().includes(searchLower) ||
-      (source.country && source.country.toLowerCase().includes(searchLower)) ||
-      (source.category && source.category.toLowerCase().includes(searchLower)) ||
-      (source.apiKey && source.apiKey.toLowerCase().includes(searchLower)) ||
-      (source.notes && source.notes.toLowerCase().includes(searchLower))
-    );
+    // Search by name only (as per Task 8 requirements)
+    const matchesSearch = source.name.toLowerCase().includes(search.toLowerCase());
+
+    // Filter by status
+    const matchesStatus =
+      statusFilter === 'all' ||
+      (statusFilter === 'enabled' && source.isEnabled) ||
+      (statusFilter === 'disabled' && !source.isEnabled);
+
+    // Filter by source type
+    const matchesSourceType =
+      sourceTypeFilter === '' ||
+      source.sourceType === sourceTypeFilter;
+
+    return matchesSearch && matchesStatus && matchesSourceType;
   });
 
   // Format date for display
@@ -392,14 +413,42 @@ export default function SourcesPage() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold">Sources Management</h2>
-        <div className="flex items-center gap-2">
-          <input
-            type="text"
-            placeholder="Search sources..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="input input-sm w-64"
-          />
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              placeholder="Search by name..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="input input-sm w-48"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm">Status:</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as any)}
+              className="select sm-sm"
+            >
+              <option value="all">All</option>
+              <option value="enabled">Enabled</option>
+              <option value="disabled">Disabled</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm">Type:</label>
+            <select
+              value={sourceTypeFilter}
+              onChange={(e) => setSourceTypeFilter(e.target.value)}
+              className="select sm-sm"
+            >
+              {sourceTypeOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option === '' ? 'All Types' : option}
+                </option>
+              ))}
+            </select>
+          </div>
           <div className="flex items-center gap-2">
             <DialogTrigger asChild>
               <button
