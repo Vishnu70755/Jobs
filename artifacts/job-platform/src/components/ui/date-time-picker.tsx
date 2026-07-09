@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { ChevronDown, Calendar as CalendarIcon, Clock } from "lucide-react";
-import { formatISTDatetime, formatIndianDate } from "@/lib/formatted";
+import { formatISTDatetime, formatIndianDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const IST = "Asia/Kolkata";
