@@ -483,6 +483,36 @@ export default function SourcesPage() {
         </div>
       )}
 
+      {/* Statistics Section */}
+      {!isLoading && sources.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="card">
+            <div className="card-header">
+              <h3 className="text-sm font-medium text-muted-foreground">Total Sources</h3>
+              <p className="text-2xl font-bold">{sources.length}</p>
+            </div>
+          </div>
+          <div className="card">
+            <div className="card-header">
+              <h3 className="text-sm font-medium text-muted-foreground">Active Sources</h3>
+              <p className="text-2xl font-bold text-green-600">{sources.filter(s => s.isEnabled).length}</p>
+            </div>
+          </div>
+          <div className="card">
+            <div className="card-header">
+              <h3 className="text-sm font-medium text-muted-foreground">Disabled Sources</h3>
+              <p className="text-2xl font-bold text-red-600">{sources.filter(s => !s.isEnabled).length}</p>
+            </div>
+          </div>
+          <div className="card">
+            <div className="card-header">
+              <h3 className="text-sm font-medium text-muted-foreground">Total Jobs Imported</h3>
+              <p className="text-2xl font-bold">{sources.reduce((total, source) => total + (source.jobsImported || 0), 0)}</p>
+            </div>
+          </div>
+        </>
+      )}
+
       {!isLoading && (
         <div className="overflow-x-auto">
           <table className="table">
