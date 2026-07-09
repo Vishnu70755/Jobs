@@ -6,8 +6,13 @@ import { applicationsTable } from "@workspace/db";
 import { eq, gt, desc, and, count } from "drizzle-orm";
 import { resolveUser } from "../middlewares/auth";
 import { mailService } from "../lib/mail";
+import {
+  getWelcomeEmailTemplate,
+  getLoginEmailTemplate
+} from "../lib/email-templates";
 import { clerkClient } from "@clerk/express";
 import crypto from "crypto";
+import { logger } from "../lib/logger";
 
 const router = Router();
 
@@ -96,7 +101,7 @@ router.patch("/me", resolveUser, async (req, res) => {
         ...(location !== undefined && { location }),
         ...(skills !== undefined && { skills }),
         ...(experience !== undefined && { experience }),
-        ...(targetRole !== undefined && { targetRole }),
+        ...(targetRoute !== undefined && { targetRole }),
         ...(linkedinUrl !== undefined && { linkedinUrl }),
         ...(githubUrl !== undefined && { githubUrl }),
         ...(phone !== undefined && { phone }),
@@ -134,24 +139,19 @@ router.post("/request-verification", resolveUser, async (req, res) => {
       .where(eq(usersTable.id, user.id))
       .returning();
 
-    // Send verification email
+    // Send verification email using template
     const verificationUrl = `${process.env.BASE_URL || "http://localhost:3000"}/verify-email/${verificationToken}`;
     try {
-      await mailService.sendMail(
-        user.email,
-        "Verify your email address",
-        `Welcome to Vishnu's Job Quest - Find Jobs
-
-Please click the following link to verify your email address: ${verificationUrl}
-
-This link will expire in 24 hours.
-
-Thank you for using Vishnu's Job Quest!`
+      const emailTemplate = getWelcomeEmailTemplate(
+        user.name || "there",
+        verificationUrl
       );
+      await mailService.sendTemplateEmail(user.email, emailTemplate);
+
       // Log success with timestamp
       req.log.info({
         to: user.email,
-        subject: "Verify your email address",
+        subject: emailTemplate.subject,
         timestamp: new Date().toISOString(),
         event: 'email_verification_sent'
       }, "Verification email sent successfully");
@@ -242,21 +242,15 @@ router.post("/forgot-password", async (req, res) => {
     // Send reset email
     const resetUrl = `${process.env.BASE_URL || "http://localhost:3000"}/reset-password/${resetToken}`;
     try {
-      await mailService.sendMail(
-        user.email,
-        "Reset your password",
-        `Welcome to Vishnu's Job Quest - Find Jobs
-
-Please click the following link to reset your password: ${resetUrl}
-
-This link will expire in 1 hour.
-
-Thank you for using Vishnu's Job Quest!`
+      const emailTemplate = getPasswordResetEmailTemplate(
+        user.name || "there",
+        resetUrl
       );
+      await mailService.sendTemplateEmail(user.email, emailTemplate);
       // Log success with timestamp
       req.log.info({
         to: user.email,
-        subject: "Reset your password",
+        subject: emailTemplate.subject,
         timestamp: new Date().toISOString(),
         event: 'email_password_reset_sent'
       }, "Reset email sent successfully");
@@ -337,6 +331,42 @@ router.post("/change-password", resolveUser, async (req, res) => {
     });
 
     res.json({ message: "Password changed successfully" });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Track user logins for security notifications
+// This would typically be called from your authentication middleware
+// For now, we'll add a placeholder endpoint that could be called after login
+router.post("/login-notification", resolveUser, async (req, res) => {
+  try {
+    const user = (req as any).dbUser;
+    const { ipAddress, location, userAgent } = req.body;
+
+    // Send login notification email
+    try {
+      const loginTime = new Date().toLocaleString();
+      const emailTemplate = getLoginEmailTemplate(
+        user.name || "there",
+        loginTime,
+        ipAddress || "Unknown",
+        location || "Unknown"
+      );
+      await mailService.sendTemplateEmail(user.email, emailTemplate);
+
+      res.json({ message: "Login notification sent" });
+    } catch (emailError) {
+      req.log.error({
+        error: emailError.message,
+        to: user.email,
+        subject: "Login notification",
+        timestamp: new Date().toISOString(),
+        event: 'email_login_notification_failed'
+      }, "Failed to send login notification email");
+      res.status(500).json({ error: "Failed to send login notification" });
+    }
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });

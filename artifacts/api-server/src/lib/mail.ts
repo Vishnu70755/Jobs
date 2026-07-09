@@ -1,10 +1,34 @@
 import nodemailer from "nodemailer";
 import { logger } from "./logger";
+import {
+  getWelcomeEmailTemplate,
+  getLoginEmailTemplate,
+  getResumeUploadEmailTemplate,
+  getResumeUpdateEmailTemplate,
+  getApplicationStatusUpdateEmailTemplate,
+  getInterviewScheduledEmailTemplate,
+  getInterviewReminderEmailTemplate,
+  getInterviewCancelledEmailTemplate,
+  getApplicationConfirmationEmailTemplate,
+  getATSAnalysisEmailTemplate,
+  getPasswordResetEmailTemplate,
+  getAdminNewUserEmailTemplate,
+  getAdminLoginEmailTemplate,
+  getAdminUserLoginEmailTemplate,
+  getImportStartedEmailTemplate,
+  getImportCompletedEmailTemplate,
+  getImportFailedEmailTemplate,
+  getSourceAddedEmailTemplate,
+  getSourceUpdatedEmailTemplate,
+  getSourceDisabledEmailTemplate,
+  getSourceEnabledEmailTemplate,
+  getSourceDeletedEmailTemplate,
+  getDailySummaryEmailTemplate,
+  getSystemErrorEmailTemplate
+} from "./email-templates";
 
 /**
- * Simple wrapper around nodemailer.
- * Expects the following env vars (add them to your .env or platform config):
- *   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM
+ * Enhanced email service with template support
  */
 export class MailService {
   private transporter: nodemailer.Transporter;
@@ -41,7 +65,41 @@ export class MailService {
   }
 
   /**
-   * Sends a plain‑text e‑mail.
+   * Sends an email using a template
+   * @param to      Recipient e‑mail address
+   * @param template    Template object with subject, html, and text properties
+   */
+  async sendTemplateEmail(to: string, template: { subject: string; html: string; text: string }): Promise<void> {
+    const mailOptions = {
+      from: process.env.SMTP_FROM || '"Vishnu\'s Job Quest" <no-reply@example.com>',
+      to,
+      subject: template.subject,
+      html: template.html,
+      text: template.text,
+    };
+
+    try {
+      await this.transporter.sendMail(mailOptions);
+      logger.info({
+        to,
+        subject: template.subject,
+        timestamp: new Date().toISOString(),
+        event: 'email_sent'
+      }, "Email sent successfully");
+    } catch (err) {
+      logger.error({
+        to,
+        subject: template.subject,
+        timestamp: new Date().toISOString(),
+        event: 'email_failed',
+        error: err.message
+      }, "Failed to send email");
+      throw err; // let the caller decide whether to fail the request
+    }
+  }
+
+  /**
+   * Sends a plain‑text e‑mail (kept for backward compatibility)
    * @param to      Recipient e‑mail address
    * @param subject Subject line
    * @param body    Body (plain text)
@@ -61,7 +119,7 @@ export class MailService {
         subject,
         timestamp: new Date().toISOString(),
         event: 'email_sent'
-      }, "Plain-text e‑mail sent successfully");
+      }, "Plain‑text e‑mail sent successfully");
     } catch (err) {
       logger.error({
         to,
@@ -69,19 +127,19 @@ export class MailService {
         timestamp: new Date().toISOString(),
         event: 'email_failed',
         error: err.message
-      }, "Failed to send plain-text e‑mail");
-      throw err; // let the caller decide whether to fail the request
+      }, "Failed to send plain‑text e‑mail");
+      throw err;
     }
   }
 
   /**
-   * Sends an HTML e‑mail (with optional plain‑text fallback).
+   * Sends an HTML e‑mail (with optional plain‑text fallback)
    * @param to      Recipient e‑mail address
    * @param subject Subject line
    * @param html    Body (HTML)
    */
   async sendHtmlMail(to: string, subject: string, html: string): Promise<void> {
-    // Generate a simple plain-text version by stripping HTML tags (naive)
+    // Generate a simple plain‑text version by stripping HTML tags (naive)
     const text = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 
     const mailOptions = {
@@ -114,6 +172,6 @@ export class MailService {
 }
 
 /**
- * Singleton – import and use MailService.instance wherever you need it.
+ * Singleton – import and use MailService.instance wherever needed
  */
 export const mailService = new MailService();

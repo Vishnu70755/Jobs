@@ -43,38 +43,16 @@ router.post("/clerk", async (req: Request, res: Response, next: NextFunction) =>
     if (!adminEmail) {
       logger.warn("ADMIN_EMAIL not set; skipping admin login notification");
     } else {
-      const adminSubject = "User Logged Into Vishnu's Job Quest";
-
-      const adminHtml = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
-          <h2 style="color: #2c3e50;">User Login Notification</h2>
-          <p><strong>Name:</strong> ${escapeHtml(fullName)}</p>
-          <p><strong>Email:</strong> ${escapeHtml(email)}</p>
-          <p><strong>User ID:</strong> ${escapeHtml(userId ?? "N/A")}</p>
-          <p><strong>Login Time:</strong> ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST</p>
-          <p><strong>IP Address:</strong> ${escapeHtml(ip)}</p>
-          <p><strong>Browser / User-Agent:</strong> ${escapeHtml(userAgent)}</p>
-          <p><strong>Login Type:</strong> ${loginType}</p>
-          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-          <p style="font-size: 0.9em; color: #7f8c8d;">This is an automated message from Vishnu's Job Quest.</p>
-        </div>
-      `;
-
-      const adminText = `
-User Login Notification
-
-Name: ${fullName}
-Email: ${email}
-User ID: ${userId ?? "N/A"}
-Login Time: ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST
-IP Address: ${ip}
-Browser / User-Agent: ${userAgent}
-Login Type: ${loginType}
-
-This is an automated message from Vishnu's Job Quest.
-      `;
-
-      await mailService.sendHtmlMail(adminEmail, adminSubject, adminHtml);
+      const adminTemplate = getAdminLoginEmailTemplate(
+        fullName,
+        new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
+        email,
+        userId ?? "N/A",
+        ip,
+        userAgent,
+        loginType
+      );
+      await mailService.sendTemplateEmail(adminEmail, adminTemplate);
       logger.info({
         userId,
         email,
@@ -89,57 +67,11 @@ This is an automated message from Vishnu's Job Quest.
 
     // Send welcome email to the user (if we have an email)
     if (email) {
-      const userSubject = "Welcome to Vishnu's Job Quest";
-
-      const userHtml = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px; background-color: #f9f9f9;">
-          <div style="text-align: center; margin-bottom: 20px;">
-            <h1 style="color: #2c3e50; margin: 0;">Vishnu's Job Quest</h1>
-            <p style="color: #7f8c8d; margin: 5px 0 0;">Find Jobs</p>
-          </div>
-          <h2 style="color: #2c3e50;">Hello ${escapeHtml(firstName || "there")},</h2>
-          <p>Thank you for logging into <strong>Vishnu's Job Quest</strong>.</p>
-          <p>Our platform helps you <strong>Find Jobs</strong> that match your skills and aspirations.</p>
-          <p>To get the most out of your experience, we encourage you to:</p>
-          <ul style="padding-left: 20px;">
-            <li>Complete your profile with your skills, experience, and preferences.</li>
-            <li>Upload your resume so employers can find you easily.</li>
-            <li>Search for jobs using our powerful search and filters.</li>
-            <li>Track your applications and stay organized.</li>
-            <li>Use our ATS Resume Analysis tool to optimize your resume for applicant tracking systems.</li>
-          </ul>
-          <p>If you have any questions, feel free to reach out to our support team.</p>
-          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-          <p style="font-size: 0.9em; color: #7f8c8d; text-align: center;">
-            Thank you for being part of Vishnu's Job Quest!<br/>
-            <a href="${process.env.BASE_URL || "http://localhost:3000"}" style="color: #3498db; text-decoration: none;">Visit Your Dashboard</a>
-          </p>
-        </div>
-      `;
-
-      const userText = `
-Welcome to Vishnu's Job Quest
-
-Hello ${firstName || "there"},
-
-Thank you for logging into Vishnu's Job Quest.
-
-Our platform helps you Find Jobs that match your skills and aspirations.
-
-To get the most out of your experience, we encourage you to:
-- Complete your profile with your skills, experience, and preferences.
-- Upload your resume so employers can find you easily.
-- Search for jobs using our powerful search and filters.
-- Track your applications and stay organized.
-- Use our ATS Resume Analysis tool to optimize your resume for applicant tracking systems.
-
-If you have any questions, feel free to reach out to our support team.
-
-Thank you for being part of Vishnu's Job Quest!
-Visit Your Dashboard: ${process.env.BASE_URL || "http://localhost:3000"}
-      `; 
-
-      await mailService.sendHtmlMail(email, userSubject, userHtml);
+      const userTemplate = getWelcomeEmailTemplate(
+        firstName || "there",
+        `${process.env.BASE_URL || "http://localhost:3000"}`
+      );
+      await mailService.sendTemplateEmail(email, userTemplate);
       logger.info({
         email,
         userId,

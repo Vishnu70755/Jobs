@@ -40,26 +40,13 @@ router.post("/start", resolveUser, requireAdmin, async (req, res) => {
       const adminEmail = process.env.ADMIN_EMAIL;
       if (adminEmail) {
         try {
-          await mailService.sendMail(
-            adminEmail,
-            "Import Jobs Started",
-            `Welcome to Vishnu's Job Quest - Find Jobs
-
-The import jobs have been started for source: ${source}.
-
-Time: ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST
-
-The import process is now running and will import jobs from the configured source.
-
-You can monitor the progress in the admin panel.
-
-Thank you for using Vishnu's Job Quest!`
-          );
+          const emailTemplate = getImportStartedEmailTemplate(source, new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }));
+          await mailService.sendTemplateEmail(adminEmail, emailTemplate);
           // Log success
-          req.log.info({ to: adminEmail, subject: "Import Jobs Started" }, "Start import email sent successfully");
+          req.log.info({ to: adminEmail, subject: emailTemplate.subject }, "Start import email sent successfully");
         } catch (emailError) {
           // Log email error but don't fail the request
-          req.log.error({ error: emailError, to: adminEmail, subject: "Import Jobs Started" }, "Failed to send start import email notification");
+          req.log.error({ error: emailError.message, to: adminEmail, subject: "Import Jobs Started" }, "Failed to send start import email notification");
         }
       } else {
         req.log.warn({ source }, "ADMIN_EMAIL not set; skipping start import email notification");
@@ -74,24 +61,13 @@ Thank you for using Vishnu's Job Quest!`
       const adminEmail = process.env.ADMIN_EMAIL;
       if (adminEmail) {
         try {
-          await mailService.sendMail(
-            adminEmail,
-            "Import Jobs Started",
-            `Welcome to Vishnu's Job Quest - Find Jobs
-
-The import jobs have been started for all sources.
-
-Time: ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST
-
-The import process is now running and will import jobs from all configured sources from the admin panel.
-
-Thank you for using Vishnu's Job Quest!`
-          );
+          const emailTemplate = getImportStartedEmailTemplate("All Sources", new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }));
+          await mailService.sendTemplateEmail(adminEmail, emailTemplate);
           // Log success
-          req.log.info({ to: adminEmail, subject: "Import Jobs Started" }, "Start import email sent successfully");
+          req.log.info({ to: adminEmail, subject: emailTemplate.subject }, "Start import email sent successfully");
         } catch (emailError) {
           // Log email error but don't fail the request
-          req.log.error({ error: emailError, to: adminEmail, subject: "Import Jobs Started" }, "Failed to send start import email notification");
+          req.log.error({ error: emailError.message, to: adminEmail, subject: "Import Jobs Started" }, "Failed to send start import email notification");
         }
       } else {
         req.log.warn({}, "ADMIN_EMAIL not set; skipping start import email notification");
@@ -123,24 +99,15 @@ router.post("/stop", resolveUser, requireAdmin, async (req, res) => {
       // Send email notification
       try {
         const adminEmail = process.env.ADMIN_EMAIL;
-        await mailService.sendMail(
-          adminEmail,
-          "Import Jobs Stopped",
-          `Welcome to Vishnu's Job Quest - Find Jobs
-
-The import jobs have been stopped for source: ${source}.
-
-Time: ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST
-
-Please check the admin panel for more details.
-
-Thank you for using Vishnu's Job Quest!`
-        );
-        // Log success
-        req.log.info({ to: adminEmail, subject: "Import Jobs Stopped" }, "Stop import email sent successfully");
+        if (adminEmail) {
+          const emailTemplate = getImportCompletedEmailTemplate(source, new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }), new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }), 0, 0, 0, 0);
+          await mailService.sendTemplateEmail(adminEmail, emailTemplate);
+          // Log success
+          req.log.info({ to: adminEmail, subject: emailTemplate.subject }, "Stop import email sent successfully");
+        }
       } catch (emailError) {
         // Log email error but don't fail the request
-        req.log.error({ error: emailError, to: adminEmail, subject: "Import Jobs Stopped" }, "Failed to send stop import email notification");
+        req.log.error({ error: errorError.message, to: adminEmail, subject: "Import Jobs Stopped" }, "Failed to send stop import email notification");
       }
 
       res.json({ success: true, message: `Import stopped for ${source}` });
@@ -151,24 +118,15 @@ Thank you for using Vishnu's Job Quest!`
       // Send email notification
       try {
         const adminEmail = process.env.ADMIN_EMAIL;
-        await mailService.sendMail(
-          adminEmail,
-          "Import Jobs Stopped",
-          `Welcome to Vishnu's Job Quest - Find Jobs
-
-The import jobs have been stopped for all sources.
-
-Time: ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST
-
-Please check the admin panel for more details.
-
-Thank you for using Vishnu's Job Quest!`
-        );
-        // Log success
-        req.log.info({ to: adminEmail, subject: "Import Jobs Stopped" }, "Stop import email sent successfully");
-      } catch (emailError) {
+        if (adminEmail) {
+          const emailTemplate = getImportCompletedEmailTemplate("All Sources", new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }), new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }), 0, 0, 0, 0);
+          await mailService.sendTemplateEmail(adminEmail, emailTemplate);
+          // Log success
+          req.log.info({ to: adminEmail, subject: emailTemplate.subject }, "Stop import email sent successfully");
+        }
+      } catch (error) {
         // Log email error but don't fail the request
-        req.log.error({ error: emailError, to: adminEmail, subject: "Import Jobs Stopped" }, "Failed to send stop import email notification");
+        req.log.error({ error: error.message, to: adminEmail, subject: "Import Jobs Stopped" }, "Failed to send stop import email notification");
       }
 
       res.json({ success: true, message: "Import stopped for all sources" });

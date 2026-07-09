@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Trash2, Save, CalendarPlus, Bell, ExternalLink, CheckCircle2, IndianRupee } from "lucide-react";
 import { buildGoogleCalendarUrl, formatISTDatetime, formatOfferedSalary } from "@/lib/format";
@@ -84,7 +85,7 @@ export default function TrackerDetail() {
       recruiterName: (app as any).recruiterName ?? "",
       recruiterEmail: (app as any).recruiterEmail ?? "",
       interviewDate: (app as any).interviewDate
-        ? new Date((app as any).interviewDate).toISOString().slice(0, 16)
+        ? new Date((app as any).interviewDate).toISOString()
         : "",
       salaryOffered: (app as any).salaryOffered?.toString() ?? "",
       interviewMode: (app as any).interviewMode ?? "",
@@ -134,7 +135,7 @@ export default function TrackerDetail() {
   }
 
   function handleAddToCalendar() {
-    if (!form?.interviewDate || !app) return;
+    if (!form?.interviewDate || form.interviewDate === "" || !app) return;
     const url = buildGoogleCalendarUrl({
       title: `Interview — ${(app as any).role} at ${(app as any).company}`,
       start: form.interviewDate,
@@ -163,7 +164,7 @@ export default function TrackerDetail() {
     if (permission === "granted") {
       setNotifEnabled(true);
       toast({ title: "Reminders enabled!", description: "You'll get notified before your interview." });
-      if (form?.interviewDate) {
+      if (form?.interviewDate && form.interviewDate !== "") {
         const days = daysUntil(form.interviewDate);
         const title = `Interview Reminder — ${(app as any)?.role} at ${(app as any)?.company}`;
         if (days > 0 && days <= 2) {
@@ -205,7 +206,7 @@ export default function TrackerDetail() {
   }
 
   const isInterviewScheduled = form.status === "interview_scheduled";
-  const hasInterviewDate = !!form.interviewDate;
+  const hasInterviewDate = !!form.interviewDate && form.interviewDate !== "";
   const daysUntilInterview = hasInterviewDate ? daysUntil(form.interviewDate) : null;
   const interviewSoon = daysUntilInterview !== null && daysUntilInterview <= 2 && daysUntilInterview >= 0;
 
@@ -325,13 +326,13 @@ export default function TrackerDetail() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Interview Date & Time (IST)</Label>
-              <Input
-                type="datetime-local"
-                value={form.interviewDate}
-                onChange={(e) => {
-                  setForm((f) => f ? { ...f, interviewDate: e.target.value } : f);
+              <DateTimePicker
+                value={form.interviewDate || null}
+                onChange={(value) => {
+                  setForm((f) => f ? { ...f, interviewDate: value ?? "" } : f);
                   setCalendarAdded(false);
                 }}
+                minDate={new Date()} // Prevent past dates
               />
               {hasInterviewDate && (
                 <p className="text-xs text-muted-foreground">

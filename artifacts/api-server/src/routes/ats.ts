@@ -2,8 +2,8 @@ import { Router } from "express";
 import { db, atsReportsTable, resumesTable } from "@workspace/db";
 import { eq, and, desc } from "drizzle-orm";
 import { resolveUser } from "../middlewares/auth";
-
-const router = Router();
+import { mailService } from "../lib/mail";
+import { getATSAnalysisEmailTemplate } from "../lib/email-templates";
 
 function generateAtsAnalysis(resumeContent: string, jobDescription: string) {
   const jdWords = jobDescription.toLowerCase().split(/\W+/).filter(w => w.length > 3);
@@ -67,6 +67,39 @@ router.post("/analyze", resolveUser, async (req, res) => {
       ...analysis,
     }).returning();
 
+    // Send ATS analysis completion email
+    try {
+      const userEmail = user.email; // DB column -- always present
+      if (userEmail) {
+        // Extract top suggestions (limit to 3 for email)
+        const suggestions = analysis.suggestions.slice(0, 3);
+        const emailTemplate = getATSAnalysisEmailTemplate(
+          user.name || "there",
+          resume.name || "Untitled Resume",
+          analysis.matchPercentage,
+          suggestions
+        );
+        await mailService.sendTemplateEmail(userEmail, emailTemplate);
+
+        // Log successful email send
+        req.log.info({
+          userId: user.id,
+          email: userEmail,
+          subject: emailTemplate.subject,
+          timestamp: new Date().toISOString(),
+          event: 'ats_analysis_email_sent'
+        }, "ATS analysis email sent successfully");
+      }
+    } catch (emailError) {
+      // Log email error but don't fail the request
+      req.log.error({
+        userId: user.id,
+        error: errorError.message,
+        timestamp: new Date().toISOString(),
+        event: 'ats_analysis_email_failed'
+      }, "Failed to send ATS analysis email");
+    }
+
     res.json(report);
   } catch (err) {
     req.log.error(err);
@@ -93,7 +126,7 @@ router.get("/reports/:id", resolveUser, async (req, res) => {
   try {
     const user = (req as any).dbUser;
     const id = parseInt(req.params["id"] as string);
-    const [report] = await db.select().from(atsReportsTable).where(and(eq(atsReportsTable.id, id), eq(atsReportsTable.userId, user.id)));
+    const [report] = await db.select().from(atsReportsTable).where(and(atsReportsTable.id, id), eq(atsReportsTable.userId, user.id));
     if (!report) { res.status(404).json({ error: "Not found" }); return; }
     res.json(report);
   } catch (err) {

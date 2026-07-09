@@ -2,6 +2,11 @@ import { Router } from "express";
 import { db, resumesTable } from "@workspace/db";
 import { eq, and, desc } from "drizzle-orm";
 import { resolveUser } from "../middlewares/auth";
+import { mailService } from "../lib/mail";
+import {
+  getResumeUploadEmailTemplate,
+  getResumeUpdateEmailTemplate
+} from "../lib/email-templates";
 
 const router = Router();
 
@@ -36,9 +41,38 @@ router.post("/", resolveUser, async (req, res) => {
       fileUrl: fileUrl ?? null,
       fileType: fileType ?? null,
       content: content ?? null,
-      isDefault: isDefault ?? false,
       version: 1,
     }).returning();
+
+    // Send resume upload confirmation email
+    try {
+      const userEmail = user.email; // DB column -- always present
+      if (userEmail) {
+        const emailTemplate = getResumeUploadEmailTemplate(
+          user.name || "there",
+          name || "Untitled Resume"
+        );
+        await mailService.sendTemplateEmail(userEmail, emailTemplate);
+
+        // Log successful email send
+        req.log.info({
+          userId: user.id,
+          email: userEmail,
+          subject: emailTemplate.subject,
+          timestamp: new Date().toISOString(),
+          event: 'resume_upload_email_sent'
+        }, "Resume upload email sent successfully");
+      }
+    } catch (emailError) {
+      // Log email error but don't fail the request
+      req.log.error({
+        userId: user.id,
+        error: emailError.message,
+        timestamp: new Date().toISOString(),
+        event: 'resume_upload_email_failed'
+      }, "Failed to send resume upload email");
+    }
+
     res.status(201).json(resume);
   } catch (err) {
     req.log.error(err);
@@ -51,7 +85,7 @@ router.get("/:id", resolveUser, async (req, res) => {
   try {
     const user = (req as any).dbUser;
     const id = parseInt(req.params["id"] as string);
-    const [resume] = await db.select().from(resumesTable).where(and(eq(resumesTable.id, id), eq(resumesTable.userId, user.id)));
+    const [resume] = await db.select().from(resumesTable).where(and(resumesTable.id, id), eq(resumesTable.userId, user.id));
     if (!resume) { res.status(404).json({ error: "Not found" }); return; }
     res.json(resume);
   } catch (err) {
@@ -81,6 +115,36 @@ router.patch("/:id", resolveUser, async (req, res) => {
       .where(and(eq(resumesTable.id, id), eq(resumesTable.userId, user.id)))
       .returning();
     if (!updated) { res.status(404).json({ error: "Not found" }); return; }
+
+    // Send resume update confirmation email
+    try {
+      const userEmail = user.email; // DB column -- always present
+      if (userEmail) {
+        const emailTemplate = getResumeUpdateEmailTemplate(
+          user.name || "there",
+          name || "Untitled Resume"
+        );
+        await mailService.sendTemplateEmail(userEmail, emailTemplate);
+
+        // Log successful email send
+        req.log.info({
+          userId: user.id,
+          email: userEmail,
+          subject: emailTemplate.subject,
+          timestamp: new Date().toISOString(),
+          event: 'resume_update_email_sent'
+        }, "Resume update email sent successfully");
+      }
+    } catch (emailError) {
+      // Log email error but don't fail the request
+      req.log.error({
+        userId: user.id,
+        error: emailError.message,
+        timestamp: new Date().toISOString(),
+        event: 'resume_update_email_failed'
+      }, "Failed to send resume update email");
+    }
+
     res.json(updated);
   } catch (err) {
     req.log.error(err);
