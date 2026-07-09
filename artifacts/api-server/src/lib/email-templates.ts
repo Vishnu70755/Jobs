@@ -1102,6 +1102,156 @@ This is an automated message, please do not reply.
 /**
  * Login email
  */
+/**
+ * Password reset email
+ */
+export function getPasswordResetEmailTemplate(userName: string, resetUrl: string): { subject: string; html: string; text: string } {
+  return {
+    subject: `Reset Your Password - Vishnu's Job Quest`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <style>
+          .container { line-height: 1.6; color: #333; }
+          .header { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+          .button { display: inline-block; background-color: #3498db; color: #fff; padding: 12px 24px; border-radius: 4px; text-decoration: none; margin: 20px 0; }
+          .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #7f8c8d; }
+        </style>
+        <div class="container">
+          <div class="header">
+            <h1>Reset Your Password</h1>
+          </div>
+          <p>Hello ${userName},</p>
+          <p>We received a request to reset your password for your Vishnu's Job Quest account. Click the button below to choose a new password. This link expires in 1 hour.</p>
+          <p><a href="${resetUrl}" class="button">Reset Password</a></p>
+          <p>If you didn't request this, you can safely ignore this email — your password will remain unchanged.</p>
+          <div class="footer">
+            <p>© ${new Date().getFullYear()} Vishnu's Job Quest. All rights reserved.</p>
+            <p>This is an automated message, please do not reply.</p>
+          </div>
+        </div>
+      </div>
+    `,
+    text: `
+Reset Your Password - Vishnu's Job Quest
+
+Hello ${userName},
+
+We received a request to reset your password. Visit the link below to choose a new password (expires in 1 hour):
+${resetUrl}
+
+If you didn't request this, you can safely ignore this email.
+
+----------------------------------------
+© ${new Date().getFullYear()} Vishnu's Job Quest. All rights reserved.
+This is an automated message, please do not reply.
+    `
+  };
+}
+
+/**
+ * Admin notification: new user signed up (currently unused elsewhere, kept for completeness)
+ */
+export function getAdminNewUserEmailTemplate(fullName: string, email: string, signedUpAt: string): { subject: string; html: string; text: string } {
+  return {
+    subject: `New User Signed Up - Vishnu's Job Quest`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <p>A new user has signed up.</p>
+        <p><strong>Name:</strong> ${fullName}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Signed Up At:</strong> ${signedUpAt}</p>
+      </div>
+    `,
+    text: `New User Signed Up - Vishnu's Job Quest\n\nName: ${fullName}\nEmail: ${email}\nSigned Up At: ${signedUpAt}`
+  };
+}
+
+/**
+ * Admin notification: a specific user logged in (currently unused elsewhere, kept for completeness)
+ */
+export function getAdminUserLoginEmailTemplate(fullName: string, email: string, loginTime: string): { subject: string; html: string; text: string } {
+  return {
+    subject: `User Login - Vishnu's Job Quest`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <p>A user has logged in.</p>
+        <p><strong>Name:</strong> ${fullName}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Login Time:</strong> ${loginTime}</p>
+      </div>
+    `,
+    text: `User Login - Vishnu's Job Quest\n\nName: ${fullName}\nEmail: ${email}\nLogin Time: ${loginTime}`
+  };
+}
+
+/**
+ * Admin login notification email
+ */
+export function getAdminLoginEmailTemplate(
+  fullName: string,
+  loginTime: string,
+  email: string,
+  userId: string,
+  ip: string,
+  userAgent: string,
+  loginType: string
+): { subject: string; html: string; text: string } {
+  return {
+    subject: `${loginType} Login Detected - Vishnu's Job Quest`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <style>
+          .container { line-height: 1.6; color: #333; }
+          .header { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+          .content { margin: 20px 0; }
+          .info-box { background-color: #ebf5fb; border: 1px solid #aed6f1; border-radius: 4px; padding: 15px; margin: 20px 0; }
+          .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #7f8c8d; }
+        </style>
+        <div class="container">
+          <div class="header">
+            <h1>${loginType} Login Detected</h1>
+          </div>
+          <p>A user has logged into Vishnu's Job Quest.</p>
+          <div class="info-box">
+            <p><strong>Name:</strong> ${fullName}</p>
+            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>User ID:</strong> ${userId}</p>
+            <p><strong>Login Time:</strong> ${loginTime}</p>
+            <p><strong>IP Address:</strong> ${ip}</p>
+            <p><strong>User Agent:</strong> ${userAgent}</p>
+            <p><strong>Login Type:</strong> ${loginType}</p>
+          </div>
+          <div class="footer">
+            <p>© ${new Date().getFullYear()} Vishnu's Job Quest. All rights reserved.</p>
+            <p>This is an automated admin notification.</p>
+          </div>
+        </div>
+      </div>
+    `,
+    text: `
+${loginType} Login Detected - Vishnu's Job Quest
+
+A user has logged into Vishnu's Job Quest.
+
+Details:
+- Name: ${fullName}
+- Email: ${email}
+- User ID: ${userId}
+- Login Time: ${loginTime}
+- IP Address: ${ip}
+- User Agent: ${userAgent}
+- Login Type: ${loginType}
+
+----------------------------------------
+© ${new Date().getFullYear()} Vishnu's Job Quest. All rights reserved.
+This is an automated admin notification.
+    `
+  };
+}
+
+/**
+ * User-facing login notification email
+ */
 export function getLoginEmailTemplate(userName: string, loginTime: string, ipAddress: string): { subject: string; html: string; text: string } {
   return {
     subject: `Login Notification - Vishnu's Job Quest`,

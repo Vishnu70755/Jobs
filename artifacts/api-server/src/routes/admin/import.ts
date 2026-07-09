@@ -4,6 +4,7 @@ import { resolveUser, requireAdmin } from "../../middlewares/auth";
 import { eq, sql } from "drizzle-orm";
 import { db, importJobsTable, importSourceConfigsTable } from "@workspace/db";
 import { mailService } from "../../lib/mail";
+import { getImportStartedEmailTemplate, getImportCompletedEmailTemplate } from "../../lib/email-templates";
 
 function escapeHtml(text: string): string {
   if (!text) return "";
@@ -97,8 +98,8 @@ router.post("/stop", resolveUser, requireAdmin, async (req, res) => {
       await importServiceManager.stopImport(source as any);
 
       // Send email notification
+      const adminEmail = process.env.ADMIN_EMAIL;
       try {
-        const adminEmail = process.env.ADMIN_EMAIL;
         if (adminEmail) {
           const emailTemplate = getImportCompletedEmailTemplate(source, new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }), new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }), 0, 0, 0, 0);
           await mailService.sendTemplateEmail(adminEmail, emailTemplate);
@@ -107,7 +108,7 @@ router.post("/stop", resolveUser, requireAdmin, async (req, res) => {
         }
       } catch (emailError) {
         // Log email error but don't fail the request
-        req.log.error({ error: errorError.message, to: adminEmail, subject: "Import Jobs Stopped" }, "Failed to send stop import email notification");
+        req.log.error({ error: emailError.message, to: adminEmail, subject: "Import Jobs Stopped" }, "Failed to send stop import email notification");
       }
 
       res.json({ success: true, message: `Import stopped for ${source}` });
@@ -116,8 +117,8 @@ router.post("/stop", resolveUser, requireAdmin, async (req, res) => {
       await importServiceManager.stopAllImports();
 
       // Send email notification
+      const adminEmail = process.env.ADMIN_EMAIL;
       try {
-        const adminEmail = process.env.ADMIN_EMAIL;
         if (adminEmail) {
           const emailTemplate = getImportCompletedEmailTemplate("All Sources", new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }), new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }), 0, 0, 0, 0);
           await mailService.sendTemplateEmail(adminEmail, emailTemplate);
@@ -194,15 +195,16 @@ router.post("/scheduler/start", resolveUser, requireAdmin, async (req, res) => {
   try {
     await importServiceManager.startScheduler();
     // Send email notification
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminName = (req as any).dbUser?.name ?? "Admin";
+    const serverTime = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
+    let providerList = "None";
     try {
-      const adminEmail = process.env.ADMIN_EMAIL;
-      const adminName = (req as any).dbUser?.name ?? "Admin";
       const enabledSources = await db
         .select({ source: importSourceConfigsTable.source })
         .from(importSourceConfigsTable)
         .where(eq(importSourceConfigsTable.isEnabled, true));
-      const providerList = enabledSources.map(row => row.source).join(", ") || "None";
-      const serverTime = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
+      providerList = enabledSources.map(row => row.source).join(", ") || "None";
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
           <h2 style="color: #2c3e50;">Job Import Scheduler Started</h2>
@@ -259,10 +261,10 @@ router.post("/scheduler/stop", resolveUser, requireAdmin, async (req, res) => {
   try {
     await importServiceManager.stopScheduler();
     // Send email notification
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminName = (req as any).dbUser?.name ?? "Admin";
+    const serverTime = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
     try {
-      const adminEmail = process.env.ADMIN_EMAIL;
-      const adminName = (req as any).dbUser?.name ?? "Admin";
-      const serverTime = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
           <h2 style="color: #2c3e50;">Job Import Scheduler Stopped</h2>

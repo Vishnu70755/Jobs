@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { mailService } from "../lib/mail";
 import { logger } from "../lib/logger";
+import { getAdminLoginEmailTemplate, getWelcomeEmailTemplate } from "../lib/email-templates";
 
 const router = Router();
 
@@ -16,7 +17,7 @@ router.post("/clerk", async (req: Request, res: Response, next: NextFunction) =>
     // We only care about session creation events
     if (type !== "session.created") {
       // Acknowledge other events
-      return res.status(20).json({ received: true });
+      return res.status(200).json({ received: true });
     }
 
     const session = data; // Clerk session object
