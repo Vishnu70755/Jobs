@@ -555,3 +555,613 @@ This is an automated message, please do not reply.
     `
   };
 }
+
+/**
+ * Application confirmation email
+ */
+export function getApplicationConfirmationEmailTemplate(userName: string, jobTitle: string, companyName: string, appliedDate: string): { subject: string; html: string; text: string } {
+  return {
+    subject: `Application Confirmed: ${jobTitle} at ${companyName}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <style>
+          .container { line-height: 1.6; color: #333; }
+          .header { color: #2c3e50; border-bottom: 2px solid #2ecc71; padding-bottom: 10px; }
+          .content { margin: 20px 0; }
+          .info-box { background-color: #d4efdf; border: 1px solid #a9dfbf; border-radius: 4px; padding: 15px; margin: 20px 0; }
+          .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #7f8c8d; }
+          .highlight { color: #27ae60; font-weight: bold; }
+        </style>
+        <div class="container">
+          <div class="header">
+            <h1>Application Confirmed!</h1>
+          </div>
+          <p>Hello ${userName},</p>
+          <p>Your application has been successfully submitted!</p>
+          <div class="info-box">
+            <p><strong>Position:</strong> <span class="highlight">${jobTitle}</span></p>
+            <p><strong>Company:</strong> <span class="highlight">${companyName}</span></p>
+            <p><strong>Applied On:</strong> ${appliedDate}</p>
+            <p><strong>Status:</strong> <span class="highlight">Application Submitted</span></p>
+          </div>
+          <p>Our team will review your application and get back to you soon.</p>
+          <div class="footer">
+            <p>© ${new Date().getFullYear()} Vishnu's Job Quest. All rights reserved.</p>
+            <p>This is an automated message, please do not reply.</p>
+          </div>
+        </div>
+      </div>
+    `,
+    text: `
+Application Confirmed: ${jobTitle} at ${companyName}
+
+Hello ${userName},
+
+Your application has been successfully submitted!
+
+Details:
+- Position: ${jobTitle}
+- Company: ${companyName}
+- Applied On: ${appliedDate}
+- Status: Application Submitted
+
+Our team will review your application and get back to you soon.
+
+----------------------------------------
+© ${new Date().getFullYear()} Vishnu's Job Quest. All rights reserved.
+This is an automated message, please do not reply.
+    `
+  };
+}
+
+/**
+ * Application status update email
+ */
+export function getApplicationStatusUpdateEmailTemplate(userName: string, jobTitle: string, companyName: string, status: string, updatedAt: string): { subject: string; html: string; text: string } {
+  return {
+    subject: `Application Status Update: ${jobTitle} at ${companyName}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <style>
+          .container { line-height: 1.6; color: #333; }
+          .header { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+          .content { margin: 20px 0; }
+          .info-box { background-color: #ebf5fb; border: 1px solid #aed6f1; border-radius: 4px; padding: 15px; margin: 20px 0; }
+          .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #7f8c8d; }
+          .status-update { color: #2980b9; font-weight: bold; }
+        </style>
+        <div class="container">
+          <div class="header">
+            <h1>Application Status Update</h1>
+          </div>
+          <p>Hello ${userName},</p>
+          <p>There's an update on your application for the position of ${jobTitle} at ${companyName}:</p>
+          <div class="info-box">
+            <p><strong>Position:</strong> ${jobTitle}</p>
+            <p><strong>Company:</strong> ${companyName}</p>
+            <p><strong>Status:</strong> <span class="status-update">${status}</span></p>
+            <p><strong>Updated On:</strong> ${updatedAt}</p>
+          </div>
+          <p>You can view more details in your dashboard.</p>
+          <div class="footer">
+            <p>© ${new Date().getFullYear()} Vishnu's Job Quest. All rights reserved.</p>
+            <p>This is an automated message, please do not reply.</p>
+          </div>
+        </div>
+      </div>
+    `,
+    text: `
+Application Status Update: ${jobTitle} at ${companyName}
+
+Hello ${userName},
+
+There's an update on your application for the position of ${jobTitle} at ${companyName}:
+
+Details:
+- Position: ${jobTitle}
+- Company: ${companyName}
+- Status: ${status}
+- Updated On: ${updatedAt}
+
+You can view more details in your dashboard.
+
+----------------------------------------
+© ${new Date().getFullYear()} Vishnu's Job Quest. All rights reserved.
+This is an automated message, please do not reply.
+    `
+  };
+}
+
+/**
+ * Interview scheduled email
+ */
+export function getInterviewScheduledEmailTemplate(userName: string, jobTitle: string, companyName: string, interviewDate: string, interviewTime: string, interviewType: string): { subject: string; html: string; text: string } {
+  return {
+    subject: `Interview Scheduled: ${jobTitle} at ${companyName}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <style>
+          .container { line-height: 1.6; color: #333; }
+          .header { color: #2c3e50; border-bottom: 2px solid #9b59b6; padding-bottom: 10px; }
+          .content { margin: 20px 0; }
+          .info-box { background-color: #f4ecf7; border: 1px solid #d7bde2; border-radius: 4px; padding: 20px; margin: 20px 0; }
+          .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #7f8c8d; }
+          .interview-info { color: #8e44ad; font-weight: bold; }
+        </style>
+        <div class="container">
+          <div class="header">
+            <h1>Interview Scheduled!</h1>
+          </div>
+          <p>Hello ${userName},</p>
+          <p>Congratulations! Your interview has been scheduled.</p>
+          <div class="info-box">
+            <p><strong>Position:</strong> ${jobTitle}</p>
+            <p><strong>Company:</strong> ${companyName}</p>
+            <p><strong>Interview Type:</strong> <span class="interview-info">${interviewType}</span></p>
+            <p><strong>Date:</strong> ${interviewDate}</p>
+            <p><strong>Time:</strong> ${interviewTime}</p>
+          </div>
+          <p>Please make sure to be ready 10 minutes before the scheduled time.</p>
+          <div class="footer">
+            <p>© ${new Date().getFullYear()} Vishnu's Job Quest. All rights reserved.</p>
+            <p>This is an automated message, please do not reply.</p>
+          </div>
+        </div>
+      </div>
+    `,
+    text: `
+Interview Scheduled: ${jobTitle} at ${companyName}
+
+Hello ${userName},
+
+Congratulations! Your interview has been scheduled.
+
+Details:
+- Position: ${jobTitle}
+- Company: ${companyName}
+- Interview Type: ${interviewType}
+- Date: ${interviewDate}
+- Time: ${interviewTime}
+
+Please make sure to be ready 10 minutes before the scheduled time.
+
+----------------------------------------
+© ${new Date().getFullYear()} Vishnu's Job Quest. All rights reserved.
+This is an automated message, please do not reply.
+    `
+  };
+}
+
+/**
+ * Interview reminder email
+ */
+export function getInterviewReminderEmailTemplate(userName: string, jobTitle: string, companyName: string, interviewDate: string, interviewTime: string, interviewType: string): { subject: string; html: string; text: string } {
+  return {
+    subject: `Interview Reminder: ${jobTitle} at ${companyName}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <style>
+          .container { line-height: 1.6; color: #333; }
+          .header { color: #2c3e50; border-bottom: 2px solid #e67e22; padding-bottom: 10px; }
+          .content { margin: 20px 0; }
+          .info-box { background-color: #fdf2e9; border: 1px solid #d7bde2; border-radius: 4px; padding: 20px; margin: 20px 0; }
+          .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #7f8c8d; }
+          .reminder-text { color: #d35400; font-weight: bold; }
+        </style>
+        <div class="container">
+          <div class="header">
+            <h1>Interview Reminder</h1>
+          </div>
+          <p>Hello ${userName},</p>
+          <p>This is a reminder about your upcoming interview:</p>
+          <div class="info-box">
+            <p><strong>Position:</strong> ${jobTitle}</p>
+            <p><strong>Company:</strong> ${companyName}</p>
+            <p><strong>Interview Type:</strong> <span class="reminder-text">${interviewType}</span></p>
+            <p><strong>Date:</strong> ${interviewDate}</p>
+            <p><strong>Time:</strong> ${interviewTime}</p>
+          </div>
+          <p>Please make sure to be ready 10 minutes before the scheduled time.</p>
+          <div class="footer">
+            <p>© ${new Date().getFullYear()} Vishnu's Job Quest. All rights reserved.</p>
+            <p>This is an automated message, please do not reply.</p>
+          </div>
+        </div>
+      </div>
+    `,
+    text: `
+Interview Reminder: ${jobTitle} at ${companyName}
+
+Hello ${userName},
+
+This is a reminder about your upcoming interview:
+
+Details:
+- Position: ${jobTitle}
+- Company: ${companyName}
+- Interview Type: ${interviewType}
+- Date: ${interviewDate}
+- Time: ${interviewTime}
+
+Please make sure to be ready 10 minutes before the scheduled time.
+
+----------------------------------------
+© ${new Date().getFullYear()} Vishnu's Job Quest. All rights reserved.
+This is an automated message, please do not reply.
+    `
+  };
+}
+
+/**
+ * Interview cancelled email
+ */
+export function getInterviewCancelledEmailTemplate(userName: string, jobTitle: string, companyName: string, interviewDate: string, interviewTime: string, interviewType: string): { subject: string; html: string; text: string } {
+  return {
+    subject: `Interview Cancelled: ${jobTitle} at ${companyName}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <style>
+          .container { line-height: 1.6; color: #333; }
+          .header { color: #2c3e50; border-bottom: 2px solid #e74c3c; padding-bottom: 10px; }
+          .content { margin: 20px 0; }
+          .info-box { background-color: #fadbd8; border: 1px solid #d5a6a6; border-radius: 4px; padding: 15px; margin: 20px 0; }
+          .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #7f8c8d; }
+          .cancelled-text { color: #e74c3c; font-weight: bold; }
+        </style>
+        <div class="container">
+          <div class="header">
+            <h1>Interview Cancelled</h1>
+          </div>
+          <p>Hello ${userName},</p>
+          <p>We regret to inform you that your interview has been cancelled.</p>
+          <div class="info-box">
+            <p><strong>Position:</strong> ${jobTitle}</p>
+            <p><strong>Company:</strong> ${companyName}</p>
+            <p><strong>Interview Type:</strong> <span class="cancelled-text">${interviewType}</span></p>
+            <p><strong>Date:</strong> ${interviewDate}</p>
+            <p><strong>Time:</strong> ${interviewTime}</p>
+          </div>
+          <p>Please check your dashboard for updates or contact support if you have any questions.</p>
+          <div class="footer">
+            <p>© ${new Date().getFullYear()} Vishnu's Job Quest. All rights reserved.</p>
+            <p>This is an automated message, please do not reply.</p>
+          </div>
+        </div>
+      </div>
+    `,
+    text: `
+Interview Cancelled: ${jobTitle} at ${companyName}
+
+Hello ${userName},
+
+We regret to inform you that your interview has been cancelled.
+
+Details:
+- Position: ${jobTitle}
+- Company: ${companyName}
+- Interview Type: ${interviewType}
+- Date: ${interviewDate}
+- Time: ${interviewTime}
+
+Please check your dashboard for updates or contact support if you have any questions.
+
+----------------------------------------
+© ${new Date().getFullYear()} Vishnu's Job Quest. All rights reserved.
+This is an automated message, please do not reply.
+    `
+  };
+}
+
+/**
+ * Resume upload email
+ */
+export function getResumeUploadEmailTemplate(userName: string, fileName: string, uploadedAt: string): { subject: string; html: string; text: string } {
+  return {
+    subject: `Resume Uploaded Successfully`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <style>
+          .container { line-height: 1.6; color: #333; }
+          .header { color: #2c3e50; border-bottom: 2px solid #27ae60; padding-bottom: 10px; }
+          .content { margin: 20px 0; }
+          .info-box { background-color: #d5f5e3; border: 1px solid #a9dfbf; border-radius: 4px; padding: 15px; margin: 20px 0; }
+          .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #7f8c8d; }
+          .success-text { color: #27ae60; font-weight: bold; }
+        </style>
+        <div class="container">
+          <div class="header">
+            <h1>Resume Uploaded Successfully</h1>
+          </div>
+          <p>Hello ${userName},</p>
+          <p>Your resume has been successfully uploaded to your profile.</p>
+          <div class="info-box">
+            <p><strong>File Name:</strong> ${fileName}</p>
+            <p><strong>Uploaded At:</strong> ${uploadedAt}</p>
+            <p><strong>Status:</strong> <span class="success-text">Upload Successful</span></p>
+          </div>
+          <p>Your resume is now ready to be used for job applications.</p>
+          <div class="footer">
+            <p>© ${new Date().getFullYear()} Vishnu's Job Quest. All rights reserved.</p>
+            <p>This is an automated message, please do not reply.</p>
+          </div>
+        </div>
+      </div>
+    `,
+    text: `
+Resume Uploaded Successfully
+
+Hello ${userName},
+
+Your resume has been successfully uploaded to your profile.
+
+Details:
+- File Name: ${fileName}
+- Uploaded At: ${uploadedAt}
+- Status: Upload Successful
+
+Your resume is now ready to be used for job applications.
+
+----------------------------------------
+© ${new Date().getFullYear()} Vishnu's Job Quest. All rights reserved.
+This is an automated message, please do not reply.
+    `
+  };
+}
+
+/**
+ * Resume update email
+ */
+export function getResumeUpdateEmailTemplate(userName: string, fileName: string, updatedAt: string): { subject: string; html: string; text: string } {
+  return {
+    subject: `Resume Updated Successfully`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <style>
+          .container { line-height: 1.6; color: #333; }
+          .header { color: #2c3e50; border-bottom: 2px solid #27ae60; padding-bottom: 10px; }
+          .content { margin: 20px 0; }
+          .info-box { background-color: #d5f5e3; border: 1px solid #a9dfbf; border-radius: 4px; padding: 15px; margin: 20px 0; }
+          .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #7f8c8d; }
+          .success-text { color: #27ae60; font-weight: bold; }
+        </style>
+        <div class="container">
+          <div class="header">
+            <h1>Resume Updated Successfully</h1>
+          </div>
+          <p>Hello ${userName},</p>
+          <p>Your resume has been successfully updated.</p>
+          <div class="info-box">
+            <p><strong>File Name:</strong> ${fileName}</p>
+            <p><strong>Updated At:</strong> ${updatedAt}</p>
+            <p><strong>Status:</strong> <span class="success-text">Update Successful</span></p>
+          </div>
+          <p>Your resume is now ready to be used for job applications.</p>
+          <div class="footer">
+            <p>© ${new Date().getFullYear()} Vishnu's Job Quest. All rights reserved.</p>
+            <p>This is an automated message, please do not reply.</p>
+          </div>
+        </div>
+      </div>
+    `,
+    text: `
+Resume Updated Successfully
+
+Hello ${userName},
+
+Your resume has been successfully updated.
+
+Details:
+- File Name: ${fileName}
+- Updated At: ${updatedAt}
+- Status: Update Successful
+
+Your resume is now ready to be used for job applications.
+
+----------------------------------------
+© ${new Date().getFullYear()} Vishnu's Job Quest. All rights reserved.
+This is an automated message, please do not reply.
+    `
+  };
+}
+
+/**
+ * ATS analysis email
+ */
+export function getATSAnalysisEmailTemplate(userName: string, jobTitle: string, companyName: string, matchPercentage: number, suggestions: string[]): { subject: string; html: string; text: string } {
+  const suggestionsList = suggestions.map(s => `<li>${s}</li>`).join('');
+
+  return {
+    subject: `ATS Analysis Report: ${jobTitle} at ${companyName}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <style>
+          .container { line-height: 1.6; color: #333; }
+          .header { color: #2c3e50; border-bottom: 2px solid #f39c12; padding-bottom: 10px; }
+          .content { margin: 20px 0; }
+          .info-box { background-color: #fdebd0; border: 1px solid #f5cba7; border-radius: 4px; padding: 20px; margin: 20px 0; }
+          .suggestions-list { margin: 15px 0; padding-left: 20px; }
+          .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #7f8c8d; }
+          .match-score { font-size: 24px; font-weight: bold; }
+          .high { color: #27ae60; }
+          .medium { color: #f39c12; }
+          .low { color: #e74c3c; }
+        </style>
+        <div class="container">
+          <div class="header">
+            <h1>ATS Analysis Report</h1>
+          </div>
+          <p>Hello ${userName},</p>
+          <p>Here's the ATS (Applicant Tracking System) analysis for your resume:</p>
+          <div class="info-box">
+            <p><strong>Position:</strong> ${jobTitle}</p>
+            <p><strong>Company:</strong> ${companyName}</p>
+            <p><strong>Match Score:</strong> <span class="match-score ${matchPercentage >= 80 ? 'high' : matchPercentage >= 60 ? 'medium' : 'low'}">${matchPercentage}%</span></p>
+            ${suggestions.length > 0 ? `
+            <p><strong>Suggestions for Improvement:</strong></p>
+            <ul class="suggestions-list">
+              ${suggestionsList}
+            </ul>
+            ` : ''}
+          </div>
+          <p>Improving your ATS score can increase your chances of getting noticed by recruiters.</p>
+          <div class="footer">
+            <p>© ${new Date().getFullYear()} Vishnu's Job Quest. All rights reserved.</p>
+            <p>This is an automated message, please do not reply.</p>
+          </div>
+        </div>
+      </div>
+    `,
+    text: `
+ATS Analysis Report: ${jobTitle} at ${companyName}
+
+Hello ${userName},
+
+Here's the ATS (Applicant Tracking System) analysis for your resume:
+
+Details:
+- Position: ${jobTitle}
+- Company: ${companyName}
+- Match Score: ${matchPercentage}%
+${suggestions.length > 0 ? `
+Suggestions for Improvement:
+${suggestions.map(s => `- ${s}`).join('\n')
+}` : ''}
+
+Improving your ATS score can increase your chances of getting noticed by recruiters.
+
+----------------------------------------
+© ${new Date().getFullYear()} Vishnu's Job Quest. All rights reserved.
+This is an automated message, please do not reply.
+    `
+  };
+}
+
+/**
+ * Welcome email
+ */
+export function getWelcomeEmailTemplate(userName: string): { subject: string; html: string; text: string } {
+  return {
+    subject: `Welcome to Vishnu's Job Quest, ${userName}!`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <style>
+          .container { line-height: 1.6; color: #333; }
+          .header { color: #2c3e50; border-bottom: 2px solid #2ecc71; padding-bottom: 10px; }
+          .content { margin: 20px 0; }
+          .info-box { background-color: #d4efdf; border: 1px solid #a9dfbf; border-radius: 4px; padding: 20px; margin: 20px 0; }
+          .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #7f8c8d; }
+          .highlight { color: #27ae60; font-weight: bold; }
+        </style>
+        <div class="container">
+          <div class="header">
+            <h1>Welcome to Vishnu's Job Quest!</h1>
+          </div>
+          <p>Hello ${userName},</p>
+          <p>Welcome to Vishnu's Job Quest - your ultimate job search companion!</p>
+          <div class="info-box">
+            <p><strong>Welcome Benefits:</strong></p>
+            <ul>
+              <li>Access to thousands of job listings from top companies</li>
+              <li>Resume building and optimization tools</li>
+              <li>Application tracking and management</li>
+              <li>Interview scheduling and reminders</li>
+              <li>Career resources and advice</li>
+            </ul>
+          </div>
+          <p>Get started by completing your profile and uploading your resume.</p>
+          <div class="footer">
+            <p>© ${new Date().getFullYear()} Vishnu's Job Quest. All rights reserved.</p>
+            <p>This is an automated message, please do not reply.</p>
+          </div>
+        </div>
+      </div>
+    `,
+    text: `
+Welcome to Vishnu's Job Quest, ${userName}!
+
+Hello ${userName},
+
+Welcome to Vishnu's Job Quest - your ultimate job search companion!
+
+Welcome Benefits:
+- Access to thousands of job listings from top companies
+- Resume building and optimization tools
+- Application tracking and management
+- Interview scheduling and reminders
+- Career resources and advice
+
+Get started by completing your profile and uploading your resume.
+
+----------------------------------------
+© ${new Date().getFullYear()} Vishnu's Job Quest. All rights reserved.
+This is an automated message, please do not reply.
+    `
+  };
+}
+
+/**
+ * Login email
+ */
+export function getLoginEmailTemplate(userName: string, loginTime: string, ipAddress: string): { subject: string; html: string; text: string } {
+  return {
+    subject: `Login Notification - Vishnu's Job Quest`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <style>
+          .container { line-height: 1.6; color: #333; }
+          .header { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+          .content { margin: 20px 0; }
+          .info-box { background-color: #ebf5fb; border: 1px solid #aed6f1; border-radius: 4px; padding: 15px; margin: 20px 0; }
+          .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #7f8c8d; }
+          .alert-text { color: #e74c3c; font-weight: bold; }
+        </style>
+        <div class="container">
+          <div class="header">
+            <h1>Login Notification</h1>
+          </div>
+          <p>Hello ${userName},</p>
+          <p>We detected a sign-in to your Vishnu's Job Quest account.</p>
+          <div class="info-box">
+            <p><strong>Time:</strong> ${loginTime}</p>
+            <p><strong>IP Address:</strong> ${ipAddress}</p>
+            <p><strong>Location:</strong> New Sign-in</p>
+          </div>
+          <p>If this was you, you can safely ignore this email.</p>
+          <p>If this wasn't you, please secure your account immediately:</p>
+          <ul>
+            <li>Change your password</li>
+            <li>Enable two-factor authentication</li>
+            <li>Contact our support team</li>
+          </ul>
+          <div class="footer">
+            <p>© ${new Date().getFullYear()} Vishnu's Job Quest. All rights reserved.</p>
+            <p>This is an automated message, please do not reply.</p>
+          </div>
+        </div>
+      </div>
+    `,
+    text: `
+Login Notification - Vishnu's Job Quest
+
+Hello ${userName},
+
+We detected a sign-in to your Vishnu's Job Quest account.
+
+Details:
+- Time: ${loginTime}
+- IP Address: ${ipAddress}
+- Location: New Sign-in
+
+If this was you, you can safely ignore this email.
+
+If this wasn't you, please secure your account immediately:
+- Change your password
+- Enable two-factor authentication
+- Contact our support team
+
+----------------------------------------
+© ${new Date().getFullYear()} Vishnu's Job Quest. All rights reserved.
+This is an automated message, please do not reply.
+    `
+  };
+}

@@ -10,7 +10,7 @@ import {
   getSourceDisabledEmailTemplate,
   getSourceEnabledEmailTemplate
 } from "../../lib/email-templates";
-import { ImportSourceEnum } from "@workspace/db";
+import { importSourceEnum } from "@workspace/db";
 
 const router = Router();
 
@@ -31,7 +31,7 @@ router.post("/", resolveUser, requireAdmin, async (req, res) => {
     const { source, isEnabled, intervalMinutes, config } = req.body;
 
     // Validate source enum
-    if (!source || !Object.values(ImportSourceEnum).includes(source as ImportSourceEnum)) {
+    if (!source || !Object.values(importSourceEnum).includes(source as typeof importSourceEnum)) {
       return res.status(400).json({ error: "Invalid source" });
     }
 
@@ -39,7 +39,7 @@ router.post("/", resolveUser, requireAdmin, async (req, res) => {
     const existing = await db
       .select()
       .from(importSourceConfigsTable)
-      .where(eq(importSourceConfigsTable.source, source as ImportSourceEnum))
+      .where(eq(importSourceConfigsTable.source, source as typeof importSourceEnum))
       .limit(1);
 
     if (existing.length > 0) {
@@ -50,7 +50,7 @@ router.post("/", resolveUser, requireAdmin, async (req, res) => {
     const [newSource] = await db
       .insert(importSourceConfigsTable)
       .values({
-        source: source as ImportSourceEnum,
+        source: source as typeof importSourceEnum,
         isEnabled: isEnabled ?? true,
         intervalMinutes: intervalMinutes ?? 60,
         config: config ?? {},
