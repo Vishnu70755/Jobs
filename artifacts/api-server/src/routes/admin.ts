@@ -308,6 +308,6 @@ async function retryEmail(emailLog: typeof emailLogsTable.$inferSelect): Promise
   } catch (err) {
     return { success: false, error: err.message };
   }
-});
+}
 
 export default router;

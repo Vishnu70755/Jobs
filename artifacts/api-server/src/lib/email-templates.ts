@@ -305,7 +305,7 @@ export function getImportCompletedEmailTemplate(sourceName: string, startedAt: s
             <p>• Duplicate Jobs Skipped: <span class="warning">${duplicates}</span></p>
             <p>• Failed Jobs: <span class="error">${failed}</span></p>
           </div>
-          <div class/footer>
+          <div class="footer">
             <p>© ${new Date().getFullYear()} Vishnu's Job Quest. All rights reserved.</p>
             <p>This is an automated message, please do not reply.</p>
           </div>
@@ -356,7 +356,7 @@ export function getImportFailedEmailTemplate(sourceName: string, errorMessage: s
             <h1>Job Import Failed</h1>
           </div>
           <p>The job import process has failed for the following source:</p>
-          <div class="error-box>
+          <div class="error-box">
             <p><strong>Source:</strong> ${sourceName}</p>
             <p><strong>Started At:</strong> ${startedAt}</p>
             <p><strong>Error:</strong> <span class="error-text">${errorMessage}</span></p>
@@ -413,4 +413,4 @@ export function getSourceAddedEmailTemplate(sourceName: string, sourceType: stri
             <p><strong>Source Type:</strong> ${sourceType}</p>
             <p><strong>Added At:</strong> ${addedAt}</p>
             <p><strong>Status:</strong> Active</p>
-          </div
+          </div>
