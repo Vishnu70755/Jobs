@@ -3,8 +3,8 @@ import { clerkClient } from "@clerk/express";
 import { db, usersTable, applicationsTable, jobsTable, resumesTable, atsReportsTable, importJobsTable, importSourceConfigsTable, savedJobsTable } from "@workspace/db";
 import { eq, ilike, desc, sql, and } from "drizzle-orm";
 import { resolveUser, requireAdmin } from "../middlewares/auth";
-import importRoutes from "./import";
-import sourceRoutes from "./source"; // <-- added
+import importRoutes from "./admin/import";
+import sourceRoutes from "./admin/source"; // <-- added
 
 const router = Router();
 
