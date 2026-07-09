@@ -12,15 +12,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/layout";
 import NotFound from "@/pages/not-found";
 
-// Assistive text component for screen readers only
-function AssistiveText({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="sr-only not-sr-only-focusable:not-sr-only">
-      {children}
-    </span>
-  );
-}
-
+// Pages
 import Dashboard from "@/pages/dashboard";
 import Jobs from "@/pages/jobs";
 import JobDetail from "@/pages/job-detail";
@@ -34,6 +26,7 @@ import Notifications from "@/pages/notifications";
 import Profile from "@/pages/profile";
 import Admin from "@/pages/admin";
 import AtsBuilder from "@/pages/ats-builder";
+import Sources from "@/pages/admin/sources"; // New import
 
 const queryClient = new QueryClient();
 
@@ -53,7 +46,7 @@ function stripBase(path: string): string {
     : path;
 }
 
-if (!clerkPubKey) {
+if (!clerkPubKkey) {
   throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY in .env file");
 }
 
@@ -82,61 +75,61 @@ function Home() {
       </a>
 
       <div className="relative min-h-screen w-full flex items-center justify-center bg-background text-foreground">
-      <div className="absolute top-5 right-6 flex items-center gap-3">
-        <a
-          href="/sign-in"
-          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          Sign In
-        </a>
-        <a
-          href="/admin-login"
-          className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          Admin
-        </a>
-      </div>
-
-      <div className="text-center space-y-6 max-w-2xl px-4">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border text-xs text-muted-foreground mb-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-          AI-Powered Job Search Platform
-        </div>
-        <h1 className="text-5xl md:text-7xl font-bold tracking-tighter">JobQuest</h1>
-        <p className="text-xl text-muted-foreground">
-          The command center for serious job seekers. Track, analyze, and win your next role
-          with precision.
-        </p>
-        <div className="flex justify-center gap-4 pt-4">
-          <a
-            href="/sign-up"
-            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground shadow hover:bg-primary/90 h-10 px-8 py-2"
-          >
-            Get Started Free
-          </a>
+        <div className="absolute top-5 right-6 flex items-center gap-3">
           <a
             href="/sign-in"
-            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-10 px-8 py-2"
+            className="text-sm text-muted-foreground hover:text-foreground hover:text-foreground transition-colors"
           >
             Sign In
           </a>
+          <a
+            href="/admin-login"
+            className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Admin
+          </a>
         </div>
 
-        <div className="grid grid-cols-3 gap-6 pt-8 text-center">
-          {[
-            { n: "20+", label: "Live Jobs" },
-            { n: "AI", label: "Career Assistant" },
-            { n: "ATS", label: "Resume Scorer" },
-          ].map((item) => (
-            <div key={item.n} className="space-y-1">
-              <p className="text-2xl font-bold text-primary">{item.n}</p>
-              <p className="text-xs text-muted-foreground">{item.label}</p>
-            </div>
-          ))}
+        <div className="text-center space-y-6 max-w-2xl px-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border text-xs text-muted-foreground mb-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+            AI-Powered Job Search Platform
+          </div>
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tighter">JobQuest</h1>
+          <p className="text-xl text-muted-foreground">
+            The command center for serious job seekers. Track, analyze, and win your next role
+            with precision.
+          </p>
+          <div className="flex justify-center gap-4 pt-4">
+            <a
+              href="/sign-up"
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground shadow hover:bg-primary/90 h-10 px-8 py-2"
+            >
+              Get Started Free
+            </a>
+            <a
+              href="/sign-in"
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-10 px-8 py-2"
+            >
+              Sign In
+            </a>
+          </div>
+
+          <div className="grid grid-cols-3 gap-6 pt-8 text-center">
+            {[
+              { n: "20+", label: "Live Jobs" },
+              { n: "AI", label: "Career Assistant" },
+              { n: "ATS", label: "Resume Scorer" },
+            ].map((item) => (
+              <div key={item.n} className="space-y-1">
+                <p className="text-2xl font-bold text-primary">{item.n}</p>
+                <p className="text-xs text-muted-foreground">{item.label}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
     </>
   );
 }
@@ -263,6 +256,7 @@ function ClerkProviderWithRoutes() {
           <Route path="/notifications"><ProtectedRoute><Notifications /></ProtectedRoute></Route>
           <Route path="/profile"><ProtectedRoute><Profile /></ProtectedRoute></Route>
           <Route path="/admin"><ProtectedRoute><Admin /></ProtectedRoute></Route>
+          <Route path="/admin/sources"><ProtectedRoute><Sources /></ProtectedRoute></Route>
           <Route path="/ats-builder"><ProtectedRoute><AtsBuilder /></ProtectedRoute></Route>
 
           <Route component={NotFound} />

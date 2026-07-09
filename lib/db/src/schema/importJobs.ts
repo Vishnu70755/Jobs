@@ -55,9 +55,14 @@ export const importJobStatsTable = pgTable("import_job_stats", {
 
 export const importSourceConfigsTable = pgTable("import_source_configs", {
   id: serial("id").primaryKey(),
-  source: importSourceEnum("source").notNull().unique(),
+  name: text("name").notNull().unique(),
+  sourceType: text("source_type").notNull().default("Job Board"),
+  url: text("url"),
+  country: text("country"),
+  category: text("category"),
+  apiKey: text("api_key"),
+  notes: text("notes"),
   isEnabled: boolean("is_enabled").notNull().default(true),
-  config: jsonb("config").notNull().default({}),
   lastRun: timestamp("last_run"),
   nextScheduledRun: timestamp("next_scheduled_run"),
   intervalMinutes: integer("interval_minutes").notNull().default(60),

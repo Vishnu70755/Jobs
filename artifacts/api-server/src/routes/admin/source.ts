@@ -17,7 +17,7 @@ const router = Router();
 // GET /admin/source - List all sources
 router.get("/", resolveUser, requireAdmin, async (req, res) => {
   try {
-    const sources = await db.select().from(importSourceConfigsTable).orderBy(importSourceConfigsTable.source);
+    const sources = await db.select().from(importSourceConfigsTable).orderBy(importSourceConfigsTable.name);
     res.json({ sources });
   } catch (err) {
     console.error(err);
@@ -28,18 +28,21 @@ router.get("/", resolveUser, requireAdmin, async (req, res) => {
 // POST /admin/source - Add a new source
 router.post("/", resolveUser, requireAdmin, async (req, res) => {
   try {
-    const { source, isEnabled, intervalMinutes, config } = req.body;
+    const { name, sourceType, url, country, category, apiKey, notes, isEnabled, intervalMinutes } = req.body;
 
-    // Validate source enum
-    if (!source || !Object.values(importSourceEnum).includes(source as typeof importSourceEnum)) {
-      return res.status(400).json({ error: "Invalid source" });
+    // Validate required fields
+    if (!name) {
+      return res.status(400).json({ error: "Source name is required" });
+    }
+    if (!sourceType) {
+      return res.status(400).json({ error: "Source type is required" });
     }
 
     // Check if source already exists
     const existing = await db
       .select()
       .from(importSourceConfigsTable)
-      .where(eq(importSourceConfigsTable.source, source as typeof importSourceEnum))
+      .where(eq(importSourceConfigsTable.name, name))
       .limit(1);
 
     if (existing.length > 0) {
@@ -50,10 +53,15 @@ router.post("/", resolveUser, requireAdmin, async (req, res) => {
     const [newSource] = await db
       .insert(importSourceConfigsTable)
       .values({
-        source: source as typeof importSourceEnum,
+        name,
+        sourceType: sourceType ?? "Job Board",
+        url: url ?? null,
+        country: country ?? null,
+        category: category ?? null,
+        apiKey: apiKey ?? null,
+        notes: notes ?? null,
         isEnabled: isEnabled ?? true,
         intervalMinutes: intervalMinutes ?? 60,
-        config: config ?? {},
       })
       .returning();
 
@@ -62,8 +70,8 @@ router.post("/", resolveUser, requireAdmin, async (req, res) => {
       const adminEmail = process.env.ADMIN_EMAIL;
       if (adminEmail) {
         const emailTemplate = getSourceAddedEmailTemplate(
-          newSource.source,
-          newSource.source, // sourceType same as source for now; we might have a separate type field but not in schema
+          newSource.name,
+          newSource.sourceType,
           new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
         );
         await mailService.sendTemplateEmail(adminEmail, emailTemplate);
@@ -87,7 +95,7 @@ router.patch("/:id", resolveUser, requireAdmin, async (req, res) => {
       return res.status(400).json({ error: "Invalid source ID" });
     }
 
-    const { isEnabled, intervalMinutes, config } = req.body;
+    const { name, sourceType, url, country, category, apiKey, notes, isEnabled, intervalMinutes } = req.body;
 
     // Fetch existing source
     const [existing] = await db
@@ -104,10 +112,15 @@ router.patch("/:id", resolveUser, requireAdmin, async (req, res) => {
     const [updatedSource] = await db
       .update(importSourceConfigsTable)
       .set({
-        isEnabled: isEnabled ?? existing.isEnabled,
-        intervalMinutes: intervalMinutes ?? existing.intervalMinutes,
-        // Only update config if provided
-        ...(config !== undefined && { config }),
+        name: name ?? undefined,
+        sourceType: sourceType ?? undefined,
+        url: url ?? undefined,
+        country: country ?? undefined,
+        category: category ?? undefined,
+        apiKey: apiKey ?? undefined,
+        notes: notes ?? undefined,
+        isEnabled: isEnabled ?? undefined,
+        intervalMinutes: intervalMinutes ?? undefined,
         updatedAt: new Date(),
       })
       .where(eq(importSourceConfigsTable.id, id))
@@ -118,8 +131,8 @@ router.patch("/:id", resolveUser, requireAdmin, async (req, res) => {
       const adminEmail = process.env.ADMIN_EMAIL;
       if (adminEmail) {
         const emailTemplate = getSourceUpdatedEmailTemplate(
-          updatedSource.source,
-          updatedSource.source, // sourceType same as source
+          updatedSource.name,
+          updatedSource.sourceType,
           new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
         );
         await mailService.sendTemplateEmail(adminEmail, emailTemplate);
@@ -162,8 +175,8 @@ router.delete("/:id", resolveUser, requireAdmin, async (req, res) => {
       const adminEmail = process.env.ADMIN_EMAIL;
       if (adminEmail) {
         const emailTemplate = getSourceDeletedEmailTemplate(
-          existing.source,
-          existing.source, // sourceType same as source
+          existing.name,
+          existing.sourceType,
           new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
         );
         await mailService.sendTemplateEmail(adminEmail, emailTemplate);
@@ -203,8 +216,8 @@ router.patch("/:id/enable", resolveUser, requireAdmin, async (req, res) => {
       const adminEmail = process.env.ADMIN_EMAIL;
       if (adminEmail) {
         const emailTemplate = getSourceEnabledEmailTemplate(
-          updatedSource.source,
-          updatedSource.source, // sourceType same as source
+          updatedSource.name,
+          updatedSource.sourceType,
           new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
         );
         await mailService.sendTemplateEmail(adminEmail, emailTemplate);
@@ -244,8 +257,8 @@ router.patch("/:id/disable", resolveUser, requireAdmin, async (req, res) => {
       const adminEmail = process.env.ADMIN_EMAIL;
       if (adminEmail) {
         const emailTemplate = getSourceDisabledEmailTemplate(
-          updatedSource.source,
-          updatedSource.source, // sourceType same as source
+          updatedSource.name,
+          updatedSource.sourceType,
           new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
         );
         await mailService.sendTemplateEmail(adminEmail, emailTemplate);
