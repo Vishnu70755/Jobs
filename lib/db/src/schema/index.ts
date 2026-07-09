@@ -7,3 +7,4 @@ export * from "./atsReports";
 export * from "./aiChats";
 export * from "./notifications";
 export * from "./importJobs";
+export * from "./emailLogs";
