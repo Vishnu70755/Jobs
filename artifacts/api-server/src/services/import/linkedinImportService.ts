@@ -30,6 +30,13 @@ export class LinkedInImportService extends BaseImportService {
 
     // Return mock data for Indian jobs
     // In production, replace this with actual scraping logic
+    return this.generateLinkedInMockData();
+  }
+
+  /**
+   * Generate LinkedIn-specific mock data
+   */
+  protected generateLinkedInMockData(): Array<any> {
     return [
       {
         title: "Senior Software Engineer",
@@ -217,7 +224,7 @@ export class LinkedInImportService extends BaseImportService {
         title: "Quality Assurance Engineer",
         company: "IBM",
         location: "Kolkata, West Bengal",
-        workMode: "onsite",
+        workMode: "onsite": "onsite",
         experienceLevel: "entry-level",
         salaryMin: 400000,
         salaryMax: 600000,
@@ -309,7 +316,7 @@ export class LinkedInImportService extends BaseImportService {
         description: "Develop mobile games using Unity and C#.",
         skills: ["Unity", "C#", "Game Design", "3D Modeling", "Cocos2d-x"],
         applyUrl: "https://linkedin.com/jobs/view/123475",
-        postedAt: new Date(Date.now() - 18 * 60 * 60 * 1000), // 18 hours ago
+        posted at: new Date(Date.now() - 18 * 60 * 60 * 1000), // 18 hours ago
       },
       {
         title: "Network Security Engineer",

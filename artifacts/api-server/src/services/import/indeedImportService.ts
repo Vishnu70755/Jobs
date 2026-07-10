@@ -18,6 +18,13 @@ export class IndeedImportService extends BaseImportService {
 
     // Return mock data for Indian jobs
     // In production, replace this with actual scraping logic
+    return this.generateIndeedMockData();
+  }
+
+  /**
+   * Generate Indeed-specific mock data
+   */
+  protected generateIndeedMockData(): Array<any> {
     return [
       // IBM India (10 jobs)
       {
@@ -366,7 +373,7 @@ export class IndeedImportService extends BaseImportService {
         location: "Chennai, Tamil Nadu",
         workMode: "onsite",
         experienceLevel: "mid-level",
-        sliderMin: 700000,
+        salaryMin: 700000, // Fixed the sliderMin typo from original
         salaryMax: 1000000,
         salaryCurrency: "INR",
         description: "Assess and manage financial and operational risks.",

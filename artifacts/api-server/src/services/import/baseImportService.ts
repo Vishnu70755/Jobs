@@ -26,6 +26,15 @@ export abstract class BaseImportService {
   abstract scrape(): Promise<Array<any>>;
 
   /**
+   * Generate mock data for development/testing
+   * Override this method in subclasses to provide source-specific mock data
+   */
+  protected generateMockData(): Array<any> {
+    // Default implementation - subclasses should override
+    return [];
+  }
+
+  /**
    * Start the import process for this source
    */
   async startImport(): Promise<void> {
@@ -149,16 +158,6 @@ export abstract class BaseImportService {
         const completedAt = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
 
         if (success) {
-          const emailTemplate = getImportCompletedEmailTemplate(
-            this.source,
-            startedAt,
-            completedAt,
-            // We need to get the stats from the importJob record or compute again.
-            // For simplicity, we can fetch the updated importJob.
-            // Let's fetch it.
-            0, 0, 0, 0 // placeholder, we will update after fetching
-          );
-
           // Fetch the updated importJob to get actual numbers
           const [jobRecord] = await db
             .select()
@@ -166,7 +165,7 @@ export abstract class BaseImportService {
             .where(eq(importJobsTable.id, importJob.id));
 
           if (jobRecord) {
-            const finalTemplate = getImportCompletedEmailTemplate(
+            const emailTemplate = getImportCompletedEmailTemplate(
               this.source,
               startedAt,
               completedAt,
@@ -175,11 +174,17 @@ export abstract class BaseImportService {
               jobRecord.duplicateJobsSkipped ?? 0,
               jobRecord.failedJobs ?? 0
             );
-await mailService.sendTemplateEmail(adminEmail, finalTemplate, "import_completed");
-            logger.info({ to: adminEmail, subject: finalTemplate.subject }, "Import completion email sent successfully");
+            await mailService.sendTemplateEmail(adminEmail, emailTemplate, "import_completed");
+            logger.info({ to: adminEmail, subject: emailTemplate.subject }, "Import completion email sent successfully");
           } else {
-            // fallback to placeholder
-await mailService.sendTemplateEmail(adminEmail, emailTemplate, "import_completed");
+            // Fallback with placeholder data
+            const emailTemplate = getImportCompletedEmailTemplate(
+              this.source,
+              startedAt,
+              completedAt,
+              0, 0, 0, 0
+            );
+            await mailService.sendTemplateEmail(adminEmail, emailTemplate, "import_completed");
             logger.info({ to: adminEmail, subject: emailTemplate.subject }, "Import completion email sent (placeholder)");
           }
         } else {
@@ -188,7 +193,7 @@ await mailService.sendTemplateEmail(adminEmail, emailTemplate, "import_completed
             errorMessage,
             startedAt
           );
-await mailService.sendTemplateEmail(adminEmail, emailTemplate, "import_failed");
+          await mailService.sendTemplateEmail(adminEmail, emailTemplate, "import_failed");
           logger.info({ to: adminEmail, subject: emailTemplate.subject }, "Import failure email sent successfully");
         }
       } else {
