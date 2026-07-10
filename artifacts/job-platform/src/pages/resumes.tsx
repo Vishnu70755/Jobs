@@ -40,8 +40,11 @@ export default function Resumes() {
   const [fileContent, setFileContent] = useState<string>("");
   const [dragging, setDragging] = useState(false);
 
-  const invalidate = () =>
+  const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: getListResumesQueryKey() });
+    queryClient.invalidateQueries({ queryKey: ['profile'] });
+    queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
+};
 
   function openAdd() {
     setForm({ name: "", isDefault: false });
