@@ -3,6 +3,7 @@ import {
   useGetApplicationBoard,
   useCreateApplication,
   getGetApplicationBoardQueryKey,
+  getGetAnalyticsOverviewQueryKey
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -58,6 +59,7 @@ export default function Tracker() {
           setShowAdd(false);
           setForm({ company: "", role: "", source: "" });
           queryClient.invalidateQueries({ queryKey: getGetApplicationBoardQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getGetAnalyticsOverviewQueryKey() });
         },
       }
     );

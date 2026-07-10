@@ -2,7 +2,7 @@ import { useGetJobStats, useGetAnalyticsOverview, useGetApplicationBoard } from 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase, Zap, Wifi, Globe, Building2, TrendingUp, BarChart2, CheckCircle } from "lucide-react";
+import { Briefcase, Zap, Wifi, Globe, Building2, TrendingUp, BarChart2, CheckCircle, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
 
@@ -37,6 +37,7 @@ export default function Dashboard() {
   const activeApps = board?.columns
     ?.filter(c => !["rejected", "declined", "ghosted", "accepted"].includes(c.status ?? ""))
     ?.reduce((sum, c) => sum + (c.count ?? 0), 0) ?? 0;
+  const savedJobs = board?.columns?.find(c => c.status === "saved")?.count ?? 0;
 
   return (
     <div className="p-8 space-y-8 max-w-7xl mx-auto w-full">
@@ -79,7 +80,7 @@ export default function Dashboard() {
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Your Applications</h2>
         {loadingOverview ? (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
+            {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -99,6 +100,15 @@ export default function Dashboard() {
                 </div>
                 <p className="text-2xl font-bold text-purple-500">{activeApps}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">Active Pipeline</p>
+              </CardContent>
+            </Card>
+            <Card className="hover:border-primary/40 transition-colors">
+              <CardContent className="p-5">
+                <div className="w-9 h-9 rounded-lg bg-slate-400/10 flex items-center justify-center mb-3">
+                  <Save className="w-4.5 h-4.5 text-slate-400" style={{ width: "18px", height: "18px" }} />
+                </div>
+                <p className="text-2xl font-bold text-slate-400">{savedJobs}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Saved Jobs</p>
               </CardContent>
             </Card>
             <Card className="hover:border-primary/40 transition-colors">

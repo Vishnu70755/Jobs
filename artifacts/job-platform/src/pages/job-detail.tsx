@@ -1,4 +1,4 @@
-import { useGetJob, useGetSimilarJobs, useSaveJob, useUnsaveJob, useCreateApplication, useListApplications, useDeleteApplication, getListApplicationsQueryKey, getGetJobQueryKey, getGetApplicationBoardQueryKey } from "@workspace/api-client-react";
+import { useGetJob, useGetSimilarJobs, useSaveJob, useUnsaveJob, useCreateApplication, useListApplications, useDeleteApplication, getListApplicationsQueryKey, getGetJobQueryKey, getGetApplicationBoardQueryKey, getGetAnalyticsOverviewQueryKey } from "@workspace/api-client-react";
 import { useParams, Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -84,6 +84,7 @@ export default function JobDetail() {
           queryClient.invalidateQueries({ queryKey: getGetJobQueryKey(id) });
           queryClient.invalidateQueries({ queryKey: getListApplicationsQueryKey() });
           queryClient.invalidateQueries({ queryKey: getGetApplicationBoardQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getGetAnalyticsOverviewQueryKey() });
           toast({ title: "Application tracked!", description: `${job.title} at ${job.company} added to your tracker.` });
         },
         onError: (error: any) => {
@@ -114,6 +115,7 @@ export default function JobDetail() {
           queryClient.invalidateQueries({ queryKey: getGetJobQueryKey(id) });
           queryClient.invalidateQueries({ queryKey: getListApplicationsQueryKey() });
           queryClient.invalidateQueries({ queryKey: getGetApplicationBoardQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getGetAnalyticsOverviewQueryKey() });
           toast({ title: "Application untracked" });
         },
         onError: () => toast({ title: "Failed to untrack", variant: "destructive" }),

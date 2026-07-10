@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Users, Briefcase, FileText, BarChart2, TrendingUp, ShieldAlert, Search, UserX, Lock, Loader2,
+  Users, Briefcase, FileText, BarChart2, TrendingUp, ShieldAlert, Search, UserX, Lock, Loader2, Save,
 } from "lucide-react";
 import { useImportStatusQuery, useImportStatsQuery, useStartImportMutation, useStopImportMutation, ImportStatus, ImportStats } from "@/hooks/useImportControl";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
@@ -172,6 +172,11 @@ const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
         }
         return count;
       }, 0)
+    : 0;
+
+  // Calculate total saved jobs across all users
+  const totalSavedJobs = Array.isArray(usersData?.users)
+    ? usersData.users.reduce((sum, user) => sum + (user.savedJobsCount ?? 0), 0)
     : 0;
 
   // Calculate next 7:00 AM IST
@@ -534,13 +539,14 @@ const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
       {/* Stats grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {loadingStats ? (
-          Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)
+          Array.from({ length: 9 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)
         ) : (
           <>
             <StatCard icon={Users}     label="Total Users"      value={stats?.totalUsers ?? 0}        sub={`+${stats?.newUsersThisWeek ?? 0} this week`} />
             <StatCard icon={Users}     label="Active Users"     value={stats?.activeUsers ?? 0} />
             <StatCard icon={Briefcase} label="Total Jobs"       value={stats?.totalJobs ?? 0} />
             <StatCard icon={BarChart2} label="Applications"     value={stats?.totalApplications ?? 0} sub={`+${stats?.applicationsThisWeek ?? 0} this week`} />
+            <StatCard icon={Save}      label="Saved Jobs"       value={totalSavedJobs} />
             <StatCard icon={FileText}  label="Resumes"          value={stats?.totalResumes ?? 0} />
             <StatCard icon={TrendingUp}label="ATS Reports"      value={stats?.totalAtsReports ?? 0} />
             <StatCard icon={TrendingUp}label="New Users / Week" value={stats?.newUsersThisWeek ?? 0} />

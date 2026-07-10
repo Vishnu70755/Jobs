@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useListJobs, useGetJob, useCreateApplication, useSaveJob, useUnsaveJob, useListApplications, getGetJobQueryKey, getGetApplicationBoardQueryKey, getListApplicationsQueryKey } from "@workspace/api-client-react";
+import { useListJobs, useGetJob, useCreateApplication, useSaveJob, useUnsaveJob, useListApplications, getGetJobQueryKey, getGetApplicationBoardQueryKey, getListApplicationsQueryKey, getGetAnalyticsOverviewQueryKey } from "@workspace/api-client-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -149,6 +149,7 @@ export default function Jobs() {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getGetApplicationBoardQueryKey() });
           queryClient.invalidateQueries({ queryKey: getGetJobQueryKey(selectedJob.id) });
+          queryClient.invalidateQueries({ queryKey: getGetAnalyticsOverviewQueryKey() });
           toast({ title: "Application tracked!", description: `${selectedJob.title} at ${selectedJob.company} added to your tracker.` });
           setApplying(false);
         },
