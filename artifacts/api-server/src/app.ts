@@ -59,8 +59,8 @@ app.use((err: any, req: any, res: any, next: any) => {
           req.path || "Unknown"
         );
         // Send email (fire and forget, but log if fails)
-        mailService.sendTemplateEmail(adminEmail, emailTemplate).catch(emailErr => {
-          logger.error({ err: emailErr }, "Failed to send system error email");
+// Line 62 — system error (5xx) notification
+mailService.sendTemplateEmail(adminEmail, emailTemplate, "system_error").catch(emailErr => {          logger.error({ err: emailErr }, "Failed to send system error email");
         });
       }
     } catch (emailErr) {

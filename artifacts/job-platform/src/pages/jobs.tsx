@@ -90,20 +90,43 @@ export default function Jobs() {
   const handleToggleSave = () => {
     if (!selectedJob) return;
 
-    if (selectedJob.isSaved) {
-      unsaveJobMutation.mutate({ id: selectedJob.id }, {
+    const job = selectedJob;
+    const newSaved = !job.isSaved;
+
+    // Optimistically update the query cache for this job
+    queryClient.setQueryData(getGetJobQueryKey(job.id), (old: any) => {
+      if (!old) return old;
+      return { ...old, isSaved: newSaved };
+    });
+
+    if (newSaved) {
+      saveJobMutation.mutate({ id: job.id }, {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getGetJobQueryKey(selectedJob.id) });
-          queryClient.invalidateQueries({ queryKey: getGetApplicationBoardQueryKey() });
-          toast({ title: "Job removed from saved list" });
+          queryClient.invalidateQueries({ queryKey: getGetJobQueryKey(job.id) });
+          toast({ title: "Job saved successfully" });
+        },
+        onError: (err) => {
+          // rollback
+          queryClient.setQueryData(getGetJobQueryKey(job.id), (old: any) => {
+            if (!old) return old;
+            return { ...old, isSaved: !newSaved };
+          });
+          toast({ title: "Failed to save job", variant: "destructive" });
         }
       });
     } else {
-      saveJobMutation.mutate({ id: selectedJob.id }, {
+      unsaveJobMutation.mutate({ id: job.id }, {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getGetJobQueryKey(selectedJob.id) });
-          queryClient.invalidateQueries({ queryKey: getGetApplicationBoardQueryKey() });
-          toast({ title: "Job saved successfully" });
+          queryClient.invalidateQueries({ queryKey: getGetJobQueryKey(job.id) });
+          toast({ title: "Job removed from saved list" });
+        },
+        onError: (err) => {
+          // rollback
+          queryClient.setQueryData(getGetJobQueryKey(job.id), (old: any) => {
+            if (!old) return old;
+            return { ...old, isSaved: !newSaved };
+          });
+          toast({ title: "Failed to remove from saved list", variant: "destructive" });
         }
       });
     }

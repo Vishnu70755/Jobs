@@ -52,7 +52,7 @@ router.post("/", resolveUser, async (req, res) => {
           user.name || "there",
           name || "Untitled Resume"
         );
-        await mailService.sendTemplateEmail(userEmail, emailTemplate);
+await mailService.sendTemplateEmail(userEmail, emailTemplate, "resume_uploaded");
 
         // Log successful email send
         req.log.info({
@@ -124,7 +124,7 @@ router.patch("/:id", resolveUser, async (req, res) => {
           user.name || "there",
           name || "Untitled Resume"
         );
-        await mailService.sendTemplateEmail(userEmail, emailTemplate);
+await mailService.sendTemplateEmail(userEmail, emailTemplate, "resume_updated");
 
         // Log successful email send
         req.log.info({

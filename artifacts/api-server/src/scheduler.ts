@@ -160,8 +160,8 @@ async function sendDailySummaryEmail(): Promise<void> {
       stats
     );
 
-    await mailService.sendTemplateEmail(adminEmail, emailTemplate);
-    logger.info({ to: adminEmail, subject: emailTemplate.subject }, "Daily summary email sent successfully");
+// Line 163 — daily summary
+await mailService.sendTemplateEmail(adminEmail, emailTemplate, "daily_summary");    logger.info({ to: adminEmail, subject: emailTemplate.subject }, "Daily summary email sent successfully");
   } catch (err) {
     logger.error(err, "Failed to send daily summary email");
   }

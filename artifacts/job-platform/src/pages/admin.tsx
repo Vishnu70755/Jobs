@@ -111,13 +111,13 @@ function AccessDenied() {
 export default function Admin() {
   const { user, isLoaded } = useUser();
   const { data: stats, isLoading: loadingStats } = useGetAdminStats({
-    query: { refetchInterval: 15000 },
+    query: { refetchInterval: 1000 },
   });
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const { data: usersData, isLoading: loadingUsers } = useListAdminUsers(
     { search: search || undefined, page },
-    { query: { refetchInterval: 15000 } }
+    { query: { refetchInterval: 1000 } }
   );
   const suspendUser = useSuspendUser();
   const queryClient = useQueryClient();

@@ -42,7 +42,7 @@ router.post("/start", resolveUser, requireAdmin, async (req, res) => {
       if (adminEmail) {
         try {
           const emailTemplate = getImportStartedEmailTemplate(source, new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }));
-          await mailService.sendTemplateEmail(adminEmail, emailTemplate);
+await mailService.sendTemplateEmail(adminEmail, emailTemplate, "import_started");
           // Log success
           req.log.info({ to: adminEmail, subject: emailTemplate.subject }, "Start import email sent successfully");
         } catch (emailError) {
@@ -63,7 +63,7 @@ router.post("/start", resolveUser, requireAdmin, async (req, res) => {
       if (adminEmail) {
         try {
           const emailTemplate = getImportStartedEmailTemplate("All Sources", new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }));
-          await mailService.sendTemplateEmail(adminEmail, emailTemplate);
+await mailService.sendTemplateEmail(adminEmail, emailTemplate, "import_started");
           // Log success
           req.log.info({ to: adminEmail, subject: emailTemplate.subject }, "Start import email sent successfully");
         } catch (emailError) {
@@ -102,7 +102,7 @@ router.post("/stop", resolveUser, requireAdmin, async (req, res) => {
       try {
         if (adminEmail) {
           const emailTemplate = getImportCompletedEmailTemplate(source, new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }), new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }), 0, 0, 0, 0);
-          await mailService.sendTemplateEmail(adminEmail, emailTemplate);
+await mailService.sendTemplateEmail(adminEmail, emailTemplate, "import_completed");
           // Log success
           req.log.info({ to: adminEmail, subject: emailTemplate.subject }, "Stop import email sent successfully");
         }
@@ -121,7 +121,7 @@ router.post("/stop", resolveUser, requireAdmin, async (req, res) => {
       try {
         if (adminEmail) {
           const emailTemplate = getImportCompletedEmailTemplate("All Sources", new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }), new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }), 0, 0, 0, 0);
-          await mailService.sendTemplateEmail(adminEmail, emailTemplate);
+await mailService.sendTemplateEmail(adminEmail, emailTemplate, "import_completed");
           // Log success
           req.log.info({ to: adminEmail, subject: emailTemplate.subject }, "Stop import email sent successfully");
         }
@@ -228,7 +228,7 @@ Server Time: ${serverTime}
 
 This is an automated message from Vishnu's Job Quest.
       `;
-      await mailService.sendHtmlMail(adminEmail, "Job Import Scheduler Started - Vishnu's Job Quest", html);
+await mailService.sendHtmlMail(adminEmail, "Job Import Scheduler Started - Vishnu's Job Quest", html, "scheduler_started");
       // Log success
       req.log.info({
         to: adminEmail,
@@ -286,7 +286,7 @@ Server Time: ${serverTime}
 
 This is an automated message from Vishnu's Job Quest.
       `;
-      await mailService.sendHtmlMail(adminEmail, "Job Import Scheduler Stopped - Vishnu's Job Quest", html);
+await mailService.sendHtmlMail(adminEmail, "Job Import Scheduler Stopped - Vishnu's Job Quest", html, "scheduler_stopped");
       // Log success
       req.log.info({
         to: adminEmail,

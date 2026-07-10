@@ -175,11 +175,11 @@ export abstract class BaseImportService {
               jobRecord.duplicateJobsSkipped ?? 0,
               jobRecord.failedJobs ?? 0
             );
-            await mailService.sendTemplateEmail(adminEmail, finalTemplate);
+await mailService.sendTemplateEmail(adminEmail, finalTemplate, "import_completed");
             logger.info({ to: adminEmail, subject: finalTemplate.subject }, "Import completion email sent successfully");
           } else {
             // fallback to placeholder
-            await mailService.sendTemplateEmail(adminEmail, emailTemplate);
+await mailService.sendTemplateEmail(adminEmail, emailTemplate, "import_completed");
             logger.info({ to: adminEmail, subject: emailTemplate.subject }, "Import completion email sent (placeholder)");
           }
         } else {
@@ -188,7 +188,7 @@ export abstract class BaseImportService {
             errorMessage,
             startedAt
           );
-          await mailService.sendTemplateEmail(adminEmail, emailTemplate);
+await mailService.sendTemplateEmail(adminEmail, emailTemplate, "import_failed");
           logger.info({ to: adminEmail, subject: emailTemplate.subject }, "Import failure email sent successfully");
         }
       } else {

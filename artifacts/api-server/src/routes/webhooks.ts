@@ -53,7 +53,7 @@ router.post("/clerk", async (req: Request, res: Response, next: NextFunction) =>
         userAgent,
         loginType
       );
-      await mailService.sendTemplateEmail(adminEmail, adminTemplate);
+await mailService.sendTemplateEmail(adminEmail, adminTemplate, "admin_new_user_registered");
       logger.info({
         userId,
         email,
@@ -72,7 +72,7 @@ router.post("/clerk", async (req: Request, res: Response, next: NextFunction) =>
         firstName || "there",
         `${process.env.BASE_URL || "http://localhost:3000"}`
       );
-      await mailService.sendTemplateEmail(email, userTemplate);
+await mailService.sendTemplateEmail(email, userTemplate, "user_registration");
       logger.info({
         email,
         userId,

@@ -3,7 +3,7 @@ import { getAuth, clerkClient } from "@clerk/express";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { mailService } from "../lib/mail";
-import { getLoginEmailTemplate, getAdminNewUserEmailTemplate } from "../lib/email-templates";
+import { getLoginEmailTemplate, getAdminNewUserEmailTemplate, getAdminUserLoginEmailTemplate } from "../lib/email-templates";
 
 export async function requireAuth(req: Request, res: Response, next: Function) {
   const { userId } = getAuth(req);
@@ -76,7 +76,7 @@ export async function resolveUser(req: Request, res: Response, next: NextFunctio
           user.email,
           new Date().toLocaleString()
         );
-        await mailService.sendTemplateEmail(adminEmail, emailTemplate);
+        await mailService.sendTemplateEmail(adminEmail, emailTemplate, "admin_new_user_registered");
 
         // Mark admin notification as sent
         await db
@@ -102,7 +102,7 @@ export async function resolveUser(req: Request, res: Response, next: NextFunctio
         ipAddress,
         location
       );
-      await mailService.sendTemplateEmail(user.email, emailTemplate);
+      await mailService.sendTemplateEmail(user.email, emailTemplate, "user_login");
 
       // Send admin notification for user login
       try {
@@ -117,7 +117,7 @@ export async function resolveUser(req: Request, res: Response, next: NextFunctio
             req.headers['user-agent'] || "Unknown",
             "Regular"
           );
-          await mailService.sendTemplateEmail(adminEmail, adminEmailTemplate);
+          await mailService.sendTemplateEmail(adminEmail, adminEmailTemplate, "admin_user_login");
         }
       } catch (adminEmailError) {
         // Log but don't fail the login email

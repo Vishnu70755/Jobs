@@ -146,7 +146,7 @@ router.post("/request-verification", resolveUser, async (req, res) => {
         user.name || "there",
         verificationUrl
       );
-      await mailService.sendTemplateEmail(user.email, emailTemplate);
+await mailService.sendTemplateEmail(user.email, emailTemplate, "user_registration");
 
       // Log success with timestamp
       req.log.info({
@@ -246,7 +246,7 @@ router.post("/forgot-password", async (req, res) => {
         user.name || "there",
         resetUrl
       );
-      await mailService.sendTemplateEmail(user.email, emailTemplate);
+await mailService.sendTemplateEmail(user.email, emailTemplate, "password_reset");
       // Log success with timestamp
       req.log.info({
         to: user.email,
@@ -354,7 +354,7 @@ router.post("/login-notification", resolveUser, async (req, res) => {
         ipAddress || "Unknown",
         location || "Unknown"
       );
-      await mailService.sendTemplateEmail(user.email, emailTemplate);
+await mailService.sendTemplateEmail(user.email, emailTemplate, "user_login");
 
       res.json({ message: "Login notification sent" });
     } catch (emailError) {

@@ -390,8 +390,7 @@ This is an automated message, please do not reply.
 
 /**
  * Notification for new source added
- */
-export function getSourceAddedEmailTemplate(sourceName: string, sourceType: string, addedAt: string): { subject: string; html: string; text: string } {
+ */export function getSourceAddedEmailTemplate(sourceName: string, sourceType: string, addedAt: string): { subject: string; html: string; text: string } {
   return {
     subject: `New Source Added: ${sourceName}`,
     html: `
@@ -414,3 +413,27 @@ export function getSourceAddedEmailTemplate(sourceName: string, sourceType: stri
             <p><strong>Added At:</strong> ${addedAt}</p>
             <p><strong>Status:</strong> Active</p>
           </div>
+          <div class="footer">
+            <p>© ${new Date().getFullYear()} Vishnu's Job Quest. All rights reserved.</p>
+            <p>This is an automated message, please do not reply.</p>
+          </div>
+        </div>
+      </div>
+    `,
+    text: `
+New Source Added: ${sourceName}
+
+A new job source has been added to the system:
+
+Details:
+- Source Name: ${sourceName}
+- Source Type: ${sourceType}
+- Added At: ${addedAt}
+- Status: Active
+
+----------------------------------------
+© ${new Date().getFullYear()} Vishnu's Job Quest. All rights reserved.
+This is an automated message, please do not reply.
+    `
+  };
+}
