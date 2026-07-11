@@ -14,9 +14,26 @@ export async function requireAuth(req: Request, res: Response, next: Function) {
   next();
 }
 
+// Returns true if the given email matches the ADMIN_EMAIL env var (case-insensitive).
+function isConfiguredAdminEmail(email: string): boolean {
+  const adminEmail = process.env.ADMIN_EMAIL;
+  return !!adminEmail && !!email && adminEmail.toLowerCase() === email.toLowerCase();
+}
+
 export async function getOrCreateUser(clerkId: string, email: string, name?: string): Promise<{ user: typeof usersTable.$inferSelect; isNew: boolean }> {
   const existing = await db.select().from(usersTable).where(eq(usersTable.clerkId, clerkId)).limit(1);
   if (existing.length > 0) {
+    // If this account's email matches ADMIN_EMAIL but the row isn't marked
+    // admin yet (e.g. row predates ADMIN_EMAIL being set), promote it here
+    // so no manual DB update is ever needed.
+    if (existing[0].role !== "admin" && isConfiguredAdminEmail(existing[0].email)) {
+      const [promoted] = await db
+        .update(usersTable)
+        .set({ role: "admin" })
+        .where(eq(usersTable.id, existing[0].id))
+        .returning();
+      return { user: promoted, isNew: false };
+    }
     return { user: existing[0], isNew: false };
   }
 
@@ -25,6 +42,7 @@ export async function getOrCreateUser(clerkId: string, email: string, name?: str
     email,
     name: name ?? null,
     skills: [],
+    role: isConfiguredAdminEmail(email) ? "admin" : "user",
   }).returning();
   return { user: created, isNew: true };
 }

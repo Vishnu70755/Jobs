@@ -17,7 +17,9 @@ import {
   FilePlus,
   X,
 } from "lucide-react";
+
 import { cn } from "@/lib/utils";
+const isAdmin = profile?.role === "admin";
 
 const navItems = [
   { href: "/dashboard",     label: "Dashboard",     icon: LayoutDashboard },
