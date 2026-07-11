@@ -390,7 +390,7 @@ This is an automated message, please do not reply.
 
 /**
  * Notification for new source added
- */
+import nodemailer from "nodemailer";
 export function getSourceAddedEmailTemplate(sourceName: string, sourceType: string, addedAt: string): { subject: string; html: string; text: string } {
   return {
     subject: `New Source Added: ${sourceName}`,
@@ -414,31 +414,46 @@ export function getSourceAddedEmailTemplate(sourceName: string, sourceType: stri
             <p><strong>Added At:</strong> ${addedAt}</p>
             <p><strong>Status:</strong> Active</p>
           </div>
-          <p>You can manage this source in the admin panel.</p>
           <div class="footer">
-            <p>© ${new Date().getFullYear()} Vishnu's Job Quest. All rights reserved.</p>     
-        <p>This is an automated message, please do not reply.</p>
+            <p>© ${new Date().getFullYear()} Vishnu's Job Quest. All rights reserved.</p>
+            <p>This is an automated message, please do not reply.</p>
           </div>
         </div>
       </div>
     `,
     text: `
 New Source Added: ${sourceName}
+
 A new job source has been added to the system:
+
 - Source Name: ${sourceName}
 - Source Type: ${sourceType}
 - Added At: ${addedAt}
 - Status: Active
-You can
-  manage this source in the admin panel.      
+
 ----------------------------------------
 © ${new Date().getFullYear()} Vishnu's Job Quest. All rights reserved.
 This is an automated message, please do not reply.
-    `
+            `
+          };
+        }
+  return {
+    subject: `New User Registered: ${userName}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h1>New User Registered</h1>
+        <p><strong>Name:</strong> ${userName}</p>
+        <p><strong>Email:</strong> ${userEmail}</p>
+        <p><strong>Registered At:</strong> ${registeredAt}</p>
+      </div>
+    `,
+    text: `New user registered: ${userName} (${userEmail}) at ${registeredAt}`
   };
-} 
+}
 
-
+/**
+ * Notification to admin when a user logs in
+ */
 export function getAdminUserLoginEmailTemplate(userName: string, userEmail: string, loginTime: string, userId: string, ipAddress: string, userAgent: string, userType: string): { subject: string; html: string; text: string } {
   return {
     subject: `User Login: ${userName}`,
