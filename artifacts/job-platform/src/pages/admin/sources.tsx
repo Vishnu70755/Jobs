@@ -510,7 +510,7 @@ export default function SourcesPage() {
               <p className="text-2xl font-bold">{sources.reduce((total, source) => total + (source.jobsImported || 0), 0)}</p>
             </div>
           </div>
-        </>
+        </div>
       )}
 
       {!isLoading && (
@@ -669,13 +669,14 @@ export default function SourcesPage() {
                     Source Name
                   </Label>
                   <FormControl>
-                    Input
-                    placeholder="Enter source name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    required
-                  />
+                    <Input
+                      placeholder="Enter source name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </FormControl>
                 </FormField>
 
                 <FormField>
@@ -683,13 +684,14 @@ export default function SourcesPage() {
                     Website URL
                   </Label>
                   <FormControl>
-                    Input
-                    placeholder="Enter website URL (e.g., https://example.com)"
-                    name="url"
-                    value={formData.url}
-                    onChange={handleInputChange}
-                    required
-                  />
+                    <Input
+                      placeholder="Enter website URL (e.g., https://example.com)"
+                      name="url"
+                      value={formData.url}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </FormControl>
                 </FormField>
 
                 <FormField>
@@ -697,13 +699,14 @@ export default function SourcesPage() {
                     Source Type
                   </Label>
                   <FormControl>
-                    Input
-                    placeholder="Enter source type (e.g., Job Board, Company Career)"
-                    name="sourceType"
-                    value={formData.sourceType}
-                    onChange={handleInputChange}
-                    required
-                  />
+                    <Input
+                      placeholder="Enter source type (e.g., Job Board, Company Career)"
+                      name="sourceType"
+                      value={formData.sourceType}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </FormControl>
                 </FormField>
 
                 <FormField>
@@ -711,13 +714,14 @@ export default function SourcesPage() {
                     Country
                   </Label>
                   <FormControl>
-                    Input
-                    placeholder="Enter country"
-                    name="country"
-                    value={formData.country}
-                    onChange={handleInputChange}
-                    required
-                  />
+                    <Input
+                      placeholder="Enter country"
+                      name="country"
+                      value={formData.country}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </FormControl>
                 </FormField>
 
                 <FormField>
@@ -725,13 +729,14 @@ export default function SourcesPage() {
                     Job Category
                   </Label>
                   <FormControl>
-                    Input
-                    placeholder="Enter job category"
-                    name="category"
-                    value={formData.category}
-                    onChange={handleInputChange}
-                    required
-                  />
+                    <Input
+                      placeholder="Enter job category"
+                      name="category"
+                      value={formData.category}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </FormControl>
                 </FormField>
 
                 <FormField>
@@ -739,15 +744,16 @@ export default function SourcesPage() {
                     Import Interval (minutes)
                   </Label>
                   <FormControl>
-                    Input
-                    type="number"
-                    placeholder="Enter interval in minutes"
-                    name="intervalMinutes"
-                    value={formData.intervalMinutes}
-                    onChange={handleInputChange}
-                    required
-                    min="1"
-                  />
+                    <Input
+                      type="number"
+                      placeholder="Enter interval in minutes"
+                      name="intervalMinutes"
+                      value={formData.intervalMinutes}
+                      onChange={handleInputChange}
+                      required
+                      min="1"
+                    />
+                  </FormControl>
                 </FormField>
 
                 <FormField>
@@ -755,14 +761,15 @@ export default function SourcesPage() {
                     Status
                   </Label>
                   <FormControl>
-                    Input
-                    placeholder="Enter status (enabled/disabled)"
-                    name="status"
-                    value={formData.status}
-                    onChange={handleInputChange}
-                    required
-                    list="status-options"
-                  />
+                    <Input
+                      placeholder="Enter status (enabled/disabled)"
+                      name="status"
+                      value={formData.status}
+                      onChange={handleInputChange}
+                      required
+                      list="status-options"
+                    />
+                  </FormControl>
                   <datalist id="status-options">
                     <option value="enabled" />
                     <option value="disabled" />
@@ -774,12 +781,13 @@ export default function SourcesPage() {
                     API Key (Optional)
                   </Label>
                   <FormControl>
-                    Input
-                    placeholder="Enter API key if required"
-                    name="apiKey"
-                    value={formData.apiKey}
-                    onChange={handleInputChange}
-                  />
+                    <Input
+                      placeholder="Enter API key if required"
+                      name="apiKey"
+                      value={formData.apiKey}
+                      onChange={handleInputChange}
+                    />
+                  </FormControl>
                 </FormField>
 
                 <FormField>
@@ -787,12 +795,13 @@ export default function SourcesPage() {
                     Notes (Optional)
                   </Label>
                   <FormControl>
-                    Textarea
-                    placeholder="Enter any additional notes"
-                    name="notes"
-                    value={formData.notes}
-                    onChange={handleInputChange}
-                  />
+                    <Textarea
+                      placeholder="Enter any additional notes"
+                      name="notes"
+                      value={formData.notes}
+                      onChange={handleInputChange}
+                    />
+                  </FormControl>
                 </FormField>
 
                 <div className="flex justify-end pt-4">

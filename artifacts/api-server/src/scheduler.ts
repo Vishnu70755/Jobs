@@ -1,8 +1,8 @@
 import cron from "node-cron";
 import { logger } from "./lib/logger";
 import { importServiceManager } from "./services/import";
-import { db, usersTable, jobsTable, applicationsTable, resumesTable, atsReportsTable, importJobsTable, importSourceConfigsTable, importJobStatsTable } from "@workspace/db";
-import { eq, sql, and, gte, lte } from "drizzle-orm";
+import { db, usersTable, jobsTable, applicationsTable, resumesTable, atsReportsTable, importJobsTable, importJobStatsTable, savedJobsTable } from "@workspace/db";
+import { eq, sql, and, gte, lte, lt, notInArray } from "drizzle-orm";
 import { mailService } from "./lib/mail";
 import { getDailySummaryEmailTemplate } from "./lib/email-templates";
 
@@ -114,20 +114,18 @@ async function sendDailySummaryEmail(): Promise<void> {
       // Get per-source statistics for today and overall
       db
         .select({
-          source: importSourceConfigsTable.name,
-          isEnabled: importSourceConfigsTable.isEnabled,
-          totalJobsEver: sql<number>`coalesce(sum(${importJobsTable.totalJobsFound}), 0)`,
-          jobsToday: sql<number>`coalesce(sum(${importJobsTable.newJobsAdded}), 0)`,
+          source: sql<string>`COALESCE(isc.name, isc.source)`,
+          isEnabled: sql<boolean>`isc.is_enabled`,
+          totalJobsEver: sql<number>`coalesce(sum(ij.total_jobs_found), 0)`,
+          jobsToday: sql<number>`coalesce(sum(ij.new_jobs_added), 0)`,
         })
-        .from(importSourceConfigsTable)
+        .from(sql`import_source_configs isc`)
         .leftJoin(
-          importJobsTable,
-          and(
-            eq(importSourceConfigsTable.name, importJobsTable.source),
-            between(importJobsTable.startedAt, startOfTodayUTC, endOfTodayUTC)
-          )
+          sql`import_jobs ij`,
+          sql`isc.name = ij.source`
         )
-        .groupBy(importSourceConfigsTable.name, importSourceConfigsTable.isEnabled)
+        .where(sql`ij.started_at >= ${startOfTodayUTC} AND ij.started_at <= ${endOfTodayUTC} AND ij.status = 'completed'`)
+        .groupBy(sql`isc.name, isc.is_enabled`)
     ]);
 
     const successRate = totalApplications > 0 ? Math.round((successfulApplications / totalApplications) * 100) : 0;
@@ -160,8 +158,8 @@ async function sendDailySummaryEmail(): Promise<void> {
       stats
     );
 
-// Line 163 — daily summary
-await mailService.sendTemplateEmail(adminEmail, emailTemplate, "daily_summary");    logger.info({ to: adminEmail, subject: emailTemplate.subject }, "Daily summary email sent successfully");
+    await mailService.sendTemplateEmail(adminEmail, emailTemplate, "daily_summary");
+    logger.info({ to: adminEmail, subject: emailTemplate.subject }, "Daily summary email sent successfully");
   } catch (err) {
     logger.error(err, "Failed to send daily summary email");
   }

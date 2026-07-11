@@ -1,6 +1,7 @@
 import { logger } from "../../lib/logger";
-import { db, importSourceConfigsTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { db } from "@workspace/db";
+import { eq, sql } from "drizzle-orm";
+import * as schema from "@workspace/db";
 import { ImportSourceEnum } from "@workspace/db";
 
 import { LinkedInImportService } from "./linkedinImportService";
@@ -33,6 +34,169 @@ export class ImportServiceManager {
   }
 
   /**
+   * Safely select from import_source_configs table, handling both schema versions
+   * @returns Array of configuration objects with normalized field names
+   */
+  async selectImportSourceConfigs() {
+    try {
+      // Try the new schema first (with "name" column)
+      const result = await db
+        .select({
+          id: schema.importSourceConfigsTable.id,
+          name: schema.importSourceConfigsTable.name,
+          sourceType: schema.importSourceConfigsTable.sourceType,
+          url: schema.importSourceConfigsTable.url,
+          country: schema.importSourceConfigsTable.country,
+          category: schema.importSourceConfigsTable.category,
+          apiKey: schema.importSourceConfigsTable.apiKey,
+          notes: schema.importSourceConfigsTable.notes,
+          isEnabled: schema.importSourceConfigsTable.isEnabled,
+          lastRun: schema.importSourceConfigsTable.lastRun,
+          nextScheduledRun: schema.importSourceConfigsTable.nextScheduledRun,
+          intervalMinutes: schema.importSourceConfigsTable.intervalMinutes,
+          createdAt: schema.importSourceConfigsTable.createdAt,
+          updatedAt: schema.importSourceConfigsTable.updatedAt
+        })
+        .from(schema.importSourceConfigsTable);
+
+      return result;
+    } catch (error) {
+      // If that fails, try the old schema (with "source" column instead of "name")
+      if (error.message && error.message.includes('column "name" does not exist')) {
+        try {
+          const result = await db
+            .select({
+              id: schema.importSourceConfigsTable.id,
+              name: schema.importSourceConfigsTable.source, // Map "source" to "name"
+              sourceType: sql`CAST('Job Board' AS text)`.as("sourceType"), // Default value
+              url: sql`NULL`.as("url"),
+              country: sql`NULL`.as("country"),
+              category: sql`NULL`.as("category"),
+              apiKey: sql`NULL`.as("apiKey"),
+              notes: sql`NULL`.as("notes"),
+              isEnabled: schema.importSourceConfigsTable.isEnabled,
+              lastRun: schema.importSourceConfigsTable.lastRun,
+              nextScheduledRun: schema.importSourceConfigsTable.nextScheduledRun,
+              intervalMinutes: schema.importSourceConfigsTable.intervalMinutes,
+              createdAt: schema.importSourceConfigsTable.createdAt,
+              updatedAt: schema.importSourceConfigsTable.updatedAt
+            })
+            .from(schema.importSourceConfigsTable);
+
+          return result;
+        } catch (error2) {
+          // If both fail, re-throw the original error
+          throw error;
+        }
+      } else {
+        // Some other error, re-throw it
+        throw error;
+      }
+    }
+  }
+
+  /**
+   * Safely insert into import_source_configs table, handling both schema versions
+   */
+  async insertImportSourceConfig(data: {
+    name: string;
+    isEnabled: boolean;
+    intervalMinutes: number;
+    nextScheduledRun: Date;
+  }) {
+    try {
+      // Try the new schema first
+      await db.insert(schema.importSourceConfigsTable).values({
+        name: data.name,
+        sourceType: "Job Board",
+        url: null,
+        country: null,
+        category: null,
+        apiKey: null,
+        notes: null,
+        isEnabled: data.isEnabled,
+        intervalMinutes: data.intervalMinutes,
+        nextScheduledRun: data.nextScheduledRun,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+    } catch (error) {
+      // If that fails, try the old schema
+      if (error.message && error.message.includes('column "name" does not exist')) {
+        try {
+          await db.insert(schema.importSourceConfigsTable).values({
+            source: data.name, // Use "source" column instead of "name"
+            isEnabled: data.isEnabled,
+            intervalMinutes: data.intervalMinutes,
+            // Note: other columns like sourceType, url, etc. don't exist in old schema
+            // but we don't need to specify them for insert if they have defaults or are nullable
+            lastRun: null,
+            nextScheduledRun: data.nextScheduledRun,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+        } catch (error2) {
+          // If both fail, re-throw the original error
+          throw error;
+        }
+      } else {
+        // Some other error, re-throw it
+        throw error;
+      }
+    }
+  }
+
+  /**
+   * Safely update in import_source_configs table, handling both schema versions
+   */
+  async updateImportSourceConfig(id: number, data: { nextScheduledRun: Date; updatedAt: Date }) {
+    try {
+      // Try the new schema first
+      await db
+        .update(schema.importSourceConfigsTable)
+        .set({
+          nextScheduledRun: data.nextScheduledRun,
+          updatedAt: data.updatedAt
+        })
+        .where(eq(schema.importSourceConfigsTable.id, id));
+    } catch (error) {
+      // If that fails, try the old schema
+      if (error.message && error.message.includes('column "nextScheduledRun" does not exist')) {
+        try {
+          await db
+            .update(schema.importSourceConfigsTable)
+            .set({
+              next_scheduled_run: data.nextScheduledRun,
+              updated_at: data.updatedAt
+            })
+            .where(eq(schema.importSourceConfigsTable.id, id));
+        } catch (error2) {
+          // If both fail, re-throw the original error
+          throw error;
+        }
+      } else if (error.message && error.message.includes('column "name" does not exist')) {
+        // This might happen if we're trying to access other fields, but for update we mainly care about the ID
+        // Let's try a simpler update that just uses the ID
+        try {
+          await db
+            .update(schema.importSourceConfigsTable)
+            .set({
+              nextScheduledRun: data.nextScheduledRun,
+              updatedAt: data.updatedAt
+            })
+            .where(eq(schema.importSourceConfigsTable.id, id));
+        } catch (error2) {
+          // If both fail, re-throw the original error
+          throw error;
+        }
+      } else {
+        // Some other error, re-throw it
+        throw error;
+      }
+    }
+  }
+
+  /**
    * Get an import service by source
    */
   getService(source: ImportSourceEnum) {
@@ -60,7 +224,7 @@ export class ImportServiceManager {
       const cron = await import("node-cron");
 
       // Load source configurations from database
-      const configs = await db.select().from(importSourceConfigsTable);
+      const configs = await this.selectImportSourceConfigs();
 
       // Schedule each enabled source
       configs.forEach(config => {
@@ -69,25 +233,25 @@ export class ImportServiceManager {
 
           const job = cron.schedule(cronExpression, async () => {
             try {
-              logger.info({ source: config.source }, `Starting scheduled import for ${config.source}`);
+              logger.info({ source: config.name }, `Starting scheduled import for ${config.name}`);
 
-              const service = this.getService(config.source as ImportSourceEnum);
+              const service = this.getService(config.name as ImportSourceEnum);
               if (service) {
                 await service.startImport();
 
                 // Update next scheduled run
                 const nextRun = new Date(Date.now() + config.intervalMinutes * 60 * 1000);
-                await db
-                  .update(importSourceConfigsTable)
-                  .set({ nextScheduledRun: nextRun, updatedAt: new Date() })
-                  .where(eq(importSourceConfigsTable.id, config.id));
+                await this.updateImportSourceConfig(config.id, {
+                  nextScheduledRun: nextRun,
+                  updatedAt: new Date()
+                });
               }
             } catch (error) {
-              logger.error({ source: config.source, error }, `Scheduled import failed for ${config.source}`);
+              logger.error({ source: config.name, error }, `Scheduled import failed for ${config.name}`);
             }
           });
 
-          logger.info({ source: config.source, interval: config.intervalMinutes }, `Scheduled import job`);
+          logger.info({ source: config.name, interval: config.intervalMinutes }, `Scheduled import job`);
         }
       });
 
@@ -170,7 +334,7 @@ export class ImportServiceManager {
     isEnabled: boolean;
     intervalMinutes: number;
   }>> {
-    const configs = await db.select().from(importSourceConfigsTable);
+    const configs = await this.selectImportSourceConfigs();
     const statusPromises = configs.map(async (config) => {
       const service = this.getService(config.name as ImportSourceEnum);
       const status = service ? await service.getStatus() : {
@@ -199,32 +363,28 @@ export class ImportServiceManager {
    */
   async initializeDefaultConfigs(): Promise<void> {
     const defaultConfigs = [
-      { source: "linkedin", isEnabled: true, intervalMinutes: 60 },
-      { source: "naukri", isEnabled: true, intervalMinutes: 120 },
-      { source: "glassdoor", isEnabled: true, intervalMinutes: 120 },
-      { source: "indeed", isEnabled: true, intervalMinutes: 60 },
-      { source: "foundit", isEnabled: true, intervalMinutes: 180 },
-      { source: "shine", isEnabled: true, intervalMinutes: 180 },
-      { source: "wellfound", isEnabled: true, intervalMinutes: 240 },
-      { source: "internshala", isEnabled: true, intervalMinutes: 120 }
+      { name: "linkedin", isEnabled: true, intervalMinutes: 60 },
+      { name: "naukri", isEnabled: true, intervalMinutes: 120 },
+      { name: "glassdoor", isEnabled: true, intervalMinutes: 120 },
+      { name: "indeed", isEnabled: true, intervalMinutes: 60 },
+      { name: "foundit", isEnabled: true, intervalMinutes: 180 },
+      { name: "shine", isEnabled: true, intervalMinutes: 180 },
+      { name: "wellfound", isEnabled: true, intervalMinutes: 240 },
+      { name: "internshala", isEnabled: true, intervalMinutes: 120 }
     ];
 
     for (const config of defaultConfigs) {
-      const existing = await db
-        .select()
-        .from(importSourceConfigsTable)
-        .where(eq(importSourceConfigsTable.name, config.source))
-        .limit(1);
+      const existing = await this.selectImportSourceConfigsByName(config.name);
 
       if (existing.length === 0) {
-        await db.insert(importSourceConfigsTable).values({
-          name: config.source,
+        await this.insertImportSourceConfig({
+          name: config.name,
           isEnabled: config.isEnabled,
           intervalMinutes: config.intervalMinutes,
           nextScheduledRun: new Date(Date.now() + config.intervalMinutes * 60 * 1000)
         });
 
-        logger.info({ source: config.source }, `Created default import configuration`);
+        logger.info({ source: config.name }, `Created default import configuration`);
       }
     }
   }
@@ -232,6 +392,59 @@ export class ImportServiceManager {
   // Get database instance for direct queries in routes
   get db() {
     return db;
+  }
+
+  /**
+   * Select import source configs by name (handles both schema versions)
+   */
+  private async selectImportSourceConfigsByName(name: string) {
+    try {
+      // Try the new schema first (with "name" column)
+      return await db
+        .select({
+          id: schema.importSourceConfigsTable.id,
+          name: schema.importSourceConfigsTable.name,
+          sourceType: schema.importSourceConfigsTable.sourceType,
+          url: schema.importSourceConfigsTable.url,
+          country: schema.importSourceConfigsTable.country,
+          category: schema.importSourceConfigsTable.category,
+          apiKey: schema.importSourceConfigsTable.apiKey,
+          notes: schema.importSourceConfigsTable.notes,
+          isEnabled: schema.importSourceConfigsTable.isEnabled,
+          lastRun: schema.importSourceConfigsTable.lastRun,
+          nextScheduledRun: schema.importSourceConfigsTable.nextScheduledRun,
+          intervalMinutes: schema.importSourceConfigsTable.intervalMinutes,
+          createdAt: schema.importSourceConfigsTable.createdAt,
+          updatedAt: schema.importSourceConfigsTable.updatedAt
+        })
+        .from(schema.importSourceConfigsTable)
+        .where(eq(schema.importSourceConfigsTable.name, name));
+    } catch (error) {
+      // If that fails, try the old schema (with "source" column instead of "name")
+      if (error instanceof Error && error.message.includes('column "name" does not exist')) {
+        return await db
+          .select({
+            id: schema.importSourceConfigsTable.id,
+            name: schema.importSourceConfigsTable.source, // Map source->name for consistency
+            sourceType: sql`'Job Board'`.as("sourceType"), // Default value
+            url: schema.importSourceConfigsTable.url,
+            country: schema.importSourceConfigsTable.country,
+            category: schema.importSourceConfigsTable.category,
+            apiKey: schema.importSourceConfigsTable.apiKey,
+            notes: schema.importSourceConfigsTable.notes,
+            isEnabled: schema.importSourceConfigsTable.isEnabled,
+            lastRun: schema.importSourceConfigsTable.lastRun,
+            nextScheduledRun: schema.importSourceConfigsTable.nextScheduledRun,
+            intervalMinutes: schema.importSourceConfigsTable.intervalMinutes,
+            createdAt: schema.importSourceConfigsTable.createdAt,
+            updatedAt: schema.importSourceConfigsTable.updatedAt
+          })
+          .from(schema.importSourceConfigsTable)
+          .where(eq(schema.importSourceConfigsTable.source, name)); // Use source column
+      } else {
+        throw error; // Re-throw if it's a different error
+      }
+    }
   }
 }
 
