@@ -317,7 +317,7 @@ export default function EmailLogsPage() {
                             import_failed: "Import Failed",
                             source_added: "Source Added",
                             source_updated: "Source Updated",
-                            source_disabled": "Source Disabled",
+                            source_disabled: "Source Disabled",
                             source_enabled: "Source Enabled",
                             source_deleted: "Source Deleted",
                             daily_summary: "Daily Summary",

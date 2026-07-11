@@ -3,7 +3,7 @@ import { getAuth, clerkClient } from "@clerk/express";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { mailService } from "../lib/mail";
-import { getLoginEmailTemplate, getAdminNewUserEmailTemplate } from "../lib/email-templates";
+import { getLoginEmailTemplate, getAdminNewUserEmailTemplate, getAdminUserLoginEmailTemplate } from "../lib/email-templates";
 
 export async function requireAuth(req: Request, res: Response, next: Function) {
   const { userId } = getAuth(req);
@@ -38,7 +38,7 @@ export async function resolveUser(req: Request, res: Response, next: NextFunctio
 
   // Get email and name from session claims
   let email = (sessionClaims?.email as string) ?? "";
-  let name = (sessionClaims?.fullName as string) ?? undefined;
+  let name = (sessionClaims?.fullName as string) ?? "";
 
   // If we don't have email in session claims, fetch from Clerk API
   if (!email) {
@@ -47,7 +47,7 @@ export async function resolveUser(req: Request, res: Response, next: NextFunctio
       email = clerkUser.emailAddresses.find(emailObj => emailObj.id === clerkUser.primaryEmailAddressId)?.emailAddress ?? "";
       const firstName = clerkUser.firstName ?? "";
       const lastName = clerkUser.lastName ?? "";
-      name = `${firstName} ${lastName}`.trim() || undefined;
+      name = `${firstName} ${lastName}`.trim() || "";
 
       // Update the user in our database with the real email and name
       await db
@@ -94,7 +94,12 @@ export async function resolveUser(req: Request, res: Response, next: NextFunctio
   if (currentSessionId && user.lastSessionId !== currentSessionId) {
     try {
       const loginTime = new Date().toLocaleString();
-      const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress || "Unknown";
+      const ipAddress = (typeof req.ip === 'string' ? req.ip :
+    (Array.isArray(req.ip) ? req.ip[0] : '')) ||
+  (typeof req.headers['x-forwarded-for'] === 'string' ? req.headers['x-forwarded-for'] :
+    (Array.isArray(req.headers['x-forwarded-for']) ? req.headers['x-forwarded-for'][0] : '')) ||
+  (typeof req.connection.remoteAddress === 'string' ? req.connection.remoteAddress : '') ||
+  "Unknown";
       const location = "Unknown"; // We don't have a geo IP service
       const emailTemplate = getLoginEmailTemplate(
         user.name || "there",
@@ -114,14 +119,17 @@ export async function resolveUser(req: Request, res: Response, next: NextFunctio
             loginTime,
             user.id,
             ipAddress,
-            req.headers['user-agent'] || "Unknown",
+            (typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] :
+              (Array.isArray(req.headers['user-agent']) ? req.headers['user-agent'][0] : '')) ||
+              "Unknown",
             "Regular"
           );
           await mailService.sendTemplateEmail(adminEmail, adminEmailTemplate);
         }
       } catch (adminEmailError) {
         // Log but don't fail the login email
-        req.log.error({ error: adminEmailError.message, userId: user.id }, "Failed to send admin user login email");
+        const errorMessage = adminEmailError instanceof Error ? adminEmailError.message : String(adminEmailError);
+        req.log.error({ error: errorMessage, userId: user.id }, "Failed to send admin user login email");
       }
 
       // Update the user's lastSessionId in the database
@@ -130,7 +138,8 @@ export async function resolveUser(req: Request, res: Response, next: NextFunctio
         .set({ lastSessionId: currentSessionId })
         .where(eq(usersTable.id, user.id));
     } catch (emailError) {
-      req.log.error({ error: emailError.message, userId: user.id }, "Failed to send login notification email");
+      const errorMessage = emailError instanceof Error ? emailError.message : String(emailError);
+      req.log.error({ error: errorMessage, userId: user.id }, "Failed to send login notification email");
     }
   }
 
