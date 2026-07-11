@@ -510,7 +510,7 @@ export default function SourcesPage() {
               <p className="text-2xl font-bold">{sources.reduce((total, source) => total + (source.jobsImported || 0), 0)}</p>
             </div>
           </div>
-        </>
+        </div>
       )}
 
       {!isLoading && (
