@@ -107,7 +107,7 @@ export abstract class BaseImportService {
           lastRun: new Date(),
           updatedAt: new Date(),
         })
-        .where(eq(importSourceConfigsTable.source, this.source));
+        .where(eq(importSourceConfigsTable.name, this.source));
 
       logger.info(
         {
@@ -341,7 +341,7 @@ export abstract class BaseImportService {
     const [config] = await db
       .select()
       .from(importSourceConfigsTable)
-      .where(eq(importSourceConfigsTable.source, this.source));
+      .where(eq(importSourceConfigsTable.name, this.source));
 
     const [latestJob] = await db
       .select()

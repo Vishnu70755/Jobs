@@ -114,7 +114,7 @@ async function sendDailySummaryEmail(): Promise<void> {
       // Get per-source statistics for today and overall
       db
         .select({
-          source: importSourceConfigsTable.source,
+          source: importSourceConfigsTable.name,
           isEnabled: importSourceConfigsTable.isEnabled,
           totalJobsEver: sql<number>`coalesce(sum(${importJobsTable.totalJobsFound}), 0)`,
           jobsToday: sql<number>`coalesce(sum(${importJobsTable.newJobsAdded}), 0)`,
@@ -123,11 +123,11 @@ async function sendDailySummaryEmail(): Promise<void> {
         .leftJoin(
           importJobsTable,
           and(
-            eq(importSourceConfigsTable.source, importJobsTable.source),
+            eq(importSourceConfigsTable.name, importJobsTable.source),
             between(importJobsTable.startedAt, startOfTodayUTC, endOfTodayUTC)
           )
         )
-        .groupBy(importSourceConfigsTable.source, importSourceConfigsTable.isEnabled)
+        .groupBy(importSourceConfigsTable.name, importSourceConfigsTable.isEnabled)
     ]);
 
     const successRate = totalApplications > 0 ? Math.round((successfulApplications / totalApplications) * 100) : 0;
