@@ -1,6 +1,5 @@
 import { BaseImportService } from "./baseImportService";
 import { ImportSourceEnum } from "@workspace/db";
-import { logger } from "../../lib/logger";
 
 /**
  * Indeed job import service
@@ -10,21 +9,10 @@ export class IndeedImportService extends BaseImportService {
     super("indeed" as ImportSourceEnum);
   }
 
-  async scrape(): Promise<Array<any>> {
-    logger.info({ source: this.source }, "Scraping Indeed jobs (India-focused)");
-
-    // Simulate some delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Return mock data for Indian jobs
-    // In production, replace this with actual scraping logic
-    return this.generateIndeedMockData();
-  }
-
   /**
    * Generate Indeed-specific mock data
    */
-  protected generateIndeedMockData(): Array<any> {
+  protected getMockData(): Array<any> {
     return [
       // IBM India (10 jobs)
       {

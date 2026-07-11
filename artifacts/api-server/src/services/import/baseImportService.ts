@@ -21,17 +21,21 @@ export abstract class BaseImportService {
 
   /**
    * Abstract method to be implemented by each source
-   * Should return array of job objects to be imported
+   * Should return array of job objects to be imported (mock or real data)
    */
-  abstract scrape(): Promise<Array<any>>;
+  protected abstract getMockData(): Array<any>;
 
   /**
-   * Generate mock data for development/testing
-   * Override this method in subclasses to provide source-specific mock data
+   * Start the import process for this source
+   * Includes logging, delay, and data processing
    */
-  protected generateMockData(): Array<any> {
-    // Default implementation - subclasses should override
-    return [];
+  async scrape(): Promise<Array<any>> {
+    logger.info({ source: this.source }, `Scraping ${this.source} jobs`);
+
+    // Simulate some delay (can be overridden by subclasses if needed)
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    return this.getMockData();
   }
 
   /**
@@ -228,7 +232,7 @@ export abstract class BaseImportService {
         }
 
         // Check for duplicates (based on source + applyUrl or title+company+location)
-                const existing = await db.query.jobsTable.findFirst({
+        const existing = await db.query.jobsTable.findFirst({
           where: (jobsTable, { eq, and, or }) => {
             const conditions = [];
             if (validatedJob.applyUrl) {

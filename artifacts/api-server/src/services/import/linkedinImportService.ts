@@ -1,6 +1,5 @@
 import { BaseImportService } from "./baseImportService";
 import { ImportSourceEnum } from "@workspace/db";
-import { logger } from "../../lib/logger";
 
 /**
  * LinkedIn job import service
@@ -15,28 +14,9 @@ export class LinkedInImportService extends BaseImportService {
   }
 
   /**
-   * Scrape jobs from LinkedIn
-   * This is a placeholder implementation - in reality you'd use:
-   * - LinkedIn's official Jobs API (requires partnership)
-   * - Or a scraping service like Apify, ScrapingBee, or custom scraper with proxies
-   * - Or LinkedIn's RSS feeds for public job postings
-   */
-  async scrape(): Promise<Array<any>> {
-    // Placeholder implementation - replace with actual LinkedIn scraping/API
-    logger.info({ source: this.source }, "Scraping LinkedIn jobs (India-focused)");
-
-    // Simulate some delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Return mock data for Indian jobs
-    // In production, replace this with actual scraping logic
-    return this.generateLinkedInMockData();
-  }
-
-  /**
    * Generate LinkedIn-specific mock data
    */
-  protected generateLinkedInMockData(): Array<any> {
+  protected getMockData(): Array<any> {
     return [
       {
         title: "Senior Software Engineer",
@@ -224,7 +204,7 @@ export class LinkedInImportService extends BaseImportService {
         title: "Quality Assurance Engineer",
         company: "IBM",
         location: "Kolkata, West Bengal",
-        workMode: "onsite": "onsite",
+        workMode: "onsite",
         experienceLevel: "entry-level",
         salaryMin: 400000,
         salaryMax: 600000,
@@ -316,7 +296,7 @@ export class LinkedInImportService extends BaseImportService {
         description: "Develop mobile games using Unity and C#.",
         skills: ["Unity", "C#", "Game Design", "3D Modeling", "Cocos2d-x"],
         applyUrl: "https://linkedin.com/jobs/view/123475",
-        posted at: new Date(Date.now() - 18 * 60 * 60 * 1000), // 18 hours ago
+        postedAt: new Date(Date.now() - 18 * 60 * 60 * 1000), // 18 hours ago
       },
       {
         title: "Network Security Engineer",

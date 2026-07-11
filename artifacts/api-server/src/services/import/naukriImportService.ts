@@ -1,6 +1,5 @@
 import { BaseImportService } from "./baseImportService";
 import { ImportSourceEnum } from "@workspace/db";
-import { logger } from "../../lib/logger";
 
 /**
  * Naukri job import service
@@ -10,21 +9,10 @@ export class NaukriImportService extends BaseImportService {
     super("naukri" as ImportSourceEnum);
   }
 
-  async scrape(): Promise<Array<any>> {
-    logger.info({ source: this.source }, "Scraping Naukri jobs (India-focused)");
-
-    // Simulate some delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Return mock data for Indian jobs
-    // In production, replace this with actual scraping logic
-    return this.generateNaukriMockData();
-  }
-
   /**
    * Generate Naukri-specific mock data for Indian market
    */
-  protected generateNaukriMockData(): Array<any> {
+  protected getMockData(): Array<any> {
     return [
       {
         title: "Java Developer",
