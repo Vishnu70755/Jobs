@@ -172,7 +172,7 @@ export class ImportServiceManager {
   }>> {
     const configs = await db.select().from(importSourceConfigsTable);
     const statusPromises = configs.map(async (config) => {
-      const service = this.getService(config.source as ImportSourceEnum);
+      const service = this.getService(config.name as ImportSourceEnum);
       const status = service ? await service.getStatus() : {
         status: "idle",
         lastRun: null,
@@ -181,7 +181,7 @@ export class ImportServiceManager {
       };
 
       return {
-        source: config.source,
+        source: config.name,
         status: status.status,
         lastRun: status.lastRun,
         nextScheduledRun: status.nextScheduledRun,
@@ -213,15 +213,14 @@ export class ImportServiceManager {
       const existing = await db
         .select()
         .from(importSourceConfigsTable)
-        .where(eq(importSourceConfigsTable.source, config.source))
+        .where(eq(importSourceConfigsTable.name, config.source))
         .limit(1);
 
       if (existing.length === 0) {
         await db.insert(importSourceConfigsTable).values({
-          source: config.source,
+          name: config.source,
           isEnabled: config.isEnabled,
           intervalMinutes: config.intervalMinutes,
-          config: {},
           nextScheduledRun: new Date(Date.now() + config.intervalMinutes * 60 * 1000)
         });
 

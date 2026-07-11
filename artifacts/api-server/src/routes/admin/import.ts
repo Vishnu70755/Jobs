@@ -201,7 +201,7 @@ router.post("/scheduler/start", resolveUser, requireAdmin, async (req, res) => {
     let providerList = "None";
     try {
       const enabledSources = await db
-        .select({ source: importSourceConfigsTable.source })
+        .select({ source: importSourceConfigsTable.name })
         .from(importSourceConfigsTable)
         .where(eq(importSourceConfigsTable.isEnabled, true));
       providerList = enabledSources.map(row => row.source).join(", ") || "None";
