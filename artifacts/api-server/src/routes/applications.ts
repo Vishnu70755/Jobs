@@ -152,7 +152,8 @@ router.post("/", resolveUser, async (req, res) => {
           );
 
           try {
-await mailService.sendTemplateEmail(userEmail, emailTemplate, "job_application_confirmation");            // Log successful email send
+            await mailService.sendTemplateEmail(userEmail, emailTemplate);
+            // Log successful email send
             logger.info({
               userId: user.id,
               email: userEmail,
@@ -289,7 +290,8 @@ router.patch("/:id", resolveUser, async (req, res) => {
             applicationDate
           );
 
-await mailService.sendTemplateEmail(userEmail, statusEmailTemplate, "application_status_update");          logger.info({
+          await mailService.sendTemplateEmail(userEmail, statusEmailTemplate);
+          logger.info({
             userId: user.id,
             email: userEmail,
             subject: statusEmailTemplate.subject,
@@ -320,7 +322,7 @@ await mailService.sendTemplateEmail(userEmail, statusEmailTemplate, "application
             validatedData.meetingLink || "TBD"
           );
 
-          await mailService.sendTemplateEmail(userEmail, interviewEmailTemplate, "interview_scheduled");
+          await mailService.sendTemplateEmail(userEmail, interviewEmailTemplate);
           logger.info({
             userId: user.id,
             email: userEmail,
@@ -338,7 +340,8 @@ await mailService.sendTemplateEmail(userEmail, statusEmailTemplate, "application
             formattedTime
           );
 
-await mailService.sendTemplateEmail(userEmail, reminderEmailTemplate, "interview_reminder");          logger.info({
+          await mailService.sendTemplateEmail(userEmail, reminderEmailTemplate);
+          logger.info({
             userId: user.id,
             email: userEmail,
             subject: reminderEmailTemplate.subject,
@@ -358,7 +361,8 @@ await mailService.sendTemplateEmail(userEmail, reminderEmailTemplate, "interview
             companyName
           );
 
-await mailService.sendTemplateEmail(userEmail, interviewCancelledEmailTemplate, "interview_cancelled");          logger.info({
+          await mailService.sendTemplateEmail(userEmail, interviewCancelledEmailTemplate);
+          logger.info({
             userId: user.id,
             email: userEmail,
             subject: interviewCancelledEmailTemplate.subject,

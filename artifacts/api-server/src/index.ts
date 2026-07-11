@@ -1,3 +1,4 @@
+
 import app from "./app";
 import { logger } from "./lib/logger";
 import { db, jobsTable } from "@workspace/db";
@@ -16,42 +17,6 @@ const port = Number(rawPort);
 
 if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
-}
-
-async function ensureImportSourceConfigsSchema() {
-  try {
-    // Rename legacy "source" column to "name" if the rename hasn't happened yet
-    await db.execute(sql`
-      DO $$
-      BEGIN
-        IF EXISTS (
-          SELECT 1 FROM information_schema.columns
-          WHERE table_name = 'import_source_configs' AND column_name = 'source'
-        ) AND NOT EXISTS (
-          SELECT 1 FROM information_schema.columns
-          WHERE table_name = 'import_source_configs' AND column_name = 'name'
-        ) THEN
-          ALTER TABLE import_source_configs RENAME COLUMN source TO name;
-        END IF;
-      END $$;
-    `);
-
-    // Ensure every column the app expects exists (safe no-ops if already present)
-    await db.execute(sql`
-      ALTER TABLE import_source_configs
-        ADD COLUMN IF NOT EXISTS source_type TEXT NOT NULL DEFAULT 'Job Board',
-        ADD COLUMN IF NOT EXISTS url TEXT,
-        ADD COLUMN IF NOT EXISTS country TEXT,
-        ADD COLUMN IF NOT EXISTS category TEXT,
-        ADD COLUMN IF NOT EXISTS api_key TEXT,
-        ADD COLUMN IF NOT EXISTS notes TEXT,
-        ADD COLUMN IF NOT EXISTS jobs_imported INTEGER NOT NULL DEFAULT 0;
-    `);
-
-    logger.info("import_source_configs schema verified");
-  } catch (err) {
-    logger.error({ err }, "Failed to verify/repair import_source_configs schema");
-  }
 }
 
 async function seedIndianJobs() {
@@ -127,7 +92,6 @@ app.listen(port, async (err) => {
 
   logger.info({ port }, "Server listening");
 
-  await ensureImportSourceConfigsSchema();
   await seedIndianJobs();
   startScheduler();
 });

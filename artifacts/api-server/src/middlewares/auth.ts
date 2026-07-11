@@ -3,7 +3,7 @@ import { getAuth, clerkClient } from "@clerk/express";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { mailService } from "../lib/mail";
-import { getLoginEmailTemplate, getAdminNewUserEmailTemplate, getAdminUserLoginEmailTemplate } from "../lib/email-templates";
+import { getLoginEmailTemplate, getAdminNewUserEmailTemplate } from "../lib/email-templates";
 
 export async function requireAuth(req: Request, res: Response, next: Function) {
   const { userId } = getAuth(req);
@@ -14,26 +14,9 @@ export async function requireAuth(req: Request, res: Response, next: Function) {
   next();
 }
 
-// Returns true if the given email matches the ADMIN_EMAIL env var (case-insensitive).
-function isConfiguredAdminEmail(email: string): boolean {
-  const adminEmail = process.env.ADMIN_EMAIL;
-  return !!adminEmail && !!email && adminEmail.toLowerCase() === email.toLowerCase();
-}
-
 export async function getOrCreateUser(clerkId: string, email: string, name?: string): Promise<{ user: typeof usersTable.$inferSelect; isNew: boolean }> {
   const existing = await db.select().from(usersTable).where(eq(usersTable.clerkId, clerkId)).limit(1);
   if (existing.length > 0) {
-    // If this account's email matches ADMIN_EMAIL but the row isn't marked
-    // admin yet (e.g. row predates ADMIN_EMAIL being set), promote it here
-    // so no manual DB update is ever needed.
-    if (existing[0].role !== "admin" && isConfiguredAdminEmail(existing[0].email)) {
-      const [promoted] = await db
-        .update(usersTable)
-        .set({ role: "admin" })
-        .where(eq(usersTable.id, existing[0].id))
-        .returning();
-      return { user: promoted, isNew: false };
-    }
     return { user: existing[0], isNew: false };
   }
 
@@ -42,7 +25,6 @@ export async function getOrCreateUser(clerkId: string, email: string, name?: str
     email,
     name: name ?? null,
     skills: [],
-    role: isConfiguredAdminEmail(email) ? "admin" : "user",
   }).returning();
   return { user: created, isNew: true };
 }
@@ -94,7 +76,7 @@ export async function resolveUser(req: Request, res: Response, next: NextFunctio
           user.email,
           new Date().toLocaleString()
         );
-        await mailService.sendTemplateEmail(adminEmail, emailTemplate, "admin_new_user_registered");
+        await mailService.sendTemplateEmail(adminEmail, emailTemplate);
 
         // Mark admin notification as sent
         await db
@@ -120,7 +102,7 @@ export async function resolveUser(req: Request, res: Response, next: NextFunctio
         ipAddress,
         location
       );
-      await mailService.sendTemplateEmail(user.email, emailTemplate, "user_login");
+      await mailService.sendTemplateEmail(user.email, emailTemplate);
 
       // Send admin notification for user login
       try {
@@ -135,7 +117,7 @@ export async function resolveUser(req: Request, res: Response, next: NextFunctio
             req.headers['user-agent'] || "Unknown",
             "Regular"
           );
-          await mailService.sendTemplateEmail(adminEmail, adminEmailTemplate, "admin_user_login");
+          await mailService.sendTemplateEmail(adminEmail, adminEmailTemplate);
         }
       } catch (adminEmailError) {
         // Log but don't fail the login email

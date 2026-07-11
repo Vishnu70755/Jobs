@@ -302,7 +302,8 @@ async function retryEmail(emailLog: typeof emailLogsTable.$inferSelect): Promise
     const template = templateFunction(recipientData);
 
     // Send the email
-await mailService.sendTemplateEmail(emailLog.recipient, template, emailLog.event);
+    await mailService.sendTemplateEmail(emailLog.recipient, template);
+
     return { success: true };
   } catch (err) {
     return { success: false, error: err.message };

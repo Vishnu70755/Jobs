@@ -1,5 +1,6 @@
 import { BaseImportService } from "./baseImportService";
 import { ImportSourceEnum } from "@workspace/db";
+import { logger } from "../../lib/logger";
 
 /**
  * LinkedIn job import service
@@ -14,9 +15,21 @@ export class LinkedInImportService extends BaseImportService {
   }
 
   /**
-   * Generate LinkedIn-specific mock data
+   * Scrape jobs from LinkedIn
+   * This is a placeholder implementation - in reality you'd use:
+   * - LinkedIn's official Jobs API (requires partnership)
+   * - Or a scraping service like Apify, ScrapingBee, or custom scraper with proxies
+   * - Or LinkedIn's RSS feeds for public job postings
    */
-  protected getMockData(): Array<any> {
+  async scrape(): Promise<Array<any>> {
+    // Placeholder implementation - replace with actual LinkedIn scraping/API
+    logger.info({ source: this.source }, "Scraping LinkedIn jobs (India-focused)");
+
+    // Simulate some delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Return mock data for Indian jobs
+    // In production, replace this with actual scraping logic
     return [
       {
         title: "Senior Software Engineer",

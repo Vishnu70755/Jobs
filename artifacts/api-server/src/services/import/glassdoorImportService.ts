@@ -1,5 +1,6 @@
 import { BaseImportService } from "./baseImportService";
 import { ImportSourceEnum } from "@workspace/db";
+import { logger } from "../../lib/logger";
 
 /**
  * Glassdoor job import service
@@ -9,66 +10,27 @@ export class GlassdoorImportService extends BaseImportService {
     super("glassdoor" as ImportSourceEnum);
   }
 
-  /**
-   * Generate Glassdoor-specific mock data for Indian market
-   */
-  protected getMockData(): Array<any> {
+  async scrape(): Promise<Array<any>> {
+    logger.info({ source: this.source }, "Scraping Glassdoor jobs (placeholder)");
+
+    // Simulate some delay
+    await new Promise(resolve => setTimeout(resolve, 1200));
+
+    // Return mock data for demonstration
     return [
       {
         title: "Senior Software Engineer",
-        company: "Microsoft India",
-        location: "Bangalore, Karnataka",
+        company: "Microsoft",
+        location: "Redmond, WA",
         workMode: "hybrid",
         experienceLevel: "senior",
-        salaryMin: 1800000,
-        salaryMax: 2500000,
-        salaryCurrency: "INR",
-        description: "Lead software development for Azure cloud services in India.",
-        skills: ["C#", ".NET", "Azure", "Microservices", "SQL"],
-        applyUrl: "https://glassdoor.com/job-listing?id=500001",
+        salaryMin: 140000,
+        salaryMax: 190000,
+        salaryCurrency: "USD",
+        description: "Senior Software Engineer position at Microsoft working on cloud services...",
+        skills: ["C#", ".NET", "Azure", "Microservices"],
+        applyUrl: "https://glassdoor.com/job/listing/123456",
         postedAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
-      },
-      {
-        title: "Data Scientist",
-        company: "Amazon India",
-        location: "Hyderabad, Telangana",
-        workMode: "remote",
-        experienceLevel: "senior",
-        salaryMin: 1600000,
-        salaryMax: 2400000,
-        salaryCurrency: "INR",
-        description: "Build machine learning models for retail forecasting and recommendation systems.",
-        skills: ["Python", "Machine Learning", "TensorFlow", "SQL", "Tableau"],
-        applyUrl: "https://glassdoor.com/job-listing?id=500002",
-        postedAt: new Date(Date.now() - 12 * 60 * 60 * 1000),
-      },
-      {
-        title: "DevOps Engineer",
-        company: "Google India",
-        location: "Pune, Maharashtra",
-        workMode: "onsite",
-        experienceLevel: "mid-level",
-        salaryMin: 1200000,
-        salaryMax: 1800000,
-        salaryCurrency: "INR",
-        description: "Manage Kubernetes clusters and CI/CD pipelines for Google Cloud Platform.",
-        skills: ["Docker", "Kubernetes", "Jenkins", "Terraform", "AWS", "GCP"],
-        applyUrl: "https://glassdoor.com/job-listing?id=500003",
-        postedAt: new Date(Date.now() - 6 * 60 * 60 * 1000),
-      },
-      {
-        title: "Full Stack Developer",
-        company: "Meta India",
-        location: "Gurgaon, Haryana",
-        workMode: "hybrid",
-        experienceLevel: "mid-level",
-        salaryMin: 1000000,
-        salaryMax: 1500000,
-        salaryCurrency: "INR",
-        description: "Develop and maintain web applications using React and Node.js.",
-        skills: ["React", "Node.js", "MongoDB", "Express", "JavaScript"],
-        applyUrl: "https://glassdoor.com/job-listing?id=500004",
-        postedAt: new Date(Date.now() - 18 * 60 * 60 * 1000),
       }
     ];
   }

@@ -1,5 +1,3 @@
-
-
 import { logger } from "../../lib/logger";
 import { db, importJobsTable, importJobStatsTable, importSourceConfigsTable, jobsTable } from "@workspace/db";
 import { eq, sql, desc } from "drizzle-orm";
@@ -23,22 +21,9 @@ export abstract class BaseImportService {
 
   /**
    * Abstract method to be implemented by each source
-   * Should return array of job objects to be imported (mock or real data)
+   * Should return array of job objects to be imported
    */
-  protected abstract getMockData(): Array<any>;
-
-  /**
-   * Start the import process for this source
-   * Includes logging, delay, and data processing
-   */
-  async scrape(): Promise<Array<any>> {
-    logger.info({ source: this.source }, `Scraping ${this.source} jobs`);
-
-    // Simulate some delay (can be overridden by subclasses if needed)
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    return this.getMockData();
-  }
+  abstract scrape(): Promise<Array<any>>;
 
   /**
    * Start the import process for this source
@@ -109,7 +94,7 @@ export abstract class BaseImportService {
           lastRun: new Date(),
           updatedAt: new Date(),
         })
-        .where(eq(importSourceConfigsTable.name, this.source));
+        .where(eq(importSourceConfigsTable.source, this.source));
 
       logger.info(
         {
@@ -164,6 +149,16 @@ export abstract class BaseImportService {
         const completedAt = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
 
         if (success) {
+          const emailTemplate = getImportCompletedEmailTemplate(
+            this.source,
+            startedAt,
+            completedAt,
+            // We need to get the stats from the importJob record or compute again.
+            // For simplicity, we can fetch the updated importJob.
+            // Let's fetch it.
+            0, 0, 0, 0 // placeholder, we will update after fetching
+          );
+
           // Fetch the updated importJob to get actual numbers
           const [jobRecord] = await db
             .select()
@@ -171,7 +166,7 @@ export abstract class BaseImportService {
             .where(eq(importJobsTable.id, importJob.id));
 
           if (jobRecord) {
-            const emailTemplate = getImportCompletedEmailTemplate(
+            const finalTemplate = getImportCompletedEmailTemplate(
               this.source,
               startedAt,
               completedAt,
@@ -180,17 +175,11 @@ export abstract class BaseImportService {
               jobRecord.duplicateJobsSkipped ?? 0,
               jobRecord.failedJobs ?? 0
             );
-            await mailService.sendTemplateEmail(adminEmail, emailTemplate, "import_completed");
-            logger.info({ to: adminEmail, subject: emailTemplate.subject }, "Import completion email sent successfully");
+            await mailService.sendTemplateEmail(adminEmail, finalTemplate);
+            logger.info({ to: adminEmail, subject: finalTemplate.subject }, "Import completion email sent successfully");
           } else {
-            // Fallback with placeholder data
-            const emailTemplate = getImportCompletedEmailTemplate(
-              this.source,
-              startedAt,
-              completedAt,
-              0, 0, 0, 0
-            );
-            await mailService.sendTemplateEmail(adminEmail, emailTemplate, "import_completed");
+            // fallback to placeholder
+            await mailService.sendTemplateEmail(adminEmail, emailTemplate);
             logger.info({ to: adminEmail, subject: emailTemplate.subject }, "Import completion email sent (placeholder)");
           }
         } else {
@@ -199,7 +188,7 @@ export abstract class BaseImportService {
             errorMessage,
             startedAt
           );
-          await mailService.sendTemplateEmail(adminEmail, emailTemplate, "import_failed");
+          await mailService.sendTemplateEmail(adminEmail, emailTemplate);
           logger.info({ to: adminEmail, subject: emailTemplate.subject }, "Import failure email sent successfully");
         }
       } else {
@@ -234,7 +223,7 @@ export abstract class BaseImportService {
         }
 
         // Check for duplicates (based on source + applyUrl or title+company+location)
-        const existing = await db.query.jobsTable.findFirst({
+                const existing = await db.query.jobsTable.findFirst({
           where: (jobsTable, { eq, and, or }) => {
             const conditions = [];
             if (validatedJob.applyUrl) {
@@ -343,7 +332,7 @@ export abstract class BaseImportService {
     const [config] = await db
       .select()
       .from(importSourceConfigsTable)
-      .where(eq(importSourceConfigsTable.name, this.source));
+      .where(eq(importSourceConfigsTable.source, this.source));
 
     const [latestJob] = await db
       .select()

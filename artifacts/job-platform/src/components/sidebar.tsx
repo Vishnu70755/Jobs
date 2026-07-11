@@ -17,9 +17,7 @@ import {
   FilePlus,
   X,
 } from "lucide-react";
-
 import { cn } from "@/lib/utils";
-
 
 const navItems = [
   { href: "/dashboard",     label: "Dashboard",     icon: LayoutDashboard },

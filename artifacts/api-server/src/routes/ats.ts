@@ -81,8 +81,8 @@ router.post("/analyze", resolveUser, async (req: Request, res: Response) => {
           analysis.matchPercentage,
           suggestions
         );
-// Line 84 — ATS analysis result
-await mailService.sendTemplateEmail(userEmail, emailTemplate, "ats_analysis");
+        await mailService.sendTemplateEmail(userEmail, emailTemplate);
+
         // Log successful email send
         req.log.info({
           userId: user.id,

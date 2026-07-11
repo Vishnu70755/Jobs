@@ -1,5 +1,6 @@
 import { BaseImportService } from "./baseImportService";
 import { ImportSourceEnum } from "@workspace/db";
+import { logger } from "../../lib/logger";
 
 /**
  * Indeed job import service
@@ -9,10 +10,14 @@ export class IndeedImportService extends BaseImportService {
     super("indeed" as ImportSourceEnum);
   }
 
-  /**
-   * Generate Indeed-specific mock data
-   */
-  protected getMockData(): Array<any> {
+  async scrape(): Promise<Array<any>> {
+    logger.info({ source: this.source }, "Scraping Indeed jobs (India-focused)");
+
+    // Simulate some delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Return mock data for Indian jobs
+    // In production, replace this with actual scraping logic
     return [
       // IBM India (10 jobs)
       {
@@ -361,7 +366,7 @@ export class IndeedImportService extends BaseImportService {
         location: "Chennai, Tamil Nadu",
         workMode: "onsite",
         experienceLevel: "mid-level",
-        salaryMin: 700000, // Fixed the sliderMin typo from original
+        sliderMin: 700000,
         salaryMax: 1000000,
         salaryCurrency: "INR",
         description: "Assess and manage financial and operational risks.",

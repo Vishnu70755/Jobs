@@ -74,7 +74,7 @@ router.post("/", resolveUser, requireAdmin, async (req, res) => {
           newSource.sourceType,
           new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
         );
-await mailService.sendTemplateEmail(adminEmail, emailTemplate, "source_added");
+        await mailService.sendTemplateEmail(adminEmail, emailTemplate);
       }
     } catch (emailError) {
       console.error("Failed to send source added email:", emailError);
@@ -135,7 +135,7 @@ router.patch("/:id", resolveUser, requireAdmin, async (req, res) => {
           updatedSource.sourceType,
           new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
         );
-await mailService.sendTemplateEmail(adminEmail, emailTemplate, "source_updated");
+        await mailService.sendTemplateEmail(adminEmail, emailTemplate);
       }
     } catch (emailError) {
       console.error("Failed to send source updated email:", emailError);
@@ -179,7 +179,7 @@ router.delete("/:id", resolveUser, requireAdmin, async (req, res) => {
           existing.sourceType,
           new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
         );
-await mailService.sendTemplateEmail(adminEmail, emailTemplate, "source_deleted");
+        await mailService.sendTemplateEmail(adminEmail, emailTemplate);
       }
     } catch (emailError) {
       console.error("Failed to send source deleted email:", emailError);
@@ -220,7 +220,7 @@ router.patch("/:id/enable", resolveUser, requireAdmin, async (req, res) => {
           updatedSource.sourceType,
           new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
         );
-await mailService.sendTemplateEmail(adminEmail, emailTemplate, "source_enabled");
+        await mailService.sendTemplateEmail(adminEmail, emailTemplate);
       }
     } catch (emailError) {
       console.error("Failed to send source enabled email:", emailError);
@@ -261,7 +261,7 @@ router.patch("/:id/disable", resolveUser, requireAdmin, async (req, res) => {
           updatedSource.sourceType,
           new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
         );
-await mailService.sendTemplateEmail(adminEmail, emailTemplate, "source_disabled");
+        await mailService.sendTemplateEmail(adminEmail, emailTemplate);
       }
     } catch (emailError) {
       console.error("Failed to send source disabled email:", emailError);

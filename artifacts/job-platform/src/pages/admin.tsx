@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import {
   useGetAdminStats,
   useListAdminUsers,
@@ -489,18 +489,20 @@ const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
           </Card>
 
           {/* Active Sources */}
-          <Card className="border">
-            <CardHeader className="pb-2">
-              <h3 className="text-sm font-medium text-muted-foreground">Active Sources</h3>
-            </CardHeader>
-            <CardContent className="text-2xl font-bold">
-              {loadingImportStats ? (
-                <Skeleton className="h-8 w-24" />
-              ) : (
-                <span>{importStats?.activeSources ?? 0}</span>
-              )}
-            </CardContent>
-          </Card>
+          <Link href="/admin/sources">
+            <Card className="border">
+              <CardHeader className="pb-2">
+                <h3 className="text-sm font-medium text-muted-foreground">Active Sources</h3>
+              </CardHeader>
+              <CardContent className="text-2xl font-bold">
+                {loadingImportStats ? (
+                  <Skeleton className="h-8 w-24" />
+                ) : (
+                  <span>{importStats?.activeSources ?? 0}</span>
+                )}
+              </CardContent>
+            </Card>
+          </Link>
         </div>
 
         {/* Recent Logs */}
