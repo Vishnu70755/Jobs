@@ -46,7 +46,7 @@ function stripBase(path: string): string {
     : path;
 }
 
-if (!clerkPubKkey) {
+if (!clerkPubKey) {
   throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY in .env file");
 }
 
