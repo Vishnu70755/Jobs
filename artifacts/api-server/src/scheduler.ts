@@ -1,12 +1,10 @@
-import { logger } from "../../lib/logger";
-import { db, importJobsTable, importJobStatsTable, importSourceConfigsTable, jobsTable } from "@workspace/db";
-import { eq, sql, desc } from "drizzle-orm";
-import { ImportSourceEnum } from "@workspace/db";
-import { mailService } from "../../lib/mail";
-import {
-  getImportCompletedEmailTemplate,
-  getImportFailedEmailTemplate
-} from "../../lib/email-templates";
+import cron from "node-cron";
+import { logger } from "./lib/logger";
+import { importServiceManager } from "./services/import";
+import { db, usersTable, jobsTable, applicationsTable, resumesTable, atsReportsTable, importJobsTable, importSourceConfigsTable, importJobStatsTable } from "@workspace/db";
+import { eq, sql, and, gte, lte } from "drizzle-orm";
+import { mailService } from "./lib/mail";
+import { getDailySummaryEmailTemplate } from "./lib/email-templates";
 
 async function checkInterviewReminders() {
   try {
@@ -116,7 +114,7 @@ async function sendDailySummaryEmail(): Promise<void> {
       // Get per-source statistics for today and overall
       db
         .select({
-          source: importSourceConfigsTable.source,
+          source: importSourceConfigsTable.name,
           isEnabled: importSourceConfigsTable.isEnabled,
           totalJobsEver: sql<number>`coalesce(sum(${importJobsTable.totalJobsFound}), 0)`,
           jobsToday: sql<number>`coalesce(sum(${importJobsTable.newJobsAdded}), 0)`,
@@ -125,11 +123,11 @@ async function sendDailySummaryEmail(): Promise<void> {
         .leftJoin(
           importJobsTable,
           and(
-            eq(importSourceConfigsTable.source, importJobsTable.source),
+            eq(importSourceConfigsTable.name, importJobsTable.source),
             between(importJobsTable.startedAt, startOfTodayUTC, endOfTodayUTC)
           )
         )
-        .groupBy(importSourceConfigsTable.source, importSourceConfigsTable.isEnabled)
+        .groupBy(importSourceConfigsTable.name, importSourceConfigsTable.isEnabled)
     ]);
 
     const successRate = totalApplications > 0 ? Math.round((successfulApplications / totalApplications) * 100) : 0;
@@ -157,51 +155,63 @@ async function sendDailySummaryEmail(): Promise<void> {
       return;
     }
 
-    // For scrapers that support cancellation, implement here
-    // For now, we'll just mark as stopped in the database
-    logger.info({ source: this.source }, "Stopping import job");
+    const emailTemplate = getDailySummaryEmailTemplate(
+      `${startOfISTToday.toLocaleDateString("en-IN")}`,
+      stats
+    );
 
-    // Update any running jobs for this source to stopped
-    await db
-      .update(importJobsTable)
-      .set({
-        status: "stopped",
-        completedAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(
-        sql`${importJobsTable.source} = ${this.source} AND ${importJobsTable.status} = 'running'`
-      );
-
-    this.isRunning = false;
+// Line 163 — daily summary
+await mailService.sendTemplateEmail(adminEmail, emailTemplate, "daily_summary");    logger.info({ to: adminEmail, subject: emailTemplate.subject }, "Daily summary email sent successfully");
+  } catch (err) {
+    logger.error(err, "Failed to send daily summary email");
   }
+}
 
-  /**
-   * Get current status of import for this source
-   */
-  async getStatus(): Promise<{
-    status: string;
-    lastRun: Date | null;
-    nextScheduledRun: Date | null;
-    isRunning: boolean;
-  }> {
-    const [config] = await db
-      .select()
-      .from(importSourceConfigsTable)
-      .where(eq(importSourceConfigsTable.name, this.source));
+export function startScheduler(): void {
+  // Initialize import service manager (create default configs if needed)
+  importServiceManager.initializeDefaultConfigs().catch(err => {
+    logger.error(err, "Failed to initialize import service configurations");
+  });
 
-    const [latestJob] = await db
-      .select()
-      .from(importJobsTable)
-      .where(eq(importJobsTable.source, this.source))
-      .orderBy(desc(importJobsTable.startedAt))
-      .limit(1);
+  cron.schedule("0 * * * *", () => {
+    checkInterviewReminders().catch((err) =>
+      logger.error(err, "Reminder job failed")
+    );
+  });
 
-    return {
-      status: latestJob?.status ?? "idle",
-      lastRun: config?.lastRun ?? null,
-      nextScheduledRun: config?.nextScheduledRun ?? null,
-      isRunning: this.isRunning,
-    };
-  }
+  checkInterviewReminders().catch((err) =>
+    logger.error(err, "Startup reminder check failed")
+  );
+
+  // Start import scheduler based on individual source configurations
+  importServiceManager.startScheduler().catch(err => {
+    logger.error(err, "Failed to start import scheduler");
+  });
+
+  // Schedule daily import at 7:00 AM IST (which is 1:30 AM UTC)
+  cron.schedule("30 1 * * *", () => {
+    triggerDailyImport().catch((err) =>
+      logger.error(err, "Failed to trigger daily 7 AM IST import")
+    );
+  });
+
+  // Schedule daily summary email at 9:00 AM IST (which is 3:30 AM UTC)
+  cron.schedule("30 3 * * *", () => {
+    sendDailySummaryEmail().catch((err) =>
+      logger.error(err, "Failed to send daily summary email")
+    );
+  });
+
+  // Schedule daily cleanup of old jobs (2:00 AM server time)
+  cron.schedule("0 2 * * *", () => {
+    cleanupOldJobs().catch((err) =>
+      logger.error(err, "Failed to cleanup old jobs")
+    );
+  });
+
+  logger.info("Interview reminder scheduler started (runs every hour)");
+  logger.info("Import scheduler started");
+  logger.info("Daily 7 AM IST import scheduler started");
+  logger.info("Daily summary email scheduler started (9:00 AM IST)");
+  logger.info("Old jobs cleanup scheduler started (runs daily at 2:00 AM)");
 }
