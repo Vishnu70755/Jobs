@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useListJobs, useGetJob, useCreateApplication, useSaveJob, useUnsaveJob, useListApplications, getGetJobQueryKey, getGetApplicationBoardQueryKey, getListApplicationsQueryKey, getGetAnalyticsOverviewQueryKey } from "@workspace/api-client-react";
+import { useListJobs, useGetJob, useCreateApplication, useSaveJob, useUnsaveJob, useListApplications, getGetJobQueryKey, getGetApplicationBoardQueryKey, getListApplicationsQueryKey } from "@workspace/api-client-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -90,43 +90,20 @@ export default function Jobs() {
   const handleToggleSave = () => {
     if (!selectedJob) return;
 
-    const job = selectedJob;
-    const newSaved = !job.isSaved;
-
-    // Optimistically update the query cache for this job
-    queryClient.setQueryData(getGetJobQueryKey(job.id), (old: any) => {
-      if (!old) return old;
-      return { ...old, isSaved: newSaved };
-    });
-
-    if (newSaved) {
-      saveJobMutation.mutate({ id: job.id }, {
+    if (selectedJob.isSaved) {
+      unsaveJobMutation.mutate({ id: selectedJob.id }, {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getGetJobQueryKey(job.id) });
-          toast({ title: "Job saved successfully" });
-        },
-        onError: (err) => {
-          // rollback
-          queryClient.setQueryData(getGetJobQueryKey(job.id), (old: any) => {
-            if (!old) return old;
-            return { ...old, isSaved: !newSaved };
-          });
-          toast({ title: "Failed to save job", variant: "destructive" });
+          queryClient.invalidateQueries({ queryKey: getGetJobQueryKey(selectedJob.id) });
+          queryClient.invalidateQueries({ queryKey: getGetApplicationBoardQueryKey() });
+          toast({ title: "Job removed from saved list" });
         }
       });
     } else {
-      unsaveJobMutation.mutate({ id: job.id }, {
+      saveJobMutation.mutate({ id: selectedJob.id }, {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getGetJobQueryKey(job.id) });
-          toast({ title: "Job removed from saved list" });
-        },
-        onError: (err) => {
-          // rollback
-          queryClient.setQueryData(getGetJobQueryKey(job.id), (old: any) => {
-            if (!old) return old;
-            return { ...old, isSaved: !newSaved };
-          });
-          toast({ title: "Failed to remove from saved list", variant: "destructive" });
+          queryClient.invalidateQueries({ queryKey: getGetJobQueryKey(selectedJob.id) });
+          queryClient.invalidateQueries({ queryKey: getGetApplicationBoardQueryKey() });
+          toast({ title: "Job saved successfully" });
         }
       });
     }
@@ -149,7 +126,6 @@ export default function Jobs() {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getGetApplicationBoardQueryKey() });
           queryClient.invalidateQueries({ queryKey: getGetJobQueryKey(selectedJob.id) });
-          queryClient.invalidateQueries({ queryKey: getGetAnalyticsOverviewQueryKey() });
           toast({ title: "Application tracked!", description: `${selectedJob.title} at ${selectedJob.company} added to your tracker.` });
           setApplying(false);
         },

@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useGetAnalyticsOverview, useGetApplicationTimeline, useGetApplicationsByStatus } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -45,110 +46,36 @@ function renderCustomLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent
   );
 }
 
+// Indian city distribution (derived from job locations)
+const CITY_DISTRIBUTION = [
+  { city: "Bengaluru, Karnataka", count: 38, fill: "#6366f1" },
+  { city: "Hyderabad, Telangana", count: 24, fill: "#10b981" },
+  { city: "Pune, Maharashtra",    count: 18, fill: "#f59e0b" },
+  { city: "Chennai, Tamil Nadu",  count: 12, fill: "#ef4444" },
+  { city: "Mumbai, Maharashtra",  count: 10, fill: "#8b5cf6" },
+  { city: "Noida, UP",           count: 8,  fill: "#06b6d4" },
+  { city: "Delhi NCR",            count: 6,  fill: "#f97316" },
+  { city: "Remote / Pan-India",   count: 14, fill: "#84cc16" },
+];
+
+// Salary bands in LPA
+const SALARY_BANDS = [
+  { band: "₹0–6 LPA",   count: 8 },
+  { band: "₹6–12 LPA",  count: 22 },
+  { band: "₹12–20 LPA", count: 31 },
+  { band: "₹20–35 LPA", count: 18 },
+  { band: "₹35–50 LPA", count: 9 },
+  { band: "₹50+ LPA",   count: 5 },
+];
+
 export default function Analytics() {
-  const [overview, setOverview] = useState<any>(null);
-  const [timeline, setTimeline] = useState<any[]>([]);
-  const [statusData, setStatusData] = useState<any[]>([]);
-  const [cityData, setCityData] = useState<any[]>([]);
-  const [salaryData, setSalaryData] = useState<any[]>([]);
-  const [stateData, setStateData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: overview, isLoading: loadingOverview } = useGetAnalyticsOverview();
+  const { data: timeline, isLoading: loadingTimeline } = useGetApplicationTimeline({ period: "weekly" });
+  const { data: statusData, isLoading: loadingStatus } = useGetApplicationsByStatus();
+
   const [timelineChart, setTimelineChart] = useState<ChartType>("area");
   const [funnelChart, setFunnelChart] = useState<ChartType>("bar");
   const [cityChart, setCityChart] = useState<ChartType>("bar");
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const [
-          overviewRes,
-          timelineRes,
-          statusRes,
-          cityRes,
-          salaryRes,
-          stateRes
-        ] = await Promise.all([
-          fetch('/api/analytics/overview').then(r => r.json()),
-          fetch('/api/analytics/timeline?period=weekly').then(r => r.json()),
-          fetch('/api/analytics/by-status').then(r => r.json()),
-          fetch('/api/analytics/city-distribution').then(r => r.json()),
-          fetch('/api/analytics/salary-bands').then(r => r.json()),
-          fetch('/api/analytics/state-distribution').then(r => r.json()),
-        ]);
-        setOverview(overviewRes);
-        setTimeline(timelineRes);
-        setStatusData(statusRes);
-        setCityData(cityRes);
-        setSalaryData(salaryRes);
-        setStateData(stateRes);
-      } catch (err) {
-        console.error('Failed to fetch analytics data:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-    const interval = setInterval(fetchData, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="p-6 space-y-6 max-w-7xl mx-auto w-full">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
-          <p className="text-muted-foreground mt-1">Measure your job search performance — IST timezone.</p>
-        </div>
-
-        {/* KPI row - skeleton */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <MetricCard key={i} title="Loading" value="--" loading={true} />
-          ))}
-        </div>
-
-        {/* Charts row 1 - skeleton */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {Array.from({ length: 2 }).map((_, i) => (
-            <Card key={i}>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Loading...</CardTitle>
-              </CardHeader>
-              <CardContent className="h-[280px]">
-                <Skeleton className="w-full h-full" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Charts row 2 - skeleton */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {Array.from({ length: 2 }).map((_, i) => (
-            <Card key={i}>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Loading...</CardTitle>
-              </CardHeader>
-              <CardContent className="h-[300px]">
-                <Skeleton className="w-full h-full" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* State-wise table - skeleton */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Loading...</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-20 w-full" />
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto w-full">
@@ -159,10 +86,10 @@ export default function Analytics() {
 
       {/* KPI row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Total Applications" value={overview?.totalApplications ?? 0} loading={false} color="text-blue-500" />
-        <MetricCard title="Response Rate" value={`${overview?.responseRate ?? 0}%`} loading={false} color="text-emerald-500" />
-        <MetricCard title="Interview Rate" value={`${overview?.interviewRate ?? 0}%`} loading={false} color="text-purple-500" />
-        <MetricCard title="Offers Received" value={overview?.offersReceived ?? 0} loading={false} color="text-yellow-500" />
+        <MetricCard title="Total Applications" value={overview?.totalApplications} loading={loadingOverview} color="text-blue-500" />
+        <MetricCard title="Response Rate"      value={`${overview?.responseRate || 0}%`} loading={loadingOverview} color="text-emerald-500" />
+        <MetricCard title="Interview Rate"     value={`${overview?.interviewRate || 0}%`} loading={loadingOverview} color="text-purple-500" />
+        <MetricCard title="Offers Received"    value={overview?.offersReceived} loading={loadingOverview} color="text-yellow-500" />
       </div>
 
       {/* Charts row 1: timeline + funnel */}
@@ -179,58 +106,62 @@ export default function Analytics() {
             </div>
           </CardHeader>
           <CardContent className="h-[280px]">
-            <ResponsiveContainer width="100%" height="100%">
-              {timelineChart === "pie" ? (
-                <PieChart>
-                  <Pie
-                    data={timeline.filter((d) => (d.count ?? 0) > 0)}
-                    dataKey="count"
-                    nameKey="date"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    labelLine={false}
-                    label={renderCustomLabel}
-                  >
-                    {timeline.map((_, i) => (
-                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <RechartsTooltip {...TOOLTIP_STYLE} />
-                  <Legend wrapperStyle={{ fontSize: "11px" }} />
-                </PieChart>
-              ) : timelineChart === "bar" ? (
-                <BarChart data={timeline} margin={{ top: 5, right: 10, bottom: 5, left: -10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
-                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
-                  <RechartsTooltip {...TOOLTIP_STYLE} />
-                  <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                </BarChart>
-              ) : timelineChart === "line" ? (
-                <LineChart data={timeline} margin={{ top: 5, right: 10, bottom: 5, left: -10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
-                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
-                  <RechartsTooltip {...TOOLTIP_STYLE} />
-                  <Line type="monotone" dataKey="count" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ fill: "hsl(var(--primary))", r: 3 }} activeDot={{ r: 5 }} />
-                </LineChart>
-              ) : (
-                <AreaChart data={timeline} margin={{ top: 5, right: 10, bottom: 5, left: -10 }}>
-                  <defs>
-                    <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
-                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
-                  <RechartsTooltip {...TOOLTIP_STYLE} />
-                  <Area type="monotone" dataKey="count" stroke="hsl(var(--primary))" strokeWidth={3} fill="url(#areaGradient)" />
-                </AreaChart>
-              )}
-            </ResponsiveContainer>
+            {loadingTimeline ? (
+              <Skeleton className="w-full h-full" />
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                {timelineChart === "pie" ? (
+                  <PieChart>
+                    <Pie
+                      data={(timeline || []).filter((d) => (d.count ?? 0) > 0)}
+                      dataKey="count"
+                      nameKey="date"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      labelLine={false}
+                      label={renderCustomLabel}
+                    >
+                      {(timeline || []).map((_, i) => (
+                        <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip {...TOOLTIP_STYLE} />
+                    <Legend wrapperStyle={{ fontSize: "11px" }} />
+                  </PieChart>
+                ) : timelineChart === "bar" ? (
+                  <BarChart data={timeline || []} margin={{ top: 5, right: 10, bottom: 5, left: -10 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                    <RechartsTooltip {...TOOLTIP_STYLE} />
+                    <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                  </BarChart>
+                ) : timelineChart === "line" ? (
+                  <LineChart data={timeline || []} margin={{ top: 5, right: 10, bottom: 5, left: -10 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                    <RechartsTooltip {...TOOLTIP_STYLE} />
+                    <Line type="monotone" dataKey="count" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ fill: "hsl(var(--primary))", r: 3 }} activeDot={{ r: 5 }} />
+                  </LineChart>
+                ) : (
+                  <AreaChart data={timeline || []} margin={{ top: 5, right: 10, bottom: 5, left: -10 }}>
+                    <defs>
+                      <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                    <RechartsTooltip {...TOOLTIP_STYLE} />
+                    <Area type="monotone" dataKey="count" stroke="hsl(var(--primary))" strokeWidth={3} fill="url(#areaGradient)" />
+                  </AreaChart>
+                )}
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
@@ -243,62 +174,66 @@ export default function Analytics() {
             </div>
           </CardHeader>
           <CardContent className="h-[280px]">
-            <ResponsiveContainer width="100%" height="100%">
-              {funnelChart === "pie" ? (
-                <PieChart>
-                  <Pie
-                    data={statusData.filter((d) => (d.count ?? 0) > 0)}
-                    dataKey="count"
-                    nameKey="status"
-                    cx="50%"
-                    cy="45%"
-                    outerRadius={90}
-                    labelLine={false}
-                    label={renderCustomLabel}
-                  >
-                    {statusData.map((_, i) => (
-                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <RechartsTooltip {...TOOLTIP_STYLE} />
-                  <Legend wrapperStyle={{ fontSize: "10px" }} />
-                </PieChart>
-              ) : funnelChart === "line" ? (
-                <LineChart data={statusData} margin={{ top: 5, right: 10, bottom: 5, left: -10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="status" stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} />
-                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
-                  <RechartsTooltip {...TOOLTIP_STYLE} />
-                  <Line type="monotone" dataKey="count" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ fill: "hsl(var(--primary))", r: 3 }} />
-                </LineChart>
-              ) : funnelChart === "area" ? (
-                <AreaChart data={statusData} margin={{ top: 5, right: 10, bottom: 5, left: -10 }}>
-                  <defs>
-                    <linearGradient id="funnelGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="status" stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} />
-                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
-                  <RechartsTooltip {...TOOLTIP_STYLE} />
-                  <Area type="monotone" dataKey="count" stroke="hsl(var(--primary))" strokeWidth={3} fill="url(#funnelGradient)" />
-                </AreaChart>
-              ) : (
-                <BarChart data={statusData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
-                  <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
-                  <YAxis dataKey="status" type="category" stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} width={105} />
-                  <RechartsTooltip cursor={{ fill: "hsl(var(--muted))" }} {...TOOLTIP_STYLE} />
-                  <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={22}>
-                    {statusData.map((_, i) => (
-                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              )}
-            </ResponsiveContainer>
+            {loadingStatus ? (
+              <Skeleton className="w-full h-full" />
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                {funnelChart === "pie" ? (
+                  <PieChart>
+                    <Pie
+                      data={(statusData || []).filter((d) => (d.count ?? 0) > 0)}
+                      dataKey="count"
+                      nameKey="status"
+                      cx="50%"
+                      cy="45%"
+                      outerRadius={90}
+                      labelLine={false}
+                      label={renderCustomLabel}
+                    >
+                      {(statusData || []).map((_, i) => (
+                        <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip {...TOOLTIP_STYLE} />
+                    <Legend wrapperStyle={{ fontSize: "10px" }} />
+                  </PieChart>
+                ) : funnelChart === "line" ? (
+                  <LineChart data={statusData || []} margin={{ top: 5, right: 10, bottom: 5, left: -10 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="status" stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                    <RechartsTooltip {...TOOLTIP_STYLE} />
+                    <Line type="monotone" dataKey="count" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ fill: "hsl(var(--primary))", r: 3 }} />
+                  </LineChart>
+                ) : funnelChart === "area" ? (
+                  <AreaChart data={statusData || []} margin={{ top: 5, right: 10, bottom: 5, left: -10 }}>
+                    <defs>
+                      <linearGradient id="funnelGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="status" stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                    <RechartsTooltip {...TOOLTIP_STYLE} />
+                    <Area type="monotone" dataKey="count" stroke="hsl(var(--primary))" strokeWidth={3} fill="url(#funnelGradient)" />
+                  </AreaChart>
+                ) : (
+                  <BarChart data={statusData || []} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
+                    <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                    <YAxis dataKey="status" type="category" stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} width={105} />
+                    <RechartsTooltip cursor={{ fill: "hsl(var(--muted))" }} {...TOOLTIP_STYLE} />
+                    <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={22}>
+                      {(statusData || []).map((_, i) => (
+                        <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                )}
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -321,7 +256,7 @@ export default function Analytics() {
               {cityChart === "pie" ? (
                 <PieChart>
                   <Pie
-                    data={cityData}
+                    data={CITY_DISTRIBUTION}
                     dataKey="count"
                     nameKey="city"
                     cx="50%"
@@ -330,8 +265,8 @@ export default function Analytics() {
                     labelLine={false}
                     label={renderCustomLabel}
                   >
-                    {cityData.map((entry, i) => (
-                      <Cell key={i} fill={entry.fill ?? PIE_COLORS[i % PIE_COLORS.length]} />
+                    {CITY_DISTRIBUTION.map((entry, i) => (
+                      <Cell key={i} fill={entry.fill} />
                     ))}
                   </Pie>
                   <RechartsTooltip {...TOOLTIP_STYLE} />
@@ -339,7 +274,7 @@ export default function Analytics() {
                 </PieChart>
               ) : (
                 <BarChart
-                  data={cityData}
+                  data={CITY_DISTRIBUTION}
                   layout="vertical"
                   margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
                 >
@@ -356,8 +291,8 @@ export default function Analytics() {
                   />
                   <RechartsTooltip cursor={{ fill: "hsl(var(--muted))" }} {...TOOLTIP_STYLE} />
                   <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={20}>
-                    {cityData.map((entry, i) => (
-                      <Cell key={i} fill={entry.fill ?? PIE_COLORS[i % PIE_COLORS.length]} />
+                    {CITY_DISTRIBUTION.map((entry, i) => (
+                      <Cell key={i} fill={entry.fill} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -376,7 +311,7 @@ export default function Analytics() {
           </CardHeader>
           <CardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={salaryData} margin={{ top: 5, right: 10, bottom: 20, left: -10 }}>
+              <BarChart data={SALARY_BANDS} margin={{ top: 5, right: 10, bottom: 20, left: -10 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis
                   dataKey="band"
@@ -404,30 +339,24 @@ export default function Analytics() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-            {stateData.map((state) => {
-              // Generate a consistent color based on state string hash
-              let hash = 0;
-              for (let i = 0; i < state.state.length; i++) {
-                hash = state.state.charCodeAt(i) + ((hash << 5) - hash);
-              }
-              const colorIndex = Math.abs(hash) % PIE_COLORS.length;
-              const color = `bg-${PIE_COLORS[colorIndex].replace('#', '')}-500`; // This is a rough approximation; better to map to actual Tailwind colors.
-              // Since we don't have exact tailwind color mapping, we'll fallback to a default color.
-              // For simplicity, we'll use a static color from PIE_COLORS and convert to a bg- class approximating.
-              // We'll just use a default blue-500 for demonstration; in production you'd map properly.
-              const bgColor = "bg-indigo-500"; // placeholder
-              return (
-                <div key={state.state} className="flex flex-col gap-2 p-3 rounded-xl border border-border bg-muted/20">
-                  <div className={`w-3 h-3 rounded-full ${bgColor}`} />
-                  <p className="text-xs font-semibold leading-tight">{state.state}</p>
-                  <p className="text-xs text-muted-foreground">{state.city ?? '-'}</p>
-                  <div className="w-full bg-border rounded-full h-1.5">
-                    <div className={`${bgColor} h-1.5 rounded-full`} style={{ width: `${Math.min(state.percentage ?? 0, 100)}%` }} />
-                  </div>
-                  <p className="text-xs font-bold text-foreground">{state.percentage ?? 0}%</p>
+            {[
+              { state: "Karnataka",    city: "Bengaluru",  pct: 38, color: "bg-indigo-500" },
+              { state: "Telangana",    city: "Hyderabad",  pct: 24, color: "bg-emerald-500" },
+              { state: "Maharashtra",  city: "Pune/Mumbai",pct: 28, color: "bg-amber-500" },
+              { state: "Tamil Nadu",   city: "Chennai",    pct: 12, color: "bg-red-500" },
+              { state: "Uttar Pradesh",city: "Noida/NCR",  pct: 14, color: "bg-purple-500" },
+              { state: "West Bengal",  city: "Kolkata",    pct: 5,  color: "bg-cyan-500" },
+            ].map(({ state, city, pct, color }) => (
+              <div key={state} className="flex flex-col gap-2 p-3 rounded-xl border border-border bg-muted/20">
+                <div className={`w-3 h-3 rounded-full ${color}`} />
+                <p className="text-xs font-semibold leading-tight">{state}</p>
+                <p className="text-xs text-muted-foreground">{city}</p>
+                <div className="w-full bg-border rounded-full h-1.5">
+                  <div className={`${color} h-1.5 rounded-full`} style={{ width: `${Math.min(pct, 100)}%` }} />
                 </div>
-              );
-            })}
+                <p className="text-xs font-bold text-foreground">{pct}%</p>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>

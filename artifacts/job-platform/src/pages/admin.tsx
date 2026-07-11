@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/react";
-import { useLocation, Link } from "wouter";
+import { useLocation } from "wouter";
 import {
   useGetAdminStats,
   useListAdminUsers,
@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Users, Briefcase, FileText, BarChart2, TrendingUp, ShieldAlert, Search, UserX, Lock, Loader2, Save,
+  Users, Briefcase, FileText, BarChart2, TrendingUp, ShieldAlert, Search, UserX, Lock, Loader2,
 } from "lucide-react";
 import { useImportStatusQuery, useImportStatsQuery, useStartImportMutation, useStopImportMutation, ImportStatus, ImportStats } from "@/hooks/useImportControl";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
@@ -111,13 +111,13 @@ function AccessDenied() {
 export default function Admin() {
   const { user, isLoaded } = useUser();
   const { data: stats, isLoading: loadingStats } = useGetAdminStats({
-    query: {},
+    query: { refetchInterval: 15000 },
   });
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const { data: usersData, isLoading: loadingUsers } = useListAdminUsers(
     { search: search || undefined, page },
-    { query: {} }
+    { query: { refetchInterval: 15000 } }
   );
   const suspendUser = useSuspendUser();
   const queryClient = useQueryClient();
@@ -141,18 +141,18 @@ export default function Admin() {
     : false;
 
   const mostRecentLastRun = Array.isArray(importStatus) && importStatus.length > 0
-    ? importStatus
-        .map(status => status.lastRun ? new Date(status.lastRun) : null)
-        .filter((date): date is Date => date !== null)
-        .reduce((latest, date) => (date > latest ? date : latest), new Date(0))
-    : null;
+  ? importStatus
+      .map(status => status.lastRun ? new Date(status.lastRun) : null)
+      .filter((date): date is Date => date !== null)
+      .reduce((latest, date) => (date > latest ? date : latest), new Date(0))
+  : null;
 
-  const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
-    ? importStatus
-        .map(status => status.nextScheduledRun ? new Date(status.nextScheduledRun) : null)
-        .filter((date): date is Date => date !== null)
-        .reduce((soonest, date) => (date < soonest ? date : soonest), new Date(8640000000000000))
-    : null;
+const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
+  ? importStatus
+      .map(status => status.nextScheduledRun ? new Date(status.nextScheduledRun) : null)
+      .filter((date): date is Date => date !== null)
+      .reduce((soonest, date) => (date < soonest ? date : soonest), new Date(8640000000000000))
+  : null;
 
   // Calculate how many times import started today
   const importsStartedToday = Array.isArray(importStatus)
@@ -172,11 +172,6 @@ export default function Admin() {
         }
         return count;
       }, 0)
-    : 0;
-
-  // Calculate total saved jobs across all users
-  const totalSavedJobs = Array.isArray(usersData?.users)
-    ? usersData.users.reduce((sum, user) => sum + (user.savedJobsCount ?? 0), 0)
     : 0;
 
   // Calculate next 7:00 AM IST
@@ -318,6 +313,7 @@ export default function Admin() {
     );
   }
 
+  
   return (
     <div className="p-8 space-y-8 max-w-7xl mx-auto w-full">
       <div className="flex items-center gap-3">
@@ -493,20 +489,18 @@ export default function Admin() {
           </Card>
 
           {/* Active Sources */}
-          <Link href="/admin/sources">
-            <Card className="border">
-              <CardHeader className="pb-2">
-                <h3 className="text-sm font-medium text-muted-foreground">Active Sources</h3>
-              </CardHeader>
-              <CardContent className="text-2xl font-bold">
-                {loadingImportStats ? (
-                  <Skeleton className="h-8 w-24" />
-                ) : (
-                  <span>{importStats?.activeSources ?? 0}</span>
-                )}
-              </CardContent>
-            </Card>
-          </Link>
+          <Card className="border">
+            <CardHeader className="pb-2">
+              <h3 className="text-sm font-medium text-muted-foreground">Active Sources</h3>
+            </CardHeader>
+            <CardContent className="text-2xl font-bold">
+              {loadingImportStats ? (
+                <Skeleton className="h-8 w-24" />
+              ) : (
+                <span>{importStats?.activeSources ?? 0}</span>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Recent Logs */}
@@ -538,14 +532,13 @@ export default function Admin() {
       {/* Stats grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {loadingStats ? (
-          Array.from({ length: 9 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)
+          Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)
         ) : (
           <>
             <StatCard icon={Users}     label="Total Users"      value={stats?.totalUsers ?? 0}        sub={`+${stats?.newUsersThisWeek ?? 0} this week`} />
             <StatCard icon={Users}     label="Active Users"     value={stats?.activeUsers ?? 0} />
             <StatCard icon={Briefcase} label="Total Jobs"       value={stats?.totalJobs ?? 0} />
             <StatCard icon={BarChart2} label="Applications"     value={stats?.totalApplications ?? 0} sub={`+${stats?.applicationsThisWeek ?? 0} this week`} />
-            <StatCard icon={Save}      label="Saved Jobs"       value={totalSavedJobs} />
             <StatCard icon={FileText}  label="Resumes"          value={stats?.totalResumes ?? 0} />
             <StatCard icon={TrendingUp}label="ATS Reports"      value={stats?.totalAtsReports ?? 0} />
             <StatCard icon={TrendingUp}label="New Users / Week" value={stats?.newUsersThisWeek ?? 0} />
@@ -554,7 +547,7 @@ export default function Admin() {
         )}
       </div>
 
-      {/* Users table - responsive */}
+      {/* Users table */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">All Users</h2>
@@ -569,200 +562,111 @@ export default function Admin() {
           </div>
         </div>
 
-        {/* Responsive container */}
-        <div className="space-y-4">
-          {/* Table view (md and up) */}
-          <div className="hidden md:block">
-            <Card>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border bg-muted/30">
-                        <th className="text-left py-3 px-4 text-muted-foreground font-medium">User</th>
-                        <th className="text-left py-3 px-4 text-muted-foreground font-medium">Role</th>
-                        <th className="text-left py-3 px-4 text-muted-foreground font-medium">Apps</th>
-                        <th className="text-left py-3 px-4 text-muted-foreground font-medium">Saved Jobs</th>
-                        <th className="text-left py-3 px-4 text-muted-foreground font-medium">Resumes</th>
-                        <th className="text-left py-3 px-4 text-muted-foreground font-medium">ATS</th>
-                        <th className="text-left py-3 px-4 text-muted-foreground font-medium">Joined</th>
-                        <th className="text-right py-3 px-4 text-muted-foreground font-medium">Actions</th>
+        <Card>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">User</th>
+                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">Role</th>
+                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">Apps</th>
+                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">Saved Jobs</th>
+                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">Resumes</th>
+                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">ATS</th>
+                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">Joined</th>
+                    <th className="text-right py-3 px-4 text-muted-foreground font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loadingUsers ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <tr key={i}>
+                        <td colSpan={8} className="py-3 px-4">
+                          <Skeleton className="h-8 w-full" />
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {loadingUsers ? (
-                        Array.from({ length: 5 }).map((_, i) => (
-                          <tr key={i}>
-                            <td colSpan={8} className="py-3 px-4">
-                              <Skeleton className="h-8 w-full" />
-                            </td>
-                          </tr>
-                        ))
-                      ) : usersData?.users?.length ? (
-                        usersData.users.map((u) => (
-                          <tr key={u.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                            <td className="py-3 px-4">
-                              <div className="flex items-center gap-3">
-                                <div className="relative w-8 h-8 flex-shrink-0">
-                                  {u.avatarUrl ? (
-                                    <img src={u.avatarUrl} alt={u.name || "Avatar"} className="rounded-full w-8 h-8 object-cover" />
-                                  ) : (
-                                    <div className="flex h-full w-full items-center justify-center rounded-full bg-primary/10 text-primary">
-                                      {(u.name || u.email || "?")[0].toUpperCase()}
-                                    </div>
-                                  )}
+                    ))
+                  ) : usersData?.users?.length ? (
+                    usersData.users.map((u) => (
+                      <tr key={u.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-3">
+                            <div className="relative w-8 h-8 flex-shrink-0">
+                              {u.avatarUrl ? (
+                                <img src={u.avatarUrl} alt={u.name || "Avatar"} className="rounded-full w-8 h-8 object-cover" />
+                              ) : (
+                                <div className="flex h-full w-full items-center justify-center rounded-full bg-primary/10 text-primary">
+                                  {(u.name || u.email || "?")[0].toUpperCase()}
                                 </div>
-                                <div>
-                                  <p className="font-medium">{u.name || "—"}</p>
-                                  <p className="text-muted-foreground text-xs">{u.email}</p>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="py-3 px-4">
-                              <Badge
-                                variant={u.role === "admin" ? "default" : "secondary"}
-                                className={u.role === "admin" ? "bg-primary/20 text-primary hover:bg-primary/30 border-0" : ""}
-                              >
-                                {u.role ?? "user"}
-                              </Badge>
-                            </td>
-                            <td className="py-3 px-4 font-mono text-center">{u.applicationCount ?? 0}</td>
-                            <td className="py-3 px-4 font-mono text-center">{u.savedJobsCount ?? 0}</td>
-                            <td className="py-3 px-4 font-mono text-center">{u.resumeCount ?? 0}</td>
-                            <td className="py-3 px-4 font-mono text-center">{u.atsReportCount ?? 0}</td>
-                            <td className="py-3 px-4 text-muted-foreground text-xs">
-                              {new Date(u.createdAt ?? Date.now()).toLocaleDateString()}
-                            </td>
-                            <td className="py-3 px-4 text-right">
-                              {u.role !== "admin" && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5"
-                                  onClick={() => handleSuspend(u.clerkId)}
-                                  disabled={suspendUser.isPending}
-                                >
-                                  <UserX className="w-3.5 h-3.5" />
-                                  Suspend
-                                </Button>
                               )}
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan={8} className="py-12 text-center text-muted-foreground">
-                            No users found.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Pagination for table view */}
-            {usersData && (usersData as any).total > 20 && (
-              <div className="flex justify-center gap-3 mt-4">
-                <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
-                  Previous
-                </Button>
-                <span className="text-sm text-muted-foreground self-center">Page {page}</span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={(usersData?.users?.length ?? 0) < 20}
-                  onClick={() => setPage((p) => p + 1)}
-                >
-                  Next
-                </Button>
-              </div>
-            )}
-          </div>
-
-          {/* Card view (sm) */}
-          <div className="block md:hidden">
-            {loadingUsers ? (
-              <>
-                {[1,2,3].map((_, i) => (
-                  <Card key={i} className="border">
-                    <CardContent className="p-4">
-                      <Skeleton className="h-4 w-32" />
-                    </CardContent>
-                  </Card>
-                ))}
-              </>
-            ) : usersData?.users?.length ? (
-              usersData.users.map((u) => (
-                <Card key={u.id} className="border">
-                  <CardContent className="p-4 space-y-3">
-                    <div className="flex items-start gap-4">
-                      <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        {u.avatarUrl ? (
-                          <img src={u.avatarUrl} alt={u.name || "Avatar"} className="h-8 w-8 rounded-full object-cover" />
-                        ) : (
-                          <div className="h-8 w-8 flex items-center justify-center rounded-full bg-primary/10 text-primary">
-                            {(u.name || u.email || "?")[0].toUpperCase()}
+                            </div>
+                            <div>
+                              <p className="font-medium">{u.name || "—"}</p>
+                              <p className="text-muted-foreground text-xs">{u.email}</p>
+                            </div>
                           </div>
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-medium">{u.name || "—"}</p>
-                        <p className="text-muted-foreground text-xs">{u.email}</p>
-                      </div>
-                    </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <Badge
+                            variant={u.role === "admin" ? "default" : "secondary"}
+                            className={u.role === "admin" ? "bg-primary/20 text-primary hover:bg-primary/30 border-0" : ""}
+                          >
+                            {u.role ?? "user"}
+                          </Badge>
+                        </td>
+                        <td className="py-3 px-4 font-mono text-center">{u.applicationCount ?? 0}</td>
+                        <td className="py-3 px-4 font-mono text-center">{u.savedJobsCount ?? 0}</td>
+                        <td className="py-3 px-4 font-mono text-center">{u.resumeCount ?? 0}</td>
+                        <td className="py-3 px-4 font-mono text-center">{u.atsReportCount ?? 0}</td>
+                        <td className="py-3 px-4 text-muted-foreground text-xs">
+                          {new Date(u.createdAt ?? Date.now()).toLocaleDateString()}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          {u.role !== "admin" && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5"
+                              onClick={() => handleSuspend(u.clerkId)}
+                              disabled={suspendUser.isPending}
+                            >
+                              <UserX className="w-3.5 h-3.5" />
+                              Suspend
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={8} className="py-12 text-center text-muted-foreground">
+                        No users found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
 
-                    <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
-                      <div>
-                        <p className="font-medium">Role</p>
-                        <p>{u.role ?? "user"}</p>
-                      </div>
-                      <div>
-                        <p className="font-medium">Apps</p>
-                        <p>{u.applicationCount ?? 0}</p>
-                      </div>
-                      <div>
-                        <p className="font-medium">Saved Jobs</p>
-                        <p>{u.savedJobsCount ?? 0}</p>
-                      </div>
-                      <div>
-                        <p className="font-medium">Resumes</p>
-                        <p>{u.resumeCount ?? 0}</p>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
-                      <div>
-                        <p className="font-medium">ATS Reports</p>
-                        <p>{u.atsReportCount ?? 0}</p>
-                      </div>
-                      <div>
-                        <p className="font-medium">Joined</p>
-                        <p>{new Date(u.createdAt ?? Date.now()).toLocaleDateString()}</p>
-                      </div>
-                    </div>
-
-                    {u.role !== "admin" && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5 w-full justify-start"
-                        onClick={() => handleSuspend(u.clerkId)}
-                        disabled={suspendUser.isPending}
-                      >
-                        <UserX className="w-3.5 h-3.5" />
-                        Suspend
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              <p className="text-center text-muted-foreground py-4">No users found.</p>
-            )}
+        {usersData && (usersData as any).total > 20 && (
+          <div className="flex justify-center gap-3 mt-4">
+            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
+              Previous
+            </Button>
+            <span className="text-sm text-muted-foreground self-center">Page {page}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={(usersData?.users?.length ?? 0) < 20}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Next
+            </Button>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

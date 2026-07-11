@@ -62,8 +62,6 @@ export default function AtsAnalyzer() {
         onSuccess: (data) => {
           setActiveReport(data as any);
           queryClient.invalidateQueries({ queryKey: getListAtsReportsQueryKey() });
-          queryClient.invalidateQueries({ queryKey: ['profile'] });
-          queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
           toast({ title: "Analysis complete!" });
         },
         onError: () => {
