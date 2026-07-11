@@ -711,6 +711,24 @@ export function getSystemErrorEmailTemplate(errorMessage: string, timestamp: str
 }
 
 /**
+ * Notification to admin when a new user signs up
+ */
+export function getAdminNewUserEmailTemplate(userName: string, userEmail: string, timestamp: string): { subject: string; html: string; text: string } {
+  return {
+    subject: `New User Registration: ${userName}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h1>New User Registration</h1>
+        <p><strong>Name:</strong> ${userName}</p>
+        <p><strong>Email:</strong> ${userEmail}</p>
+        <p><strong>Registration Time:</strong> ${timestamp}</p>
+      </div>
+    `,
+    text: `New user registered: ${userName} (${userEmail}) at ${timestamp}`
+  };
+}
+
+/**
  * Daily summary sent to admin with key platform stats
  */
 export function getDailySummaryEmailTemplate(dateLabel: string, stats: { newUsers: number; activeUsers: number; jobsImported: number; applications: number; interviews: number; resumeUploads: number; atsAnalysis: number; successRate: string }): { subject: string; html: string; text: string } {
