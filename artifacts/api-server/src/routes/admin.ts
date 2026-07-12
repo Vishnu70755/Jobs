@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { clerkClient } from "@clerk/express";
-import { db, usersTable, applicationsTable, jobsTable, resumesTable, atsReportsTable, importJobsTable, importSourceConfigsTable, savedJobsTable, emailLogsTable } from "@workspace/db";
+import { db, usersTable, applicationsTable, jobsTable, resumesTable, atsReportsTable, importJobsTable, importSourceConfigsTable, savedJobsTable, emailLogsTable, insertJobSchema } from "@workspace/db";
 import { eq, ilike, desc, sql, and, lt, gt, gte, lte } from "drizzle-orm";
 import { resolveUser, requireAdmin } from "../middlewares/auth";
 import importRoutes from "./admin/import";
@@ -310,4 +310,27 @@ async function retryEmail(emailLog: typeof emailLogsTable.$inferSelect): Promise
   }
 }
 
+
+import { z } from "zod";
+// POST /admin/jobs
+router.post("/jobs", resolveUser, requireAdmin, async (req, res) => {
+  try {
+    // Validate the request body
+    const parsedBody = insertJobSchema.parse(req.body);
+
+    // Insert the job
+    const [newJob] = await db.insert(jobsTable).values(parsedBody).returning();
+
+    // Return the created job
+    res.status(201).json(newJob);
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      // Validation error
+      res.status(400).json({ error: "Invalid input", details: err.errors });
+    } else {
+      console.error(err);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+});
 export default router;

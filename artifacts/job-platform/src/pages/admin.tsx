@@ -6,7 +6,8 @@ import {
   useListAdminUsers,
   useSuspendUser,
   getListAdminUsersQueryKey,
-  useGetMyProfile
+  useGetMyProfile,
+  useCreateAdminJob
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +22,19 @@ import {
 import { useImportStatusQuery, useImportStatsQuery, useStartImportMutation, useStopImportMutation, ImportStatus, ImportStats } from "@/hooks/useImportControl";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  Description,
+  Footer,
+} from "@/components/ui/dialog";
+import { Select } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+
 
 // Helper function to format dates in IST (Indian Standard Time)
 function formatIST(date: Date): string {
@@ -115,6 +129,25 @@ export default function Admin() {
   });
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [addJobDialogOpen, setAddJobDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    title: "",
+    company: "",
+    companyLogo: null,
+    location: "",
+    workMode: "onsite" as const,
+    experienceLevel: null as string | null,
+    salaryMin: null as number | null,
+    salaryMax: null as number | null,
+    salaryCurrency: "USD" as const,
+    description: null as string | null,
+    skills: [],
+    source: "",
+    applyUrl: null as string | null,
+    isNew: true,
+    isHot: false,
+  });
+
   const { data: usersData, isLoading: loadingUsers } = useListAdminUsers(
     { search: search || undefined, page },
     { query: { refetchInterval: 15000 } }
@@ -128,6 +161,7 @@ export default function Admin() {
   const { data: importStats, isLoading: loadingImportStats } = useImportStatsQuery();
   const startImportMutation = useStartImportMutation();
   const stopImportMutation = useStopImportMutation();
+  const createAdminJobMutation = useCreateAdminJob();
 
   // Get user profile to check role
   const { data: profile, isLoading: loadingProfile } = useGetMyProfile();
@@ -330,9 +364,9 @@ const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
       <section className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold">Job Import Control</h2>
-          <div>
+          <div className="flex items-center gap-3">
             {/* Dynamic Import Button */}
-            <div className="mb-4">
+            <div>
               <Button
                 variant={isAnyImportRunning || startImportMutation.isPending ? 'destructive' : 'default'}
                 className={`w-full ${
@@ -365,6 +399,14 @@ const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
                 )}
               </Button>
             </div>
+
+            {/* Add Job Button */}
+            <div>
+              <Button variant="default" onClick={handleAddJobClick}>
+                Add Job
+              </Button>
+            </div>
+          </div>
 
             {/* Import Status and Statistics */}
             <div className="space-y-3 text-sm">

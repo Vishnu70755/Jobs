@@ -6,10 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ListJobsWorkMode = typeof ListJobsWorkMode[keyof typeof ListJobsWorkMode];
+export type JobInputWorkMode = typeof JobInputWorkMode[keyof typeof JobInputWorkMode];
 
 
-export const ListJobsWorkMode = {
+export const JobInputWorkMode = {
   remote: 'remote',
   hybrid: 'hybrid',
   onsite: 'onsite',

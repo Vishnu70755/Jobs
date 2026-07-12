@@ -1,6 +1,6 @@
 import { db } from "./index";
 import { usersTable } from "./schema";
-import { eq } from "drizzle-orm";
+import { eq, like } from "drizzle-orm";
 import { clerkClient } from "@clerk/express";
 
 /**
@@ -20,12 +20,10 @@ async function fixPlaceholderEmails() {
         name: usersTable.name,
       })
       .from(usersTable)
-      .where(({ email }) =>
-        // Using SQL LIKE to find emails ending with @noemail.jobquest
-        // Note: This is a simplified check - in practice, we'd want to be more precise
-        // but for now we'll use a basic pattern match
-        email.like('%@noemail.jobquest')
-      );
+      // Using SQL LIKE to find emails ending with @noemail.jobquest
+      // Note: This is a simplified check - in practice, we'd want to be more precise
+      // but for now we'll use a basic pattern match
+      .where(like(usersTable.email, '%@noemail.jobquest'));
 
     console.log(`Found ${placeholderUsers.length} users with placeholder emails`);
 
@@ -39,7 +37,7 @@ async function fixPlaceholderEmails() {
         // Get the primary email address
         const primaryEmailId = clerkUser.primaryEmailAddressId;
         const emailObj = clerkUser.emailAddresses.find(
-          email => email.id === primaryEmailId
+          (email: { id: string }) => email.id === primaryEmailId
         );
 
         if (!emailObj) {

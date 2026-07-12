@@ -5,16 +5,15 @@
  * JobQuest API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { JobWorkMode } from './jobWorkMode';
+import type { JobInputWorkMode } from './jobInputWorkMode';
 
-export interface Job {
-  id: number;
+export interface JobInput {
   title: string;
   company: string;
   /** @nullable */
   companyLogo?: string | null;
   location: string;
-  workMode?: JobWorkMode;
+  workMode?: JobInputWorkMode;
   /** @nullable */
   experienceLevel?: string | null;
   /** @nullable */
@@ -31,12 +30,4 @@ export interface Job {
   applyUrl?: string | null;
   isNew?: boolean;
   isHot?: boolean;
-  /** @nullable */
-  matchScore?: number | null;
-  /** @nullable */
-  postedAt?: string | null;
-  /** @nullable */
-  expiresAt?: string | null;
-  createdAt: string;
-  isSaved?: boolean;
 }

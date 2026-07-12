@@ -36,14 +36,6 @@ export interface UserProfile {
   linkedinUrl?: string | null;
   /** @nullable */
   githubUrl?: string | null;
-  /** @nullable */
-  resumeUrl?: string | null;
-  /** @nullable */
-  resumeFileName?: string | null;
-  /** @nullable */
-  savedJobsCount?: number | null;
-  /** @nullable */
-  trackedJobsCount?: number | null;
   role?: UserProfileRole;
   createdAt: string;
   updatedAt?: string;

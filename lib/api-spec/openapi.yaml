@@ -705,6 +705,29 @@ paths:
         "200":
           description: Suspended
 
+  /admin/jobs:
+    post:
+      operationId: createAdminJob
+      tags: [admin]
+      summary: Create a new job (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobInput"
+      responses:
+        "201":
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "400":
+          description: Invalid input
+        "500":
+          description: Internal server error
+
 components:
   schemas:
     HealthStatus:
@@ -964,6 +987,46 @@ components:
           type: ["string", "null"]
         isDefault:
           type: boolean
+
+    JobInput:
+      type: object
+      required: [title, company, location, source]
+      properties:
+        title:
+          type: string
+        company:
+          type: string
+        companyLogo:
+          type: ["string", "null"]
+        location:
+          type: string
+        workMode:
+          type: string
+          enum: [remote, hybrid, onsite]
+        experienceLevel:
+          type: ["string", "null"]
+        salaryMin:
+          type: ["integer", "null"]
+        salaryMax:
+          type: ["integer", "null"]
+        salaryCurrency:
+          type: ["string", "null"]
+        description:
+          type: ["string", "null"]
+        skills:
+          type: array
+          items:
+            type: string
+        source:
+          type: string
+        applyUrl:
+          type: ["string", "null"]
+        isNew:
+          type: boolean
+          default: true
+        isHot:
+          type: boolean
+          default: false
 
     ResumeUpdate:
       type: object
