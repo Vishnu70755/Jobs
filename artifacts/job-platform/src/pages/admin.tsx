@@ -545,6 +545,7 @@ const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
                   className="w-full h-32 resize-none rounded-md border border-gray-300 bg-white dark:bg-dark-medium text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
+            </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
@@ -622,8 +623,9 @@ const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
               Cancel
             </button>
             <button
-              type="submit"
+              type="button"
               disabled={createAdminJobMutation.isPending}
+              onClick={handleSubmit}
               className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
             >
               {createAdminJobMutation.isPending ? (
@@ -768,18 +770,20 @@ const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
               <div className="text-center py-4">
                 <Skeleton className="h-4 w-32" />
               </div>
-            ) : (importStatus?.logs?.length ?? 0) > 0 ? (
-              <>
-                {importStatus.logs.map((log: any) => (
-                  <div key={log.id} className="text-sm text-muted-foreground">
-                    <time className="mr-2">{new Date(log.timestamp).toLocaleTimeString()}</time>
-                    <span>{log.message}</span>
-                  </div>
-                ))}
-              </>
             ) : (
-              <p className="text-center text-muted-foreground py-4">No recent logs</p>
-            )}
+                (importStatus?.logs?.length ?? 0) > 0 ? (
+                  <div>
+                    {importStatus.logs.map((log: any) => (
+                      <div key={log.id} className="text-sm text-muted-foreground">
+                        <time className="mr-2">{new Date(log.timestamp).toLocaleTimeString()}</time>
+                        <span>{log.message}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground py-4">No recent logs</p>
+                ))
+            }
           </CardContent>
         </Card>
       </section>
@@ -799,8 +803,7 @@ const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
             <StatCard icon={TrendingUp}label="New Users / Week" value={stats?.newUsersThisWeek ?? 0} />
             <StatCard icon={BarChart2} label="Apps / Week"      value={stats?.applicationsThisWeek ?? 0} />
           </>
-        )}
-      </div>
+          </div>
 
       {/* Users table */}
       <div>
