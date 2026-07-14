@@ -703,6 +703,9 @@ importers:
 
   lib/db:
     dependencies:
+      '@clerk/express':
+        specifier: ^2.1.25
+        version: 2.1.40(express@5.2.1)
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.2(@types/pg@8.20.0)(pg@8.22.0)

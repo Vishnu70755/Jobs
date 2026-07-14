@@ -350,16 +350,6 @@ const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
   
   return (
     <div className="p-8 space-y-8 max-w-7xl mx-auto w-full">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
-          <ShieldAlert className="w-5 h-5 text-destructive" />
-        </div>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Admin Panel</h1>
-          <p className="text-muted-foreground">Platform overview and user management.</p>
-        </div>
-      </div>
-
       {/* Job Import Control Section */}
       <section className="space-y-6">
         <div className="flex items-center justify-between">
@@ -402,32 +392,253 @@ const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
 
             {/* Add Job Button */}
             <div>
-              <Button variant="default" onClick={handleAddJobClick}>
-                Add Job
+              <Button variant="default" onClick={handleAddJobClick} asChild>
+                <DialogTrigger asChild>
+                  <button>Add Job</button>
+                </DialogTrigger>
               </Button>
             </div>
           </div>
 
-            {/* Import Status and Statistics */}
-            <div className="space-y-3 text-sm">
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full"
-                  style={{
-                    backgroundColor: getStatusColor(getImportStatus())
-                  }}
-                ></div>
-                <span className="font-medium">{getImportStatus()}</span>
-              </div>
+          {/* Import Status and Statistics */}
+          <div className="space-y-3 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full"
+                style={{
+                  backgroundColor: getStatusColor(getImportStatus())
+                }}
+              ></div>
+              <span className="font-medium">{getImportStatus()}</span>
+            </div>
 
-              <div className="flex items-center gap-2">
-                <FileText className="h-4 w-4 text-muted-foreground" />
-                <span>Jobs Imported: {getImportedJobsCount()}</span>
-              </div>
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-muted-foreground" />
+              <span>Jobs Imported: {getImportedJobsCount()}</span>
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Stats Grid */}
+      {/* Add Job Dialog */}
+      <Dialog open={addJobDialogOpen} onOpenChange={setAddJobDialogOpen}>
+        <DialogTrigger asChild>
+          <button className="hidden">Open Dialog</button>
+        </DialogTrigger>
+        <DialogContent className="w-[500px] sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Add New Job</DialogTitle>
+            <Description>
+              Fill in the job details below to create a new position
+            </Description>
+          </DialogHeader>
+          <form onSubmit={(e) => {
+              e.preventDefault();
+              handleSubmit();
+            }}
+            className="space-y-6">
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Job Title</label>
+              <Input
+                placeholder="e.g., Senior Software Engineer"
+                value={formData.title}
+                onChange={(e) => handleFormChange('title', e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Company</label>
+                <Input
+                  placeholder="Company name"
+                  value={formData.company}
+                  onChange={(e) => handleFormChange('company', e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                <Input
+                  placeholder="City, State or Remote"
+                  value={formData.location}
+                  onChange={(e) => handleFormChange('location', e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Work Mode</label>
+                <Select
+                  value={formData.workMode}
+                  onValueChange={(value) => handleFormChange('workMode', value)}
+                >
+                  <SelectValue placeholder="Select work mode" />
+                  <SelectItem value="onsite">On-site</SelectItem>
+                  <SelectItem value="hybrid">Hybrid</SelectItem>
+                  <SelectItem value="remote">Remote</SelectItem>
+                </Select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Experience Level</label>
+                <Input
+                  placeholder="e.g., Entry, Mid, Senior"
+                  value={formData.experienceLevel ?? ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    handleFormChange('experienceLevel', value === '' ? null : value);
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Salary Range</label>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    placeholder="Min"
+                    value={formData.salaryMin ?? ''}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      handleFormChange('salaryMin', value === '' ? null : parseInt(value) || null);
+                    }}
+                    className="flex-1"
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Max"
+                    value={formData.salaryMax ?? ''}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      handleFormChange('salaryMax', value === '' ? null : parseInt(value) || null);
+                    }}
+                    className="flex-1"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Currency</label>
+                  <Select
+                    value={formData.salaryCurrency}
+                    onValueChange={(value) => handleFormChange('salaryCurrency', value as const)}
+                  >
+                    <SelectValue placeholder="Select currency" />
+                    <SelectItem value="USD">USD ($)</SelectItem>
+                    <SelectItem value="EUR">EUR (€)</SelectItem>
+                    <SelectItem value="GBP">GBP (£)</SelectItem>
+                    <SelectItem value="JPY">JPY (¥)</SelectItem>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Job Description</label>
+                <textarea
+                  placeholder="Describe the role, responsibilities, requirements, requirements, etc."
+                  value={formData.description ?? ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    handleFormChange('description', value === '' ? null : value);
+                  }}
+                  className="w-full h-32 resize-none rounded-md border border-gray-300 bg-white dark:bg-dark-medium text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Skills (comma-separated)</label>
+                  <Input
+                    placeholder="e.g., JavaScript, React, Node.js, AWS"
+                    value={formData.skills.join(', ')}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const skills = value
+                        .split(',')
+                        .map(s => s.trim())
+                        .filter(s => s.length > 0)
+                      ;
+                      handleFormChange('skills', skills);
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Source</label>
+                  <Input
+                    placeholder="e.g., LinkedIn, Indeed, Company Website"
+                    value={formData.source}
+                    onChange={(e) => handleFormChange('source', e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-gray-700 mb-2">Application URL (Optional)</label>
+                  <Input
+                    placeholder="https://company.com/careers/job-id"
+                    value={formData.applyUrl ?? ''}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      handleFormChange('applyUrl', value === '' ? null : value);
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-4">
+                <button
+                  type="button"
+                  onClick={() => setAddJobDialogOpen(false)}
+                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 dark:bg-dark-medium dark:text-white dark:hover:bg-dark-light"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={createAdminJobMutation.isPending}
+                  className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+                >
+                  {createAdminJobMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Creating...
+                    </>
+                  ) : (
+                    'Create Job'
+                  )}
+                </button>
+              </div>
+            </form>
+          </DialogContent>
+          <DialogFooter>
+            <button
+              type="button"
+              onClick={() => setAddJobDialogOpen(false)}
+              className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 dark:bg-dark-medium dark:text-white dark:hover:bg-dark-light"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={createAdminJobMutation.isPending}
+              className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+            >
+              {createAdminJobMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Creating...
+                </>
+              ) : (
+                'Create Job'
+              )}
+            </button>
+          </DialogFooter>
+        </Dialog>
+
+      {/* Stats grid */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           {/* Status Card */}
           <Card className="border">
@@ -714,4 +925,109 @@ const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
       </div>
     </div>
   );
-}
+  }
+
+  function handleAddJobClick() {
+    // Reset form to default values when opening the dialog
+    setFormData({
+      title: "",
+      company: "",
+      companyLogo: null,
+      location: "",
+      workMode: "onsite" as const,
+      experienceLevel: null as string | null,
+      salaryMin: null as number | null,
+      salaryMax: null as number | null,
+      salaryCurrency: "USD" as const,
+      description: null as string | null,
+      skills: [],
+      source: "",
+      applyUrl: null as string | null,
+      isNew: true,
+      isHot: false,
+    });
+    setAddJobDialogOpen(true);
+  }
+
+  function handleFormChange(field: keyof typeof formData, value: any) {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  }
+
+  async function handleSubmit() {
+    try {
+      // Prepare the data for submission
+      const submitData = { ...formData };
+
+      // Convert null values to undefined for optional fields (except those that should remain null)
+      Object.keys(submitData).forEach(key => {
+        if (submitData[key] === null &&
+            ['companyLogo', 'experienceLevel', 'salaryMin', 'salaryMax', 'description', 'applyUrl'].includes(key as any)) {
+          delete submitData[key];
+        }
+      });
+
+      // Convert string numbers to actual numbers if needed
+      if (submitData.salaryMin !== undefined && typeof submitData.salaryMin === 'string') {
+        submitData.salaryMin = parseFloat(submitData.salaryMin);
+      }
+      if (submitData.salaryMax !== undefined && typeof submitData.salaryMax === 'string') {
+        submitData.salaryMax = parseFloat(submitData.salaryMax);
+      }
+
+      // Convert skills string to array if needed (work on submitData, not formData)
+      if (typeof submitData.skills === 'string') {
+        submitData.skills = submitData.skills
+          .split(',')
+          .map((skill: string) => skill.trim())
+          .filter((skill: string) => skill.length > 0);
+      }
+
+      createAdminJobMutation.mutate(submitData, {
+        onSuccess: (data) => {
+          toast({ title: "Job created successfully!" });
+          setAddJobDialogOpen(false);
+          // Reset form after successful submission
+          setFormData({
+            title: "",
+            company: "",
+            companyLogo: null,
+            location: "",
+            workMode: "onsite" as const,
+            experienceLevel: null as string | null,
+            salaryMin: null as number | null,
+            salaryMax: null as number | null,
+            salaryCurrency: "USD" as const,
+            description: null as string | null,
+            skills: [],
+            source: "",
+            applyUrl: null as string | null,
+            isNew: true,
+            isHot: false,
+          });
+          // Invalidate relevant queries to refetch data
+          queryClient.invalidateQueries({ queryKey: ['jobs'] });
+          queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
+        },
+        onError: (error) => {
+          console.error('Failed to create job:', error);
+          toast({
+            title: "Failed to create job",
+            description: error.message || "An unknown error occurred",
+            variant: "destructive"
+          });
+        }
+      });
+    } catch (err) {
+      console.error('Error in form submission:', err);
+      toast({
+        title: "Validation error",
+        description: "Please check your form data and try again",
+        variant: "destructive"
+      });
+    }
+  }   
+
+} 
