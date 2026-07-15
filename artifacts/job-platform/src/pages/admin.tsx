@@ -762,7 +762,7 @@ const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
           </CardHeader>
           <CardContent className="space-y-2">
             {loadingImportStats ? (
-              <div className="text-center py-4">
+          <div className="text-center py-4">
                 <Skeleton className="h-4 w-32" />
               </div>
             ) : (
@@ -781,23 +781,23 @@ const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
             }
           </CardContent>
         </Card>
-
       {/* Stats grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {loadingStats ? (
           Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)
         ) : (
           <>
-            <StatCard icon={Users}     label="Total Users"      value={stats?.totalUsers ?? 0}        sub={ "+" + (stats?.newUsersThisWeek ?? 0) + " this week" } />
-            <StatCard icon={Users}     label="Active Users"     value={stats?.activeUsers ?? 0} />
+            <StatCard icon={Users}   label="Total Users"      value={stats?.totalUsers ?? 0}      sub={ "+" + (stats?.newUsersThisWeek ?? 0) + " this week" } />
+            <StatCard icon={Users}   label="Active Users"     value={stats?.activeUsers ?? 0} />
             <StatCard icon={Briefcase} label="Total Jobs"       value={stats?.totalJobs ?? 0} />
             <StatCard icon={BarChart2} label="Applications"     value={stats?.totalApplications ?? 0} sub={"+" + (stats?.applicationsThisWeek ?? 0) + " this week"} />
-            <StatCard icon={FileText}  label="Resumes"          value={stats?.totalResumes ?? 0} />
+            <StatCard icon={FileText}label="Resumes"          value={stats?.totalResumes ?? 0} />
             <StatCard icon={TrendingUp}label="ATS Reports"      value={stats?.totalAtsReports ?? 0} />
             <StatCard icon={TrendingUp}label="New Users / Week" value={stats?.newUsersThisWeek ?? 0} />
             <StatCard icon={BarChart2} label="Apps / Week"      value={stats?.applicationsThisWeek ?? 0} />
           </>
         )
+        }
       </div>
 
       {/* Users table */}
@@ -1026,6 +1026,6 @@ const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
         variant: "destructive"
       });
     }
-  }   
+  } 
 
-} 
+}
