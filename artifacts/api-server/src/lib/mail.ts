@@ -87,12 +87,13 @@ export class MailService {
         event: 'email_sent'
       }, "Email sent successfully");
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
       logger.error({
         to,
         subject: template.subject,
         timestamp: new Date().toISOString(),
         event: 'email_failed',
-        error: err.message
+        error: errorMessage
       }, "Failed to send email");
       throw err; // let the caller decide whether to fail the request
     }
@@ -121,12 +122,13 @@ export class MailService {
         event: 'email_sent'
       }, "Plain‑text e‑mail sent successfully");
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
       logger.error({
         to,
         subject,
         timestamp: new Date().toISOString(),
         event: 'email_failed',
-        error: err.message
+        error: errorMessage
       }, "Failed to send plain‑text e‑mail");
       throw err;
     }
@@ -159,12 +161,13 @@ export class MailService {
         event: 'html_email_sent'
       }, "HTML e‑mail sent successfully");
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
       logger.error({
         to,
         subject,
         timestamp: new Date().toISOString(),
         event: 'html_email_failed',
-        error: err.message
+        error: errorMessage
       }, "Failed to send HTML e‑mail");
       throw err;
     }

@@ -30,7 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
   Description,
-  Footer,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Select } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";

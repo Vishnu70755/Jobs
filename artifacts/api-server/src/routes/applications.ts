@@ -250,7 +250,7 @@ router.patch("/:id", resolveUser, async (req, res) => {
         ...(validatedData.appliedAt !== undefined && { appliedAt: validatedData.appliedAt ? new Date(validatedData.appliedAt) : null }),
         ...(validatedData.resumeId !== undefined && { resumeId: validatedData.resumeId }),
         updatedAt: new Date(),
-      );
+      })
       .where(and(eq(applicationsTable.id, id), eq(applicationsTable.userId, user.id)))
       .returning();
     if (!updated) { res.status(404).json({ error: "Not found" }); return; }
@@ -396,7 +396,7 @@ router.patch("/:id", resolveUser, async (req, res) => {
     }
 
     req.log.error(err);
-    res.status(500).json({ error: "Internal server error" );
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 

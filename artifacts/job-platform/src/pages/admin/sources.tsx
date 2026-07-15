@@ -15,7 +15,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
+  Description,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -606,9 +606,9 @@ export default function SourcesPage() {
           <DialogHeader>
             <DialogTitle>Delete Source</DialogTitle>
           </DialogHeader>
-          <DialogDescription>
+          <Description>
             Are you sure you want to delete this source? This action cannot be undone.
-          </DialogDescription>
+          </Description>
           <DialogFooter>
             <button
               type="button"
@@ -655,7 +655,7 @@ export default function SourcesPage() {
               {editSourceId !== null ? "Edit Source" : "Add New Source"}
             </DialogTitle>
           </DialogHeader>
-          <DialogDescription>
+          <Description>
             <Form onSubmit={handleSubmit}>
               <form>
                 <FormField>
@@ -834,7 +834,7 @@ export default function SourcesPage() {
                 </div>
               </form>
             </Form>
-          </DialogDescription>
+          </Description>
         </DialogContent>
       </Dialog>
     </div>
