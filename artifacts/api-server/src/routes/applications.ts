@@ -93,7 +93,7 @@ router.get("/pipeline", resolveUser, async (req, res) => {
   }
 });
 
-import { mailService } from "../lib/mail";
+
 // POST /applications
 router.post("/", resolveUser, async (req, res) => {
   try {
@@ -153,24 +153,25 @@ router.post("/", resolveUser, async (req, res) => {
 
           try {
             await mailService.sendTemplateEmail(userEmail, emailTemplate);
-            // Log successful email send
+
             logger.info({
               userId: user.id,
               email: userEmail,
               subject: emailTemplate.subject,
               timestamp: new Date().toISOString(),
-              event: 'application_confirmation_email_sent'
+              event: "application_confirmation_email_sent",
             }, "Application confirmation email sent successfully");
           } catch (emailErr) {
-            // Log email error but don't fail the whole request – application was saved successfully
             logger.error({
               userId: user.id,
               email: userEmail,
               subject: emailTemplate.subject,
-              err: emailErr.message,
+              err: emailErr instanceof Error
+                ? emailErr.message
+                : String(emailErr),
               timestamp: new Date().toISOString(),
-              event: 'application_confirmation_email_failed'
-            }, "Failed to send application confirmation e‑mail");
+              event: "application_confirmation_email_failed",
+            }, "Failed to send application confirmation e-mail");
           }
         } else {
           // If we don't have email, log warning but don't fail the request
@@ -180,7 +181,9 @@ router.post("/", resolveUser, async (req, res) => {
         // Log any error in fetching user email or job details, but don't fail the request
         logger.error({
           userId: user.id,
-          err: err.message,
+          err: err instanceof Error
+            ? err.message
+            : String(err),
           timestamp: new Date().toISOString(),
           event: 'application_confirmation_error'
         }, "Failed to prepare application confirmation email");
@@ -247,7 +250,7 @@ router.patch("/:id", resolveUser, async (req, res) => {
         ...(validatedData.appliedAt !== undefined && { appliedAt: validatedData.appliedAt ? new Date(validatedData.appliedAt) : null }),
         ...(validatedData.resumeId !== undefined && { resumeId: validatedData.resumeId }),
         updatedAt: new Date(),
-      })
+      );
       .where(and(eq(applicationsTable.id, id), eq(applicationsTable.userId, user.id)))
       .returning();
     if (!updated) { res.status(404).json({ error: "Not found" }); return; }
@@ -372,14 +375,15 @@ router.patch("/:id", resolveUser, async (req, res) => {
         }
 
       } catch (emailErr) {
-        // Log email error but don't fail the whole request
         logger.error({
           userId: user.id,
           email: userEmail,
-          err: emailErr.message,
+          err: emailErr instanceof Error
+            ? emailErr.message
+            : String(emailErr),
           timestamp: new Date().toISOString(),
-          event: 'application_update_email_failed'
-        }, "Failed to send application update e‑mail");
+          event: "application_update_email_failed"
+        }, "Failed to send application update e-mail");
       }
     }
 
@@ -392,7 +396,7 @@ router.patch("/:id", resolveUser, async (req, res) => {
     }
 
     req.log.error(err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "Internal server error" );
   }
 });
 

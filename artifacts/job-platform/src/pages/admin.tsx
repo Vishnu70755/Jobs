@@ -1018,7 +1018,7 @@ const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
           });
         }
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error in form submission:', err);
       toast({
         title: "Validation error",
@@ -1027,5 +1027,3 @@ const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
       });
     }
   } 
-
-}
