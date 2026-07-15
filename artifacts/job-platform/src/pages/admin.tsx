@@ -786,7 +786,6 @@ const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
             }
           </CardContent>
         </Card>
-      </section>
 
       {/* Stats grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -803,7 +802,8 @@ const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
             <StatCard icon={TrendingUp}label="New Users / Week" value={stats?.newUsersThisWeek ?? 0} />
             <StatCard icon={BarChart2} label="Apps / Week"      value={stats?.applicationsThisWeek ?? 0} />
           </>
-          </div>
+        )
+      </div>
 
       {/* Users table */}
       <div>
