@@ -1,3 +1,4 @@
+import React from "react";
 import { render, screen } from '@testing-library/react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 

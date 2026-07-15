@@ -1,12 +1,10 @@
-import * as React from "react";
+import React from "react";
+ 
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { ChevronDown, Calendar as CalendarIcon, Clock } from "lucide-react";
-import { formatISTDatetime, formatIndianDate } from "@/lib/format";
-import { cn } from "@/lib/utils";
+import { CalendarIcon, Clock } from "lucide-react";
+import { formatISTDatetime } from "@/lib/format";
 
 const IST = "Asia/Kolkata";
 
@@ -28,8 +26,8 @@ export const DateTimePicker = React.forwardRef(
     ref: React.Ref<HTMLDivElement>
   ) => {
     const [open, setOpen] = React.useState(false);
-    const [dateValue, setDateValue] = React.useState<Date | null>(
-      value ? new Date(value) : null
+    const [dateValue, setDateValue] = React.useState<Date | undefined>(
+      value ? new Date(value) : undefined
     );
     const [timeValue, setTimeValue] = React.useState<string>("00:00"); // HH:MM format
 
@@ -66,12 +64,6 @@ export const DateTimePicker = React.forwardRef(
       onDateOrTimeChange(date);
     };
 
-    // Handle time change
-    const handleTimeChange = (time: string) => {
-      setTimeValue(time);
-      onDateOrTimeChange(dateValue);
-    };
-
     // Combined handler for date/time changes
     const onDateOrTimeChange = (date: Date | null) => {
       if (!date || !timeValue) {
@@ -79,7 +71,9 @@ export const DateTimePicker = React.forwardRef(
         return;
       }
 
-      const [hours, minutes] = timeValue.split(":").map(Number);
+      const timeParts = timeValue.split(":");
+      const hours = parseInt(timeParts[0]) || 0;
+      const minutes = parseInt(timeParts[1]) || 0;
 
       // The date from Calendar is in UTC (midnight UTC of selected day)
       // But we want to interpret it as a local date (IST)
@@ -88,8 +82,8 @@ export const DateTimePicker = React.forwardRef(
         date.getUTCFullYear(),   // Year from UTC date
         date.getUTCMonth(),      // Month from UTC date
         date.getUTCDate(),       // Day from UTC date
-        parseInt(hours),         // Hours from time selection (IST)
-        parseInt(minutes)        // Minutes from time selection (IST)
+        hours,                   // Hours from time selection (IST)
+        minutes                  // Minutes from time selection (IST)
       );
 
       // Convert this local time (IST) to UTC for storage
@@ -100,7 +94,7 @@ export const DateTimePicker = React.forwardRef(
 
     // Handle clearing the value
     const handleClear = () => {
-      setDateValue(null);
+      setDateValue(undefined);
       setTimeValue("00:00");
       onChange(null);
     };
@@ -160,12 +154,13 @@ export const DateTimePicker = React.forwardRef(
                 <label className="text-sm font-medium">Date</label>
                 <div className="relative">
                   <Calendar
-                    selected={dateValue ?? undefined}
+                    selected={dateValue}
                     onSelect={handleDateChange}
                     disabled={false}
                     numberOfMonths={1}
+                    mode="single"
                     // Prevent past dates
-                    from={minDate ?? new Date()}
+                    minDate={(minDate ?? new Date()).toISOString().split('T')[0]}
                     // Show today highlight
                     todayButton={{
                       label: "Today",

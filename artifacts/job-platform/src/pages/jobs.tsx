@@ -1,3 +1,5 @@
+import React from "react";
+ 
 import { useState, useEffect } from "react";
 import { useListJobs, useGetJob, useCreateApplication, useSaveJob, useUnsaveJob, useListApplications, getGetJobQueryKey, getGetApplicationBoardQueryKey, getListApplicationsQueryKey } from "@workspace/api-client-react";
 import { Badge } from "@/components/ui/badge";

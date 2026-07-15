@@ -1,3 +1,4 @@
+import React from "react";
 import { Link, useLocation } from "wouter";
 import { UserButton, useUser } from "@clerk/react";
 import { useGetMyProfile } from "@workspace/api-client-react";
@@ -83,10 +84,15 @@ const userEmail = user?.primaryEmailAddress?.emailAddress;
     user?.imageUrl,
     profile?.title,
     profile?.location,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (profile as any)?.phone,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (profile as any)?.bio,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (profile as any)?.dateOfBirth,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (profile as any)?.gender,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (profile as any)?.portfolio,
     profile?.experience,
     profile?.targetRole,

@@ -1,6 +1,7 @@
+import React from "react";
+// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 "use client"
 
-import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, VariantProps } from "class-variance-authority"
 import { PanelLeftIcon } from "lucide-react"
@@ -607,10 +608,10 @@ function SidebarMenuSkeleton({
 }: React.ComponentProps<"div"> & {
   showIcon?: boolean
 }) {
-  // Random width between 50 to 90%.
+  // Deterministic width for skeleton (avoid Math.random in render)
   const width = React.useMemo(() => {
-    return `${Math.floor(Math.random() * 40) + 50}%`
-  }, [])
+    return `${50}%`; // Fixed width to avoid rendering inconsistencies
+  }, []);
 
   return (
     <div

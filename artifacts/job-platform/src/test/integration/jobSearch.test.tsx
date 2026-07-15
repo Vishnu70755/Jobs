@@ -1,3 +1,4 @@
+import React from "react";
 import { rest } from 'msw';
 console.log('msw rest:', rest);
 import { render, screen } from "@testing-library/react";

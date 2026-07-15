@@ -1,4 +1,4 @@
-import * as React from "react"
+import React from "react";
 import { AudioPlayer } from "@/assets/js/audio"
 
 import type {
@@ -16,12 +16,6 @@ type ToasterToast = ToastProps & {
   action?: ToastActionElement
 }
 
-const actionTypes = {
-  ADD_TOAST: "ADD_TOAST",
-  UPDATE_TOAST: "UPDATE_TOAST",
-  DISMISS_TOAST: "DISMISS_TOAST",
-  REMOVE_TOAST: "REMOVE_TOAST",
-} as const
 
 let count = 0
 
@@ -30,23 +24,23 @@ function genId() {
   return count.toString()
 }
 
-type ActionType = typeof actionTypes
+type ActionType = "ADD_TOAST" | "UPDATE_TOAST" | "DISMISS_TOAST" | "REMOVE_TOAST"
 
 type Action =
   | {
-      type: ActionType["ADD_TOAST"]
+      type: "ADD_TOAST"
       toast: ToasterToast
     }
   | {
-      type: ActionType["UPDATE_TOAST"]
+      type: "UPDATE_TOAST"
       toast: Partial<ToasterToast>
     }
   | {
-      type: ActionType["DISMISS_TOAST"]
+      type: "DISMISS_TOAST"
       toastId?: ToasterToast["id"]
     }
   | {
-      type: ActionType["REMOVE_TOAST"]
+      type: "REMOVE_TOAST"
       toastId?: ToasterToast["id"]
     }
 
@@ -124,6 +118,8 @@ export const reducer = (state: State, action: Action): State => {
         ...state,
         toasts: state.toasts.filter((t) => t.id !== action.toastId),
       }
+    default:
+      return state
   }
 }
 
@@ -143,10 +139,10 @@ type Toast = Omit<ToasterToast, "id">
 function toast({ ...props }: Toast) {
   const id = genId()
 
-  const update = (props: ToasterToast) =>
+  const update = (props: Partial<ToasterToast>) =>
     dispatch({
       type: "UPDATE_TOAST",
-      toast: { ...props, id },
+      toast: { id, ...props },
     })
   const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
 
@@ -156,8 +152,8 @@ function toast({ ...props }: Toast) {
     case "destructive":
       AudioPlayer.playError()
       break
-    case "success":
-      AudioPlayer.playSuccess()
+    case "default":
+      AudioPlayer.playNotification()
       break
     default:
       AudioPlayer.playNotification()

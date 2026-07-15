@@ -1,3 +1,4 @@
+import React from "react";
 import { render, screen } from '@testing-library/react';
 import { Tracker } from '@/pages/tracker';
 import { rest } from 'msw';

@@ -1,3 +1,4 @@
+import React from "react";
 // Visual regression test example for Button component
 // This demonstrates the approach - in practice you'd use @storybook/addon-visual-tests or playwright
 import { render } from '@testing-library/react';

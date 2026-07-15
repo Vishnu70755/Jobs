@@ -1,3 +1,6 @@
+import React from "react";
+ 
+ 
 import { useState, useCallback } from "react";
 import { Sidebar } from "./sidebar";
 import { MessageSquare, Menu } from "lucide-react";

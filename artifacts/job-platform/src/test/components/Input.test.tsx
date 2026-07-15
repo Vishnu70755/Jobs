@@ -1,3 +1,4 @@
+import React from "react";
 import { render, screen } from '@testing-library/react';
 import { Input } from '@/components/ui/input';
 import { vi } from 'vitest';

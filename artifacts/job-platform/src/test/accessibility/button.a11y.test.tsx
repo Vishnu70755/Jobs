@@ -1,3 +1,4 @@
+import React from "react";
 // src/test/accessibility/button.a11y.test.tsx
 import { render, screen } from '@testing-library/react';
 import { axe, toHaveNoViolations } from 'jest-axe';

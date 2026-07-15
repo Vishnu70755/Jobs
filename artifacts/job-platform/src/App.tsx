@@ -1,32 +1,36 @@
+import React from "react";
+ 
+ 
 import { useEffect, useRef } from "react";
+import { lazy, Suspense } from "react";
 import { ClerkProvider, SignIn, SignUp, Show, useClerk } from "@clerk/react";
-import { publishableKeyFromHost } from "@clerk/shared/keys";
-import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from "wouter";
-import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
-import { ThemeProvider } from "./components/theme-provider";
+import { publishableKeyFromHost }  from "@clerk/shared/keys";
+import { Switch, Route, useLocation, Router as WouterRouter, Redirect }  from "wouter";
+import { QueryClient, QueryClientProvider, useQueryClient }  from "@tanstack/react-query";
+import { ThemeProvider }  from "./components/theme-provider";
 import { setBaseUrl } from "@workspace/api-client-react";
-import { useAuth } from "@clerk/react";
-import { setAuthTokenGetter } from "@workspace/api-client-react";
-import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { Layout } from "@/components/layout";
-import NotFound from "@/pages/not-found";
+import { useAuth }  from "@clerk/react";
+import { setAuthTokenGetter }  from "@workspace/api-client-react";
+import { Toaster }  from "@/components/ui/toaster";
+import { TooltipProvider }  from "@/components/ui/tooltip";
+import { Layout }  from "@/components/layout";
+import NotFound  from "@/pages/not-found";
 
-// Pages
-import Dashboard from "@/pages/dashboard";
-import Jobs from "@/pages/jobs";
-import JobDetail from "@/pages/job-detail";
-import Tracker from "@/pages/tracker";
-import TrackerDetail from "@/pages/tracker-detail";
-import Resumes from "@/pages/resumes";
-import AtsAnalyzer from "@/pages/ats";
-import Analytics from "@/pages/analytics";
-import AiAssistant from "@/pages/ai";
-import Notifications from "@/pages/notifications";
-import Profile from "@/pages/profile";
-import Admin from "@/pages/admin";
-import AtsBuilder from "@/pages/ats-builder";
-import Sources from "@/pages/admin/sources"; // New import
+// Lazy load pages
+const Dashboard = lazy(() => import("@/pages/dashboard"));
+const Jobs = lazy(() => import("@/pages/jobs"));
+const JobDetail = lazy(() => import("@/pages/job-detail"));
+const Tracker = lazy(() => import("@/pages/tracker"));
+const TrackerDetail = lazy(() => import("@/pages/tracker-detail"));
+const Resumes = lazy(() => import("@/pages/resumes"));
+const AtsAnalyzer = lazy(() => import("@/pages/ats"));
+const Analytics = lazy(() => import("@/pages/analytics"));
+const AiAssistant = lazy(() => import("@/pages/ai"));
+const Notifications = lazy(() => import("@/pages/notifications"));
+const Profile = lazy(() => import("@/pages/profile"));
+const Admin = lazy(() => import("@/pages/admin"));
+const Sources = lazy(() => import("@/pages/admin/sources"));
+const AtsBuilder = lazy(() => import("@/pages/ats-builder"));
 
 const queryClient = new QueryClient();
 
@@ -46,7 +50,7 @@ function stripBase(path: string): string {
     : path;
 }
 
-if (!clerkPubKkey) {
+if (!clerkPubKey) {
   throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY in .env file");
 }
 
@@ -244,20 +248,20 @@ function ClerkProviderWithRoutes() {
           <Route path="/sign-up/*?" component={SignUpPage} />
           <Route path="/admin-login/*?" component={AdminLoginPage} />
 
-          <Route path="/dashboard"><ProtectedRoute><Dashboard /></ProtectedRoute></Route>
-          <Route path="/jobs"><ProtectedRoute><Jobs /></ProtectedRoute></Route>
-          <Route path="/jobs/:id"><ProtectedRoute><JobDetail /></ProtectedRoute></Route>
-          <Route path="/tracker"><ProtectedRoute><Tracker /></ProtectedRoute></Route>
-          <Route path="/tracker/:id"><ProtectedRoute><TrackerDetail /></ProtectedRoute></Route>
-          <Route path="/resumes"><ProtectedRoute><Resumes /></ProtectedRoute></Route>
-          <Route path="/ats"><ProtectedRoute><AtsAnalyzer /></ProtectedRoute></Route>
-          <Route path="/analytics"><ProtectedRoute><Analytics /></ProtectedRoute></Route>
-          <Route path="/ai"><ProtectedRoute><AiAssistant /></ProtectedRoute></Route>
-          <Route path="/notifications"><ProtectedRoute><Notifications /></ProtectedRoute></Route>
-          <Route path="/profile"><ProtectedRoute><Profile /></ProtectedRoute></Route>
-          <Route path="/admin"><ProtectedRoute><Admin /></ProtectedRoute></Route>
-          <Route path="/admin/sources"><ProtectedRoute><Sources /></ProtectedRoute></Route>
-          <Route path="/ats-builder"><ProtectedRoute><AtsBuilder /></ProtectedRoute></Route>
+          <Route path="/dashboard"><ProtectedRoute><Suspense fallback={<div>Loading...</div>}><Dashboard /></Suspense></ProtectedRoute></Route>
+          <Route path="/jobs"><ProtectedRoute><Suspense fallback={<div>Loading...</div>}><Jobs /></Suspense></ProtectedRoute></Route>
+          <Route path="/jobs/:id"><ProtectedRoute><Suspense fallback={<div>Loading...</div>}><JobDetail /></Suspense></ProtectedRoute></Route>
+          <Route path="/tracker"><ProtectedRoute><Suspense fallback={<div>Loading...</div>}><Tracker /></Suspense></ProtectedRoute></Route>
+          <Route path="/tracker/:id"><ProtectedRoute><Suspense fallback={<div>Loading...</div>}><TrackerDetail /></Suspense></ProtectedRoute></Route>
+          <Route path="/resumes"><ProtectedRoute><Suspense fallback={<div>Loading...</div>}><Resumes /></Suspense></ProtectedRoute></Route>
+          <Route path="/ats"><ProtectedRoute><Suspense fallback={<div>Loading...</div>}><AtsAnalyzer /></Suspense></ProtectedRoute></Route>
+          <Route path="/analytics"><ProtectedRoute><Suspense fallback={<div>Loading...</div>}><Analytics /></Suspense></ProtectedRoute></Route>
+          <Route path="/ai"><ProtectedRoute><Suspense fallback={<div>Loading...</div>}><AiAssistant /></Suspense></ProtectedRoute></Route>
+          <Route path="/notifications"><ProtectedRoute><Suspense fallback={<div>Loading...</div>}><Notifications /></Suspense></ProtectedRoute></Route>
+          <Route path="/profile"><ProtectedRoute><Suspense fallback={<div>Loading...</div>}><Profile /></Suspense></ProtectedRoute></Route>
+          <Route path="/admin"><ProtectedRoute><Suspense fallback={<div>Loading...</div>}><Admin /></Suspense></ProtectedRoute></Route>
+          <Route path="/admin/sources"><ProtectedRoute><Suspense fallback={<div>Loading...</div>}><Sources /></Suspense></ProtectedRoute></Route>
+          <Route path="/ats-builder"><ProtectedRoute><Suspense fallback={<div>Loading...</div>}><AtsBuilder /></Suspense></ProtectedRoute></Route>
 
           <Route component={NotFound} />
         </Switch>

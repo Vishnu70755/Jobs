@@ -1,3 +1,4 @@
+import React from "react";
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/react";
 import { useLocation, Link } from "wouter";
@@ -10,18 +11,16 @@ import {
   useCreateAdminJob
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Users, Briefcase, FileText, BarChart2, TrendingUp, ShieldAlert, Search, UserX, Lock, Loader2,
+  Users, Briefcase, FileText, BarChart2, TrendingUp, Search, UserX, Lock, Loader2,
 } from "lucide-react";
-import { useImportStatusQuery, useImportStatsQuery, useStartImportMutation, useStopImportMutation, ImportStatus, ImportStats } from "@/hooks/useImportControl";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
+import { useImportStatusQuery, useImportStatsQuery, useStartImportMutation, useStopImportMutation } from "@/hooks/useImportControl";
 
 import {
   Dialog,
@@ -32,8 +31,7 @@ import {
   Description,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Select } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectValue, SelectItem } from "@/components/ui/select";
 
 
 // Helper function to format dates in IST (Indian Standard Time)
@@ -66,7 +64,7 @@ function getNext7amIST(): Date {
   return new Date(next7am.toLocaleString("en-US", { timeZone: "UTC" }));
 }
 
-function StatCard({ icon: Icon, label, value, sub }: { icon: any; label: string; value: number | string; sub?: string }) {
+function StatCard({ icon: Icon, label, value, sub }: { icon: React.ComponentType<any>; label: string; value: number | string; sub?: string }) {
   return (
     <Card>
       <CardContent className="p-5 flex items-start gap-4">
@@ -123,9 +121,9 @@ function AccessDenied() {
 }
 
 export default function Admin() {
-  const { user, isLoaded } = useUser();
+  const { isLoaded } = useUser();
   const { data: stats, isLoading: loadingStats } = useGetAdminStats({
-    query: { refetchInterval: 15000 },
+    query: { refetchInterval: 15000, queryKey: undefined as unknown as import('@tanstack/react-query').QueryKey },
   });
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -150,7 +148,7 @@ export default function Admin() {
 
   const { data: usersData, isLoading: loadingUsers } = useListAdminUsers(
     { search: search || undefined, page },
-    { query: { refetchInterval: 15000 } }
+    { query: { refetchInterval: 15000, queryKey: undefined as unknown as import('@tanstack/react-query').QueryKey } }
   );
   const suspendUser = useSuspendUser();
   const queryClient = useQueryClient();
@@ -164,7 +162,7 @@ export default function Admin() {
   const createAdminJobMutation = useCreateAdminJob();
 
   // Get user profile to check role
-  const { data: profile, isLoading: loadingProfile } = useGetMyProfile();
+  const { data: profile } = useGetMyProfile();
 
   // Check if user is admin based on role from our backend
   const isAdmin = profile?.role === 'admin';
@@ -176,14 +174,14 @@ export default function Admin() {
 
   const mostRecentLastRun = Array.isArray(importStatus) && importStatus.length > 0
   ? importStatus
-      .map(status => status.lastRun ? new Date(status.lastRun) : null)
+      .map(status => status.lastRunAt ? new Date(status.lastRunAt) : null)
       .filter((date): date is Date => date !== null)
       .reduce((latest, date) => (date > latest ? date : latest), new Date(0))
   : null;
 
 const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
   ? importStatus
-      .map(status => status.nextScheduledRun ? new Date(status.nextScheduledRun) : null)
+      .map(status => status.nextRunAt ? new Date(status.nextRunAt) : null)
       .filter((date): date is Date => date !== null)
       .reduce((soonest, date) => (date < soonest ? date : soonest), new Date(8640000000000000))
   : null;
@@ -517,7 +515,7 @@ const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
                   <label className="block text-sm font-medium text-gray-700 mb-2">Currency</label>
                   <Select
                     value={formData.salaryCurrency}
-                    onValueChange={(value) => handleFormChange('salaryCurrency', value as const)}
+                    onValueChange={(value) => handleFormChange('salaryCurrency', value)}
                   >
                     <SelectValue placeholder="Select currency" />
                     <SelectItem value="USD">USD ($)</SelectItem>
@@ -762,23 +760,33 @@ const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
           </CardHeader>
           <CardContent className="space-y-2">
             {loadingImportStats ? (
-          <div className="text-center py-4">
+              <div className="text-center py-4">
                 <Skeleton className="h-4 w-32" />
               </div>
             ) : (
-                (importStatus?.logs?.length ?? 0) > 0 ? (
-                  <div>
-                    {importStatus.logs.map((log: any) => (
-                      <div key={log.id} className="text-sm text-muted-foreground">
-                        <time className="mr-2">{new Date(log.timestamp).toLocaleTimeString()}</time>
-                        <span>{log.message}</span>
+              <>
+                {Array.isArray(importStatus) && importStatus.length > 0 ? (
+                  <>
+                    {importStatus.flatMap(status => status.logs || []).length > 0 ? (
+                      <div>
+                        {importStatus
+                          .flatMap(status => status.logs || [])
+                          .map((log: any) => (
+                            <div key={log.id} className="text-sm text-muted-foreground">
+                              <time className="mr-2">{new Date(log.timestamp).toLocaleTimeString()}</time>
+                              <span>{log.message}</span>
+                            </div>
+                          ))}
                       </div>
-                    ))}
-                  </div>
+                    ) : (
+                      <p className="text-center text-muted-foreground py-4">No recent logs</p>
+                    )}
+                  </>
                 ) : (
                   <p className="text-center text-muted-foreground py-4">No recent logs</p>
-                ))
-            }
+                )}
+              </>
+            )}
           </CardContent>
         </Card>
       {/* Stats grid */}
@@ -846,13 +854,9 @@ const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-3">
                             <div className="relative w-8 h-8 flex-shrink-0">
-                              {u.avatarUrl ? (
-                                <img src={u.avatarUrl} alt={u.name || "Avatar"} className="rounded-full w-8 h-8 object-cover" />
-                              ) : (
-                                <div className="flex h-full w-full items-center justify-center rounded-full bg-primary/10 text-primary">
-                                  {(u.name || u.email || "?")[0].toUpperCase()}
-                                </div>
-                              )}
+                              <div className="flex h-full w-full items-center justify-center rounded-full bg-primary/10 text-primary">
+                                {(u.name || u.email || "?")[0].toUpperCase()}
+                              </div>
                             </div>
                             <div>
                               <p className="font-medium">{u.name || "—"}</p>
@@ -869,14 +873,14 @@ const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
                           </Badge>
                         </td>
                         <td className="py-3 px-4 font-mono text-center">{u.applicationCount ?? 0}</td>
-                        <td className="py-3 px-4 font-mono text-center">{u.savedJobsCount ?? 0}</td>
+                        <td className="py-3 px-4 font-mono text-center">0</td>
                         <td className="py-3 px-4 font-mono text-center">{u.resumeCount ?? 0}</td>
-                        <td className="py-3 px-4 font-mono text-center">{u.atsReportCount ?? 0}</td>
+                        <td className="py-3 px-4 font-mono text-center">0</td>
                         <td className="py-3 px-4 text-muted-foreground text-xs">
                           {new Date(u.createdAt ?? Date.now()).toLocaleDateString()}
                         </td>
                         <td className="py-3 px-4 text-right">
-                          {u.role !== "admin" && (
+                          {u.role !== "admin" && u.clerkId ? (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -887,7 +891,7 @@ const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
                               <UserX className="w-3.5 h-3.5" />
                               Suspend
                             </Button>
-                          )}
+                          ) : null}
                         </td>
                       </tr>
                     ))
@@ -923,7 +927,7 @@ const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
       </div>
     </div>
   );
-  }
+
 
   function handleAddJobClick() {
     // Reset form to default values when opening the dialog
@@ -983,41 +987,46 @@ const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
           .filter((skill: string) => skill.length > 0);
       }
 
-      createAdminJobMutation.mutate(submitData, {
-        onSuccess: (data) => {
-          toast({ title: "Job created successfully!" });
-          setAddJobDialogOpen(false);
-          // Reset form after successful submission
-          setFormData({
-            title: "",
-            company: "",
-            companyLogo: null,
-            location: "",
-            workMode: "onsite" as const,
-            experienceLevel: null as string | null,
-            salaryMin: null as number | null,
-            salaryMax: null as number | null,
-            salaryCurrency: "USD" as const,
-            description: null as string | null,
-            skills: [],
-            source: "",
-            applyUrl: null as string | null,
-            isNew: true,
-            isHot: false,
-          });
-          // Invalidate relevant queries to refetch data
-          queryClient.invalidateQueries({ queryKey: ['jobs'] });
-          queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
-        },
-        onError: (error) => {
-          console.error('Failed to create job:', error);
-          toast({
-            title: "Failed to create job",
-            description: error.message || "An unknown error occurred",
-            variant: "destructive"
-          });
-        }
-      });
+      
+  const onSuccess = (data: any) => {
+    toast({ title: "Job created successfully!" });
+    setAddJobDialogOpen(false);
+    // Reset form after successful submission
+    setFormData({
+      title: "",
+      company: "",
+      companyLogo: null,
+      location: "",
+      workMode: "onsite" as const,
+      experienceLevel: null as string | null,
+      salaryMin: null as number | null,
+      salaryMax: null as number | null,
+      salaryCurrency: "USD" as const,
+      description: null as string | null,
+      skills: [],
+      source: "",
+      applyUrl: null as string | null,
+      isNew: true,
+      isHot: false,
+    });
+    // Invalidate relevant queries to refetch data
+    queryClient.invalidateQueries({ queryKey: ['jobs'] });
+    queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
+  };
+
+  const onError = (error: any) => {
+    console.error('Failed to create job:', error);
+    toast({
+      title: "Failed to create job",
+      description: error.message || "An unknown error occurred",
+      variant: "destructive"
+    });
+  };
+
+  createAdminJobMutation.mutate(submitData, {
+    onSuccess,
+    onError
+  });
     } catch (err: any) {
       console.error('Error in form submission:', err);
       toast({
@@ -1026,4 +1035,5 @@ const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
         variant: "destructive"
       });
     }
-  } 
+  }
+} 

@@ -1,3 +1,4 @@
+import React from "react";
 export default function PlaceholderPage({ title }: { title: string }) {
   return (
     <div className="p-8 max-w-7xl mx-auto w-full">

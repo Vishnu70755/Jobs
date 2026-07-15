@@ -1,3 +1,4 @@
+import React from "react";
 import { useGetJobStats, useGetAnalyticsOverview, useGetApplicationBoard } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";

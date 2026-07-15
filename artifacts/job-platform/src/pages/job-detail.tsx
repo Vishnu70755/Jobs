@@ -1,3 +1,5 @@
+import React from "react";
+ 
 import { useGetJob, useGetSimilarJobs, useSaveJob, useUnsaveJob, useCreateApplication, useListApplications, useDeleteApplication, getListApplicationsQueryKey, getGetJobQueryKey, getGetApplicationBoardQueryKey } from "@workspace/api-client-react";
 import { useParams, Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
