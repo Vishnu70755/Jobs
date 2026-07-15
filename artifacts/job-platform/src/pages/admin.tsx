@@ -359,12 +359,7 @@ const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
             <div>
               <Button
                 variant={isAnyImportRunning || startImportMutation.isPending ? 'destructive' : 'default'}
-                className={`w-full ${
-                  // Override default variant to be green for start button
-                  !(isAnyImportRunning || startImportMutation.isPending)
-                    ? 'bg-green-600 text-green-foreground hover:bg-green-700 border-green-600 hover:border-green-700'
-                    : ''  // Use default destructive styling for stop button
-                }`}
+                className={`w-full ${!(isAnyImportRunning || startImportMutation.isPending) ? 'bg-green-600 text-green-foreground hover:bg-green-700 border-green-600 hover:border-green-700' : ''}`}
                 onClick={handleToggleImport}
                 disabled={isAnyImportRunning || startImportMutation.isPending ? stopImportMutation.isPending : startImportMutation.isPending}
               >
@@ -793,10 +788,10 @@ const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
           Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)
         ) : (
           <>
-            <StatCard icon={Users}     label="Total Users"      value={stats?.totalUsers ?? 0}        sub={`+${stats?.newUsersThisWeek ?? 0} this week`} />
+            <StatCard icon={Users}     label="Total Users"      value={stats?.totalUsers ?? 0}        sub={ "+" + (stats?.newUsersThisWeek ?? 0) + " this week" } />
             <StatCard icon={Users}     label="Active Users"     value={stats?.activeUsers ?? 0} />
             <StatCard icon={Briefcase} label="Total Jobs"       value={stats?.totalJobs ?? 0} />
-            <StatCard icon={BarChart2} label="Applications"     value={stats?.totalApplications ?? 0} sub={`+${stats?.applicationsThisWeek ?? 0} this week`} />
+            <StatCard icon={BarChart2} label="Applications"     value={stats?.totalApplications ?? 0} sub={"+" + (stats?.applicationsThisWeek ?? 0) + " this week"} />
             <StatCard icon={FileText}  label="Resumes"          value={stats?.totalResumes ?? 0} />
             <StatCard icon={TrendingUp}label="ATS Reports"      value={stats?.totalAtsReports ?? 0} />
             <StatCard icon={TrendingUp}label="New Users / Week" value={stats?.newUsersThisWeek ?? 0} />
