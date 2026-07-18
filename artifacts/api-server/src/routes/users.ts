@@ -101,7 +101,7 @@ router.patch("/me", resolveUser, async (req, res) => {
         ...(location !== undefined && { location }),
         ...(skills !== undefined && { skills }),
         ...(experience !== undefined && { experience }),
-        ...(targetRoute !== undefined && { targetRole }),
+        ...(targetRole !== undefined && { targetRole }),
         ...(linkedinUrl !== undefined && { linkedinUrl }),
         ...(githubUrl !== undefined && { githubUrl }),
         ...(phone !== undefined && { phone }),

@@ -81,17 +81,17 @@ function AccessDenied() {
 
 export default function Admin() {
   const { user, isLoaded } = useUser();
-  const { data: stats, isLoading: loadingStats } = useGetAdminStats(undefined, { refetchInterval: 30000 });
+  const { data: stats, isLoading: loadingStats } = useGetAdminStats(undefined, {});
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const { data: usersData, isLoading: loadingUsers } = useListAdminUsers({ search: search || undefined, page }, { refetchInterval: 30000 });
+  const { data: usersData, isLoading: loadingUsers } = useListAdminUsers({ search: search || undefined, page }, {});
   const suspendUser = useSuspendUser();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   // Import control hooks
-  const { data: importStatus, isLoading: loadingImportStatus } = useImportStatusQuery(undefined, { refetchInterval: 30000 });
-  const { data: importStats, isLoading: loadingImportStats } = useImportStatsQuery(undefined, { refetchInterval: 30000 });
+  const { data: importStatus, isLoading: loadingImportStatus } = useImportStatusQuery(undefined, {});
+  const { data: importStats, isLoading: loadingImportStats } = useImportStatsQuery(undefined, {});
   const startImportMutation = useStartImportMutation();
   const stopImportMutation = useStopImportMutation();
 

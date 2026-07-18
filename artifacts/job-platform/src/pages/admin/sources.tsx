@@ -117,7 +117,6 @@ export default function SourcesPage() {
   const { data: sources = [], isLoading, error } = useQuery<Source[], Error>({
     queryKey: ["sources"],
     queryFn: fetchSources,
-    refetchInterval: 30000,
   });
 
   // Populate source type options when sources change

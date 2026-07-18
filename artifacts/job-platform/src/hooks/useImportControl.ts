@@ -35,7 +35,6 @@ export const useImportStatusQuery = () => {
       );
       return response.data;
     },
-    refetchInterval: 5000, // Poll every 5 seconds for status updates
   });
 };
 
@@ -50,7 +49,6 @@ export const useImportStatsQuery = () => {
       );
       return response.data;
     },
-    refetchInterval: 15000, // Less frequent for stats
   });
 };
 
