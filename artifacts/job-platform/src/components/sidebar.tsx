@@ -30,6 +30,7 @@ const navItems = [
   { href: "/analytics",     label: "Analytics",     icon: BarChart3 },
   { href: "/ai",            label: "AI Assistant",  icon: MessageSquare },
   { href: "/notifications", label: "Notifications", icon: Bell },
+  { href: "/admin",         label: "Admin",         icon: ShieldAlert },
 ];
 
 function ProfileCompletionRing({ pct }: { pct: number }) {
@@ -75,7 +76,6 @@ export function Sidebar({ onClose }: SidebarProps) {
 
 
 const userEmail = user?.primaryEmailAddress?.emailAddress;
-  const isAdmin = profile?.role === 'admin';
 
   // Profile completion — includes new extended fields
   const fields = [
@@ -160,20 +160,6 @@ const userEmail = user?.primaryEmailAddress?.emailAddress;
             </Link>
           );
         })}
-
-        {isAdmin && (
-          <Link href="/admin" onClick={handleNavClick}>
-            <div className={cn(
-              "flex items-center gap-3 px-3 py-2 rounded-md transition-colors cursor-pointer text-sm font-medium mt-2",
-              location.startsWith("/admin")
-                ? "bg-destructive/10 text-destructive"
-                : "text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-            )}>
-              <ShieldAlert className="w-4 h-4 flex-shrink-0" />
-              Admin
-            </div>
-          </Link>
-        )}
       </nav>
 
       {/* Bottom: user + completion */}

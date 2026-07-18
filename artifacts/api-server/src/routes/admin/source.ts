@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db, importSourceConfigsTable } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import { db, importSourceConfigsTable, importJobsTable } from "@workspace/db";
+import { eq, and, sql } from "drizzle-orm";
 import { resolveUser, requireAdmin } from "../../middlewares/auth";
 import { mailService } from "../../lib/mail";
 import {
@@ -17,7 +17,43 @@ const router = Router();
 // GET /admin/source - List all sources
 router.get("/", resolveUser, requireAdmin, async (req, res) => {
   try {
-    const sources = await db.select().from(importSourceConfigsTable).orderBy(importSourceConfigsTable.name);
+    const sources = await db
+        .select({
+          id: importSourceConfigsTable.id,
+          name: importSourceConfigsTable.name,
+          sourceType: importSourceConfigsTable.sourceType,
+          url: importSourceConfigsTable.url,
+          country: importSourceConfigsTable.country,
+          category: importSourceConfigsTable.category,
+          apiKey: importSourceConfigsTable.apiKey,
+          notes: importSourceConfigsTable.notes,
+          isEnabled: importSourceConfigsTable.isEnabled,
+          intervalMinutes: importSourceConfigsTable.intervalMinutes,
+          jobsImported: sql<number>`coalesce(sum(${importJobsTable.newJobsAdded}), 0)`.mapWith(Number),
+          lastRun: importSourceConfigsTable.lastRun,
+          nextScheduledRun: importSourceConfigsTable.nextScheduledRun,
+          createdAt: importSourceConfigsTable.createdAt,
+          updatedAt: importSourceConfigsTable.updatedAt,
+        })
+        .from(importSourceConfigsTable)
+        .leftJoin(importJobsTable, eq(importSourceConfigsTable.name, importJobsTable.source))
+        .groupBy(
+          importSourceConfigsTable.id,
+          importSourceConfigsTable.name,
+          importSourceConfigsTable.sourceType,
+          importSourceConfigsTable.url,
+          importSourceConfigsTable.country,
+          importSourceConfigsTable.category,
+          importSourceConfigsTable.apiKey,
+          importSourceConfigsTable.notes,
+          importSourceConfigsTable.isEnabled,
+          importSourceConfigsTable.intervalMinutes,
+          importSourceConfigsTable.lastRun,
+          importSourceConfigsTable.nextScheduledRun,
+          importSourceConfigsTable.createdAt,
+          importSourceConfigsTable.updatedAt
+        )
+        .orderBy(importSourceConfigsTable.name);
     res.json({ sources });
   } catch (err) {
     console.error(err);

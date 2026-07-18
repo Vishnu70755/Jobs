@@ -66,6 +66,7 @@ export const importSourceConfigsTable = pgTable("import_source_configs", {
   lastRun: timestamp("last_run"),
   nextScheduledRun: timestamp("next_scheduled_run"),
   intervalMinutes: integer("interval_minutes").notNull().default(60),
+  jobsImported: integer("jobs_imported").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

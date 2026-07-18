@@ -81,17 +81,17 @@ function AccessDenied() {
 
 export default function Admin() {
   const { user, isLoaded } = useUser();
-  const { data: stats, isLoading: loadingStats } = useGetAdminStats();
+  const { data: stats, isLoading: loadingStats } = useGetAdminStats(undefined, { refetchInterval: 30000 });
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const { data: usersData, isLoading: loadingUsers } = useListAdminUsers({ search: search || undefined, page });
+  const { data: usersData, isLoading: loadingUsers } = useListAdminUsers({ search: search || undefined, page }, { refetchInterval: 30000 });
   const suspendUser = useSuspendUser();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   // Import control hooks
-  const { data: importStatus, isLoading: loadingImportStatus } = useImportStatusQuery();
-  const { data: importStats, isLoading: loadingImportStats } = useImportStatsQuery();
+  const { data: importStatus, isLoading: loadingImportStatus } = useImportStatusQuery(undefined, { refetchInterval: 30000 });
+  const { data: importStats, isLoading: loadingImportStats } = useImportStatsQuery(undefined, { refetchInterval: 30000 });
   const startImportMutation = useStartImportMutation();
   const stopImportMutation = useStopImportMutation();
 
@@ -111,7 +111,7 @@ export default function Admin() {
 
   const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
     ? importStatus
-        .map(status => status.nextRunAt ? new Date(status.nextRunAt) : null)
+        .map(status => status.nextScheduledRun ? new Date(status.nextScheduledRun) : null)
         .filter((date): date is Date => date !== null)
         .reduce((soonest, date) => (date < soonest ? date : soonest), new Date(8640000000000000)) // Far future
     : null;
@@ -181,8 +181,8 @@ export default function Admin() {
     if (Array.isArray(importStatus) && importStatus.length > 0) {
       const recentlyCompleted = importStatus.some(status =>
         !status.isRunning &&
-        status.lastRunAt &&
-        new Date(status.lastRunAt).getTime() > Date.now() - 300000 && // Last 5 minutes
+        status.lastRun &&
+        new Date(status.lastRun).getTime() > Date.now() - 300000 && // Last 5 minutes
         status.logs?.some(log => log.level === 'success')
       );
       if (recentlyCompleted) return 'Completed';
@@ -192,8 +192,8 @@ export default function Admin() {
     if (Array.isArray(importStatus) && importStatus.length > 0) {
       const recentlyStopped = importStatus.some(status =>
         !status.isRunning &&
-        status.lastRunAt &&
-        new Date(status.lastRunAt).getTime() > Date.now() - 300000 && // Last 5 minutes
+        status.lastRun &&
+        new Date(status.lastRun).getTime() > Date.now() - 300000 && // Last 5 minutes
         !status.logs?.some(log => log.level === 'error')
       );
       if (recentlyStopped) return 'Stopped';
