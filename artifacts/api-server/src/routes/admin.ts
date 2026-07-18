@@ -1,17 +1,13 @@
 import { Router } from "express";
-import { clerkClient } from "@clerk/express";
-import { db, usersTable, applicationsTable, jobsTable, resumesTable, atsReportsTable, importJobsTable, importSourceConfigsTable, savedJobsTable, emailLogsTable, insertJobSchema } from "@workspace/db";
-import { eq, ilike, desc, sql, and, lt, gt, gte, lte } from "drizzle-orm";
+import { db, usersTable, applicationsTable, jobsTable, resumesTable, atsReportsTable, importJobsTable, importSourceConfigsTable, savedJobsTable } from "@workspace/db";
+import { eq, ilike, desc, sql, and } from "drizzle-orm";
 import { resolveUser, requireAdmin } from "../middlewares/auth";
 import importRoutes from "./admin/import";
-import sourceRoutes from "./admin/source"; // <-- added
 
 const router = Router();
 
 // Import routes
 router.use("/import", importRoutes);
-// Sources routes
-router.use("/sources", sourceRoutes); // <-- added
 
 // GET /admin/stats
 router.get("/stats", resolveUser, requireAdmin, async (req, res) => {
@@ -63,16 +59,9 @@ router.get("/users", resolveUser, requireAdmin, async (req, res) => {
       .where(search ? ilike(usersTable.email, `%${search}%`) : undefined);
 
     const enriched = await Promise.all(users.map(async u => {
-      // Fetch Clerk profile for avatar — wrapped in try/catch so a single
-      // failure (rate limit, stale clerkId, network hiccup) doesn't take
-      // down the entire user list request.
-      let avatarUrl: string | null = null;
-      try {
-        const clerkUser = await clerkClient.users.getUser(u.clerkId);
-        avatarUrl = clerkUser?.profileImageUrl ?? null;
-      } catch (clerkErr) {
-        req.log.warn({ userId: u.id, err: clerkErr }, "Failed to fetch Clerk profile for user");
-      }
+      // Fetch Clerk profile for avatar
+      const clerkUser = await clerkClient.users.getUser(u.clerkId);
+      const avatarUrl = clerkUser?.profileImageUrl ?? null;
 
       // Fetch latest resume (prefer default, then most recent)
       const resume = await db.query.resumesTable.findFirst({
@@ -109,8 +98,7 @@ router.get("/users", resolveUser, requireAdmin, async (req, res) => {
         resumeUrl,
         resumeFileName,
         savedJobsCount: Number(savedJobsCount),
-        // Renamed to match frontend's expected field name (was atsReportsCount)
-        atsReportCount: Number(atsReportsCount),
+        atsReportsCount: Number(atsReportsCount),
         createdAt: u.createdAt,
       };
     }));
@@ -134,203 +122,4 @@ router.patch("/users/:id/suspend", resolveUser, requireAdmin, async (req, res) =
   }
 });
 
-// Email Logs Routes
-// GET /admin/email-logs
-router.get("/email-logs", resolveUser, requireAdmin, async (req, res) => {
-  try {
-    const page = Math.max(1, parseInt((req.query.page as string) ?? "1"));
-    const limit = Math.min(100, parseInt((req.query.limit as string) ?? "50"));
-    const offset = (page - 1) * limit;
-    const search = (req.query.search as string) ?? "";
-    const statusFilter = (req.query.status as string) ?? "";
-    const eventFilter = (req.query.event as string) ?? "";
-
-    let whereClause = undefined;
-
-    if (search) {
-      whereClause = ilike(emailLogsTable.recipient, `%${search}%`);
-    }
-
-    if (statusFilter) {
-      whereClause = whereClause ? and(whereClause, eq(emailLogsTable.status, statusFilter)) : eq(emailLogsTable.status, statusFilter);
-    }
-
-    if (eventFilter) {
-      whereClause = whereClause ? and(whereClause, eq(emailLogsTable.event, eventFilter)) : eq(emailLogsTable.event, eventFilter);
-    }
-
-    const [emailLogs, { count }] = await Promise.all([
-      db.select().from(emailLogsTable)
-        .where(whereClause)
-        .orderBy(desc(emailLogsTable.createdAt))
-        .offset(offset)
-        .limit(limit),
-      db.select({ count: sql<number>`count(*)` }).from(emailLogsTable).where(whereClause)
-    ]);
-
-    res.json({ emailLogs, total: Number(count), page, limit });
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// POST /admin/email-logs/:id/retry
-router.post("/email-logs/:id/retry", resolveUser, requireAdmin, async (req, res) => {
-  try {
-    const id = parseInt(req.params["id"] as string);
-    const emailLog = await db.query.emailLogsTable.findFirst({
-      where: eq(emailLogsTable.id, id)
-    });
-
-    if (!emailLog) {
-      res.status(404).json({ error: "Email log not found" });
-      return;
-    }
-
-    // Retry sending the email
-    const { success, error } = await retryEmail(emailLog);
-
-    if (success) {
-      // Update the log as successful
-      await db.update(emailLogsTable)
-        .set({
-          status: 'sent',
-          error: null,
-          retryCount: emailLog.retryCount + 1,
-          lastAttemptedAt: new Date(),
-          updatedAt: new Date()
-        })
-        .where(eq(emailLogsTable.id, id));
-
-      res.json({ success: true, message: 'Email resent successfully' });
-    } else {
-      // Update the log with the error
-      await db.update(emailLogsTable)
-        .set({
-          status: 'failed',
-          error: error,
-          retryCount: emailLog.retryCount + 1,
-          lastAttemptedAt: new Date(),
-          updatedAt: new Date()
-        })
-        .where(eq(emailLogsTable.id, id));
-
-      res.status(500).json({ error: `Failed to resend email: ${error}` });
-    }
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// Helper function to retry sending an email
-async function retryEmail(emailLog: typeof emailLogsTable.$inferSelect): Promise<{ success: boolean; error?: string }> {
-  try {
-    // Import the mail service and email templates
-    const { mailService } = await import("../lib/mail");
-    const {
-      getWelcomeEmailTemplate,
-      getLoginEmailTemplate,
-      getResumeUploadEmailTemplate,
-      getResumeUpdateEmailTemplate,
-      getApplicationStatusUpdateEmailTemplate,
-      getInterviewScheduledEmailTemplate,
-      getInterviewReminderEmailTemplate,
-      getInterviewCancelledEmailTemplate,
-      getApplicationConfirmationEmailTemplate,
-      getATSAnalysisEmailTemplate,
-      getPasswordResetEmailTemplate,
-      getAdminNewUserEmailTemplate,
-      getAdminLoginEmailTemplate,
-      getAdminUserLoginEmailTemplate,
-      getImportStartedEmailTemplate,
-      getImportCompletedEmailTemplate,
-      getImportFailedEmailTemplate,
-      getSourceAddedEmailTemplate,
-      getSourceUpdatedEmailTemplate,
-      getSourceDisabledEmailTemplate,
-      getSourceEnabledEmailTemplate,
-      getSourceDeletedEmailTemplate,
-      getDailySummaryEmailTemplate,
-      getSystemErrorEmailTemplate
-    } = await import("../lib/email-templates");
-
-    // Map event to template function
-    const templateMap: Record<string, (data: any) => { subject: string; html: string; text: string }> = {
-      'user_registration': getWelcomeEmailTemplate,
-      'user_login': getLoginEmailTemplate,
-      'resume_upload': getResumeUploadEmailTemplate,
-      'resume_update': getResumeUpdateEmailTemplate,
-      'application_status_update': getApplicationStatusUpdateEmailTemplate,
-      'interview_scheduled': getInterviewScheduledEmailTemplate,
-      'interview_reminder': getInterviewReminderEmailTemplate,
-      'interview_cancelled': getInterviewCancelledEmailTemplate,
-      'application_confirmation': getApplicationConfirmationEmailTemplate,
-      'ats_analysis': getATSAnalysisEmailTemplate,
-      'password_reset': getPasswordResetEmailTemplate,
-      'admin_new_user': getAdminNewUserEmailTemplate,
-      'admin_login': getAdminLoginEmailTemplate,
-      'admin_user_login': getAdminUserLoginEmailTemplate,
-      'import_started': getImportStartedEmailTemplate,
-      'import_completed': getImportCompletedEmailTemplate,
-      'import_failed': getImportFailedEmailTemplate,
-      'source_added': getSourceAddedEmailTemplate,
-      'source_updated': getSourceUpdatedEmailTemplate,
-      'source_disabled': getSourceDisabledEmailTemplate,
-      'source_enabled': getSourceEnabledEmailTemplate,
-      'source_deleted': getSourceDeletedEmailTemplate,
-      'daily_summary': getDailySummaryEmailTemplate,
-      'system_error': getSystemErrorEmailTemplate,
-    };
-
-    const templateFunction = templateMap[emailLog.event];
-    if (!templateFunction) {
-      throw new Error(`Unknown email event: ${emailLog.event}`);
-    }
-
-    // Parse the recipient data (assuming it's stored as JSON string)
-    let recipientData: any = {};
-    try {
-      recipientData = JSON.parse(emailLog.recipientData || '{}');
-    } catch (e) {
-      // If parsing fails, use empty object
-      recipientData = {};
-    }
-
-    // Generate the email template
-    const template = templateFunction(recipientData);
-
-    // Send the email
-    await mailService.sendTemplateEmail(emailLog.recipient, template);
-
-    return { success: true };
-  } catch (err) {
-    return { success: false, error: err.message };
-  }
-}
-
-
-import { z } from "zod";
-// POST /admin/jobs
-router.post("/jobs", resolveUser, requireAdmin, async (req, res) => {
-  try {
-    // Validate the request body
-    const parsedBody = insertJobSchema.parse(req.body);
-
-    // Insert the job
-    const [newJob] = await db.insert(jobsTable).values(parsedBody).returning();
-
-    // Return the created job
-    res.status(201).json(newJob);
-  } catch (err) {
-    if (err instanceof z.ZodError) {
-      // Validation error
-      res.status(400).json({ error: "Invalid input", details: err.errors });
-    } else {
-      console.error(err);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  }
-});
 export default router;
