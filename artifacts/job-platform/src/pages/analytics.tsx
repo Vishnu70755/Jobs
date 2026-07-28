@@ -376,11 +376,11 @@ export default function Analytics() {
                   <p className="text-xs font-semibold leading-tight">{state.state}</p>
                   <p className="text-xs text-muted-foreground">{state.city ?? '-'}</p>
                   <div className="w-full bg-border rounded-full h-1.5">
-                    <div className={`${bgColor} h-1.5 rounded-full`} style={{ width: `${Math.min(state.percentage ?? 0, 100)}%` }} />
+                    <div className={`${bgColor} h-1.5 rounded-full`} style={{ width: `${Math.min(state.percentage ?? 0, 100)}%` }}></div>
                   </div>
                   <p className="text-xs font-bold text-foreground">{state.percentage ?? 0}%</p>
                 </div>
-              })}
+              })
             </div>
           </CardContent>
         </Card>
@@ -597,7 +597,7 @@ export default function Analytics() {
                   <p className="text-xs font-semibold leading-tight">{state.state}</p>
                   <p className="text-xs text-muted-foreground">{state.city ?? '-'}</p>
                   <div className="w-full bg-border rounded-full h-1.5">
-                    <div className={`${bgColor} h-1.5 rounded-full`} style={{ width: `${Math.min(state.percentage ?? 0, 100)}%` }} />
+                    <div className={`${bgColor} h-1.5 rounded-full`} style={{ width: `${Math.min(state.percentage ?? 0, 100)}%` }}></div>
                   </div>
                   <p className="text-xs font-bold text-foreground">{state.percentage ?? 0}%</p>
                 </div>

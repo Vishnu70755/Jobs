@@ -107,7 +107,7 @@ router.get("/:id/logs", resolveUser, requireAdmin, async (req, res) => {
     const [source] = await db
       .select({ name: importSourcesTable.name })
       .from(importSourcesTable)
-      .where(eq(importSources are(1));
+      .where(eq(importSourcesTable.id, id));
     if (!source) {
       return res.status(404).json({ error: "Source not found" });
     }
