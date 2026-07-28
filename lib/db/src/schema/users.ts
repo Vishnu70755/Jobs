@@ -30,6 +30,8 @@ export const usersTable = pgTable("users", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
   // Track last session ID for login notifications
   lastSessionId: text("last_session_id"),
+  // Track last login timestamp
+  lastLoginAt: timestamp("last_login_at"),
   // Track if admin notification has been sent for this user
   adminNotificationSent: boolean("admin_notification_sent").notNull().default(false),
 });

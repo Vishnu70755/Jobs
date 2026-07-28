@@ -400,6 +400,95 @@ router.patch("/:id", resolveUser, async (req, res) => {
   }
 });
 
+
+// POST /applications/:id/track - Track an application
+router.post("/:id/track", resolveUser, async (req, res) => {
+  try {
+    const user = (req as any).dbUser;
+    const id = parseInt(req.params["id"] as string);
+
+    // Verify the application belongs to the user
+    const [application] = await db
+      .select()
+      .from(applicationsTable)
+      .where(
+        and(
+          eq(applicationsTable.id, id),
+          eq(applicationsTable.userId, user.id)
+        )
+      );
+
+    if (!application) {
+      return res.status(404).json({ error: "Application not found" });
+    }
+
+    // Update the isTracked flag to true
+    const [updated] = await db
+      .update(applicationsTable)
+      .set({ isTracked: true })
+      .where(
+        and(
+          eq(applicationsTable.id, id),
+          eq(applicationsTable.userId, user.id)
+        )
+      )
+      .returning();
+
+    if (!updated) {
+      return res.status(404).json({ error: "Application not found" });
+    }
+
+    res.json({ success: true, isTracked: updated.isTracked });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// DELETE /applications/:id/track - Untrack an application
+router.delete("/:id/track", resolveUser, async (req, res) => {
+  try {
+    const user = (req as any).dbUser;
+    const id = parseInt(req.params["id"] as string);
+
+    // Verify the application belongs to the user
+    const [application] = await db
+      .select()
+      .from(applicationsTable)
+      .where(
+        and(
+          eq(applicationsTable.id, id),
+          eq(applicationsTable.userId, user.id)
+        )
+      );
+
+    if (!application) {
+      return res.status(404).json({ error: "Application not found" });
+    }
+
+    // Update the isTracked flag to false
+    const [updated] = await db
+      .update(applicationsTable)
+      .set({ isTracked: false })
+      .where(
+        and(
+          eq(applicationsTable.id, id),
+          eq(applicationsTable.userId, user.id)
+        )
+      )
+      .returning();
+
+    if (!updated) {
+      return res.status(404).json({ error: "Application not found" });
+    }
+
+    res.json({ success: true, isTracked: updated.isTracked });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // DELETE /applications/:id
 router.delete("/:id", resolveUser, async (req, res) => {
   try {

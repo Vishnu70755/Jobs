@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Form, FormControl, FormField } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Plus, Edit, Trash2, Check, X } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Search, Plus, Edit, Trash2, Check, X, Log, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogTrigger,
@@ -20,6 +21,7 @@ import {
   Description,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 // Types based on our backend schema
@@ -38,6 +40,16 @@ interface Source {
   jobsImported: number;
   createdAt: string;
   updatedAt: string;
+}
+
+interface LogEntry {
+  id: number;
+  source: string;
+  timestamp: string; // ISO string
+  jobsImported: number;
+  duration: number | null; // in milliseconds
+  status: string;
+  errors: string | null;
 }
 
 // Fetch all sources
@@ -113,6 +125,12 @@ export default function SourcesPage() {
     notes: "",
   });
 
+  // Logs dialog state
+  const [logsDialogOpen, setLogsDialogOpen] = useState(false);
+  const [logsDialogSourceId, setLogsDialogSourceId] = useState<number | null>(null);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+
   // Fetch sources
   const { data: sources = [], isLoading, error } = useQuery<Source[], Error>({
     queryKey: ["sources"],
@@ -131,6 +149,15 @@ export default function SourcesPage() {
       setSourceTypeOptions(['']);
     }
   }, [sources]);
+
+  // Fetch logs for selected source when logsDialogSourceId changes
+  useEffect(() => {
+    if (logsDialogSourceId !== null) {
+      fetchLogsForSource(logsDialogSourceId);
+    } else {
+      setLogs([]);
+    }
+  }, [logsDialogSourceId, fetchLogsForSource]);
 
   // Mutations
   const createMutation = useMutation({
@@ -246,6 +273,59 @@ export default function SourcesPage() {
       toast({ title: "Failed to disable source", description: error.message, variant: "destructive" });
     },
   });
+
+  // Function to fetch logs for a source
+  const fetchLogsForSource = async (sourceId: number) => {
+    setLogsLoading(true);
+    try {
+      const res = await fetch(`/admin/import-sources/${sourceId}/logs`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (!res.ok) {
+        throw new Error("Failed to fetch logs");
+      }
+      const data = await res.json();
+      // The API returns { success: true, data: [...] }
+      if (data.success && Array.isArray(data.data)) {
+        setLogs(data.data);
+      } else {
+        setLogs([]);
+      }
+    } catch (error) {
+      console.error("Error fetching logs:", error);
+      setLogs([]);
+    } finally {
+      setLogsLoading(false);
+    }
+  };
+
+  // Function to retry a log
+  const retryLog = async (sourceId: number, logId: number) => {
+    try {
+      const res = await fetch(`/admin/import-sources/${sourceId}/logs/${logId}/retry`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (!res.ok) {
+        throw new Error("Failed to retry log");
+      }
+      const data = await res.json();
+      if (data.success) {
+        toast({ title: "Retry initiated successfully" });
+        // Refetch logs after retry
+        await fetchLogsForSource(sourceId);
+      } else {
+        throw new Error("Failed to retry log");
+      }
+    } catch (error) {
+      console.error("Error retrying log:", error);
+      toast({ title: "Failed to retry log", description: (error as Error).message || "Unknown error", variant: "destructive" });
+    }
+  };
 
   // Handle input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -559,6 +639,16 @@ export default function SourcesPage() {
                     <td>{formatDate(source.lastRun)}</td>
                     <td>{source.jobsImported ?? 0}</td>
                     <td className="flex items-center space-x-2">
+                      {/* View Logs button */}
+                      <button
+                        onClick={() => {
+                          setLogsDialogSourceId(source.id);
+                          setLogsDialogOpen(true);
+                        }}
+                        className="btn btn-sm btn-outline"
+                      >
+                        <Log className="h-3 w-3" /> Logs
+                      </button>
                       {/* Edit button */}
                       <button
                         onClick={() => handleEditClick(source)}
@@ -628,6 +718,65 @@ export default function SourcesPage() {
               {deleteMutation.isPending ? "Deleting..." : "Delete Source"}
             </button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Logs Dialog */}
+      <Dialog open={logsDialogOpen} onOpenChange={(open) => {
+        if (!open) {
+          setLogsDialogSourceId(null);
+          setLogs([]);
+        }
+      }}>
+        <DialogContent className="w-96">
+          <DialogHeader>
+            <DialogTitle>
+              {logsDialogSourceId !== null ? (
+                <>
+                  Logs for{' '}
+                  <span className="font-medium">
+                    {sources.find(s => s.id === logsDialogSourceId)?.name ?? "Unknown"}
+                  </span>
+                </>
+              ) : (
+                "Logs for Source"
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          <Description>
+            {logsLoading ? (
+              <div className="space-y-2">
+                {[1, 2, 3].map((_, i) => (
+                  <div key={i} className="text-sm text-muted-foreground">
+                    <Skeleton className="h-4 w-32" />
+                  </div>
+                ))}
+              </div>
+            ) : (logs.length > 0) ? (
+              <div className="space-y-2">
+                {logs.map((log) => (
+                  <div key={log.id} className="text-sm text-muted-foreground">
+                    <time className="mr-2">{new Date(log.timestamp).toLocaleTimeString()}</time>
+                    <span>{log.message}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground py-4">No logs found</p>
+            )}
+          </Description>
+          <div className="flex justify-end pt-4">
+            <button
+              type="button"
+              onClick={() => {
+                setLogsDialogOpen(false);
+                setLogsDialogSourceId(null);
+              }}
+              className="btn btn-outline"
+            >
+              Close
+            </button>
+          </div>
         </DialogContent>
       </Dialog>
 

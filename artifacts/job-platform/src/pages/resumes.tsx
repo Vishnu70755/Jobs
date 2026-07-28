@@ -42,8 +42,10 @@ export default function Resumes() {
   const [fileContent, setFileContent] = useState<string>("");
   const [dragging, setDragging] = useState(false);
 
-  const invalidate = () =>
+  const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: getListResumesQueryKey() });
+    queryClient.invalidateQueries({ queryKey: ['analytics'] });
+};
 
   function openAdd() {
     setForm({ name: "", isDefault: false });

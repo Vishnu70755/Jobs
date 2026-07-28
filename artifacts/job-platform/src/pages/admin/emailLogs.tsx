@@ -13,6 +13,7 @@ import {
   Label,
   Select,
   Separator,
+  Skeleton,
 } from "@/components/ui";
 import {
   ArrowUpDown,
@@ -113,10 +114,11 @@ export default function EmailLogsPage() {
     setRetryingId(id);
     try {
       await retryEmailLog(id);
+      toast({ title: "Email retry initiated successfully" });
       // Refetch to update status
       fetchData();
     } catch (err) {
-      console.error("Failed to retry email:", err);
+      toast({ title: "Failed to retry email", description: err.message, variant: "destructive" });
     } finally {
       setRetryingId(null);
     }
@@ -231,8 +233,35 @@ export default function EmailLogsPage() {
       </div>
 
       {loading ? (
-        <div className="text-center py-8">
-          <div className="loading loading-spinner loading-lg" />
+        <div className="overflow-x-auto">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Recipient</th>
+                <th>Subject</th>
+                <th>Event</th>
+                <th>Status</th>
+                <th>Error</th>
+                <th>Retry Count</th>
+                <th>Date & Time</th>
+                <th className="w-16">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[...Array(5)].map((_, i) => (
+                <tr key={i} className="hover:bg-accent">
+                  <td><Skeleton className="h-4 w-24" /></td>
+                  <td title="" className="max-w-32 truncate"><Skeleton className="h-4 w-32" /></td>
+                  <td><Skeleton className="h-4 w-24" /></td>
+                  <td><div className="flex items-center space-x-2"><div className="w-2 h-2 rounded-full" style={{ backgroundColor: "gray.500" }}></div><span className="text-xs capitalize">Skeleton</span></div></td>
+                  <td className="max-w-40 truncate"><Skeleton className="h-4 w-24" /></td>
+                  <td><Skeleton className="h-4 w-8" /></td>
+                  <td><Skeleton className="h-4 w-24" /></td>
+                  <td className="flex items-center space-x-2"></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       ) : (
         <>

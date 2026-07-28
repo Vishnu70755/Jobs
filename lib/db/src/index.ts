@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
-import * as schema from "./schema";
+import * as schema from "./schema/index.ts";
 
 const { Pool } = pg;
 
@@ -12,7 +12,7 @@ if (!process.env.DATABASE_URL) {
 
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  
+
   ssl:
     process.env.NODE_ENV === "production"
       ? { rejectUnauthorized: false }
@@ -21,8 +21,7 @@ export const pool = new Pool({
 export const db = drizzle(pool, { schema });
 
 pool.on("error", (err) => {
-  
   console.error("Unexpected error on idle Postgres client", err);
 });
 
-export * from "./schema";
+export * from "./schema/index.ts";

@@ -100,6 +100,24 @@ router.post("/", resolveUser, requireAdmin, async (req, res) => {
         intervalMinutes: intervalMinutes ?? 60,
       })
       .returning();
+    // Also ensure a row exists in import_sources for this new source
+    await db
+      .insert(importSourcesTable)
+      .values({
+        name: newSource.name,
+        status: "idle",
+        today_imports: 0,
+        total_imports: 0,
+        lastImport: null,
+        lastSuccess: null,
+        lastFailure: null,
+        schedule: "0 7 * * *",
+        enabled: newSource.isEnabled,
+      })
+      .onConflictDoUpdate({
+        target: importSourcesTable.name,
+        set: {}
+      });
 
     // Send email notification
     try {

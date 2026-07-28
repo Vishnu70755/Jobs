@@ -209,24 +209,29 @@ export class ImportServiceManager {
       { source: "internshala", isEnabled: true, intervalMinutes: 120 }
     ];
 
+    // Get all existing configurations in a single query to avoid N+1 problem
+    const existingConfigs = await db
+      .select({ source: importSourceConfigsTable.source })
+      .from(importSourceConfigsTable);
+
+    // Create a set of existing source names for O(1) lookup
+    const existingSources = new Set(existingConfigs.map(c => c.source));
+
     for (const config of defaultConfigs) {
-      const existing = await db
-        .select()
-        .from(importSourceConfigsTable)
-        .where(eq(importSourceConfigsTable.source, config.source))
-        .limit(1);
-
-      if (existing.length === 0) {
-        await db.insert(importSourceConfigsTable).values({
-          source: config.source,
-          isEnabled: config.isEnabled,
-          intervalMinutes: config.intervalMinutes,
-          config: {},
-          nextScheduledRun: new Date(Date.now() + config.intervalMinutes * 60 * 1000)
-        });
-
-        logger.info({ source: config.source }, `Created default import configuration`);
+      // Skip if this configuration already exists
+      if (existingSources.has(config.source)) {
+        continue;
       }
+
+      await db.insert(importSourceConfigsTable).values({
+        source: config.source,
+        isEnabled: config.isEnabled,
+        intervalMinutes: config.intervalMinutes,
+        config: {},
+        nextScheduledRun: new Date(Date.now() + config.intervalMinutes * 60 * 1000)
+      });
+
+      logger.info({ source: config.source }, `Created default import configuration`);
     }
   }
 

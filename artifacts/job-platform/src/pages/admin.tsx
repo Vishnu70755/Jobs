@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useUser } from "@clerk/react";
 import { useLocation } from "wouter";
 import {
@@ -90,31 +90,47 @@ export default function Admin() {
   const { toast } = useToast();
 
   // Import control hooks
-  const { data: importStatus, isLoading: loadingImportStatus } = useImportStatusQuery(undefined, {});
+  const { data: importStatus, isLoading: loadingImportStatus } = useImportStatusQuery(undefined, {
+    // Poll every 5 seconds when an import is running, every 30 seconds when idle
+    refetchInterval: (data) => {
+      if (!data) return 30000; // 30 seconds when no data
+      const isAnyImportRunning = Array.isArray(data)
+        ? data.some(status => status.isRunning)
+        : false;
+      return isAnyImportRunning ? 5000 : 30000; // 5 seconds when running, 30 when idle
+    },
+    refetchIntervalInBackground: true,
+  });
   const { data: importStats, isLoading: loadingImportStats } = useImportStatsQuery(undefined, {});
   const startImportMutation = useStartImportMutation();
   const stopImportMutation = useStopImportMutation();
 
   const userEmail = user?.primaryEmailAddress?.emailAddress;
 
-  // Compute import status values from the array (handle undefined/empty cases safely)
-  const isAnyImportRunning = Array.isArray(importStatus)
-    ? importStatus.some(status => status.isRunning)
-    : false;
+  // Memoize expensive computations
+  const isAnyImportRunning = useMemo(() => {
+    return Array.isArray(importStatus)
+      ? importStatus.some(status => status.isRunning)
+      : false;
+  }, [importStatus]);
 
-  const mostRecentLastRun = Array.isArray(importStatus) && importStatus.length > 0
-    ? importStatus
-        .map(status => status.lastRun ? new Date(status.lastRun) : null)
-        .filter((date): date is Date => date !== null)
-        .reduce((latest, date) => (date > latest ? date : latest), new Date(0))
-    : null;
+  const mostRecentLastRun = useMemo(() => {
+    return Array.isArray(importStatus) && importStatus.length > 0
+      ? importStatus
+          .map(status => status.lastRun ? new Date(status.lastRun) : null)
+          .filter((date): date is Date => date !== null)
+          .reduce((latest, date) => (date > latest ? date : latest), new Date(0))
+      : null;
+  }, [importStatus]);
 
-  const soonestNextRun = Array.isArray(importStatus) && importStatus.length > 0
-    ? importStatus
-        .map(status => status.nextScheduledRun ? new Date(status.nextScheduledRun) : null)
-        .filter((date): date is Date => date !== null)
-        .reduce((soonest, date) => (date < soonest ? date : soonest), new Date(8640000000000000)) // Far future
-    : null;
+  const soonestNextRun = useMemo(() => {
+    return Array.isArray(importStatus) && importStatus.length > 0
+      ? importStatus
+          .map(status => status.nextScheduledRun ? new Date(status.nextScheduledRun) : null)
+          .filter((date): date is Date => date !== null)
+          .reduce((soonest, date) => (date < soonest ? date : soonest), new Date(8640000000000000)) // Far future
+      : null;
+  }, [importStatus]);
 
   const handleToggleImport = () => {
     // If currently importing or starting to import, stop it
@@ -123,6 +139,7 @@ export default function Admin() {
       stopImportMutation.mutate(undefined, {
         onSuccess: () => {
           toast({ title: "Import stopped successfully" });
+          queryClient.invalidateQueries({ queryKey: ['analytics'] });
         },
         onError: (error: any) => {
           const errorMessage = error?.response?.data?.error ||
@@ -141,6 +158,7 @@ export default function Admin() {
       startImportMutation.mutate(undefined, {
         onSuccess: () => {
           toast({ title: "Import started successfully" });
+          queryClient.invalidateQueries({ queryKey: ['analytics'] });
         },
         onError: (error: any) => {
           const errorMessage = error?.response?.data?.error ||
@@ -158,16 +176,12 @@ export default function Admin() {
   };
 
   // Helper function to determine current import status text
-  const getImportStatus = (): string => {
+  const getImportStatus = useMemo(() => {
     // Check for loading states first
     if (startImportMutation.isPending) return 'Starting';
     if (stopImportMutation.isPending) return 'Stopping';
 
     // Check if any import is currently running
-    const isAnyImportRunning = Array.isArray(importStatus)
-      ? importStatus.some(status => status.isRunning)
-      : false;
-
     if (isAnyImportRunning) return 'Importing';
 
     // Check for recent errors in logs
@@ -201,10 +215,10 @@ export default function Admin() {
 
     // Default to idle
     return 'Idle';
-  };
+  }, [importStatus, startImportMutation.isPending, stopImportMutation.isPending]);
 
-  const getStatusColor = (status: string): string => {
-    const statusLower = status.toLowerCase();
+  const getStatusColor = useMemo(() => {
+    const statusLower = getImportStatus().toLowerCase();
     switch (statusLower) {
       case 'idle':
         return 'text-muted-foreground';
@@ -221,11 +235,11 @@ export default function Admin() {
       default:
         return 'text-muted-foreground';
     }
-  };
+  }, [getImportStatus]);
 
-  const getImportedJobsCount = (): number => {
+  const getImportedJobsCount = useMemo(() => {
     return importStats?.totalImportedJobs ?? 0;
-  };
+  }, [importStats]);
 
   if (!isLoaded) {
     return (
@@ -310,15 +324,15 @@ export default function Admin() {
               <div className="flex items-center gap-2">
                 <div className="h-2 w-2 rounded-full"
                   style={{
-                    backgroundColor: getStatusColor(getImportStatus())
+                    backgroundColor: getStatusColor
                   }}
                 ></div>
-                <span className="font-medium">{getImportStatus()}</span>
+                <span className="font-medium">{getImportStatus}</span>
               </div>
 
               <div className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-muted-foreground" />
-                <span>Jobs Imported: {getImportedJobsCount()}</span>
+                <span>Jobs Imported: {getImportedJobsCount}</span>
               </div>
             </div>
           </div>
@@ -424,7 +438,7 @@ export default function Admin() {
             <h3 className="text-sm font-medium text-muted-foreground">Recent Import Logs</h3>
           </CardHeader>
           <CardContent className="space-y-2">
-            {loadingImportStats ? (
+            {loadingImportStatus ? (
               <div className="text-center py-4">
                 <Skeleton className="h-4 w-32" />
               </div>

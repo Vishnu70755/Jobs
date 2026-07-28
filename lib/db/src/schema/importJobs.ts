@@ -45,12 +45,13 @@ export const importJobStatsTable = pgTable("import_job_stats", {
     .notNull(),
   source: importSourceEnum("source").notNull(),
   timestamp: timestamp("timestamp").notNull().defaultNow(),
+  status: text("status"),
   jobsFound: integer("jobs_found").default(0),
-  jobsAdded: integer("jobs_added").default(0),
+  jobsImported: integer("jobs_imported").notNull().default(0),
   jobsSkipped: integer("jobs_skipped").default(0),
   jobsFailed: integer("jobs_failed").default(0),
   durationMs: integer("duration_ms"),
-  errorMessage: text("error_message"),
+  errors: text("errors"),
 });
 
 export const importSourceConfigsTable = pgTable("import_source_configs", {

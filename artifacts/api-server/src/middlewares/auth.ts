@@ -117,7 +117,7 @@ export async function resolveUser(req: Request, res: Response, next: NextFunctio
             user.name || "there",
             user.email,
             loginTime,
-            user.id,
+            String(user.id),
             ipAddress,
             (typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] :
               (Array.isArray(req.headers['user-agent']) ? req.headers['user-agent'][0] : '')) ||
@@ -132,10 +132,13 @@ export async function resolveUser(req: Request, res: Response, next: NextFunctio
         req.log.error({ error: errorMessage, userId: user.id }, "Failed to send admin user login email");
       }
 
-      // Update the user's lastSessionId in the database
+      // Update the user's lastSessionId and lastLoginAt in the database
       await db
         .update(usersTable)
-        .set({ lastSessionId: currentSessionId })
+        .set({
+          lastSessionId: currentSessionId,
+          lastLoginAt: new Date()
+        })
         .where(eq(usersTable.id, user.id));
     } catch (emailError) {
       const errorMessage = emailError instanceof Error ? emailError.message : String(emailError);
@@ -149,7 +152,8 @@ export async function resolveUser(req: Request, res: Response, next: NextFunctio
 
 export function requireAdmin(req: Request, res: Response, next: NextFunction) {
   const user = (req as any).dbUser;
-  if (!user || user.role !== "admin") {
+  const adminRole = process.env.ADMIN_ROLE ?? "admin";
+  if (!user || user.role !== adminRole) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }

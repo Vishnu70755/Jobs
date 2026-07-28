@@ -1,7 +1,7 @@
 import { pgTable, serial, text, timestamp, integer, jsonb } from "drizzle-orm/pg-core";
-import { usersTable } from "./users";
-import { resumesTable } from "./resumes";
-import { jobsTable } from "./jobs";
+import { usersTable } from "./users.ts";
+import { resumesTable } from "./resumes.ts";
+import { jobsTable } from "./jobs.ts";
 
 export const atsReportsTable = pgTable("ats_reports", {
   id: serial("id").primaryKey(),

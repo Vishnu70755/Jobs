@@ -9,6 +9,7 @@ const router = Router();
 router.get("/", async (req, res) => {
   try {
     const { search, location, workMode, source, postedWithin, sortBy = "latest", page = "1", limit = "20" } = req.query as Record<string, string>;
+    const userId = (req as any).dbUser?.id || null; // Get user ID if authenticated
 
     const pageNum = Math.max(1, parseInt(page));
     const limitNum = Math.min(50, Math.max(1, parseInt(limit)));
@@ -30,11 +31,36 @@ router.get("/", async (req, res) => {
 
     const baseQuery = conditions.length > 0 ? db.select().from(jobsTable).where(and(...conditions)) : db.select().from(jobsTable);
 
-    const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(jobsTable).where(conditions.length > 0 ? and(...conditions) : undefined);
-
+    // Get jobs
     const jobs = await baseQuery.orderBy(desc(jobsTable.createdAt)).offset(offset).limit(limitNum);
 
-    res.json({ jobs, total: Number(count), page: pageNum, limit: limitNum });
+    // For each job, check if current user has saved it
+    const jobsWithSavedStatus = await Promise.all(
+      jobs.map(async (job) => {
+        let isSaved = false;
+        if (userId) {
+          const [saved] = await db
+            .select({ id: savedJobsTable.id })
+            .from(savedJobsTable)
+            .where(
+              and(
+                eq(savedJobsTable.userId, userId),
+                eq(savedJobsTable.jobId, job.id)
+              )
+            );
+
+          isSaved = !!saved;
+        }
+        return {
+          ...job,
+          isSaved
+        };
+      })
+    );
+
+    const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(jobsTable).where(conditions.length > 0 ? and(...conditions) : undefined);
+
+    res.json({ jobs: jobsWithSavedStatus, total: Number(count), page: pageNum, limit: limitNum });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -83,12 +109,36 @@ router.get("/stats", async (req, res) => {
 router.get("/saved", requireAuth, resolveUser, async (req, res) => {
   try {
     const user = (req as any).dbUser;
+    const userId = user.id;
+
     const saved = await db
-      .select({ job: jobsTable })
+      .select({
+        id: jobsTable.id,
+        title: jobsTable.title,
+        company: jobsTable.company,
+        companyLogo: jobsTable.companyLogo,
+        location: jobsTable.location,
+        workMode: jobsTable.workMode,
+        experienceLevel: jobsTable.experienceLevel,
+        salaryMin: jobsTable.salaryMin,
+        salaryMax: jobsTable.salaryMax,
+        salaryCurrency: jobsTable.salaryCurrency,
+        description: jobsTable.description,
+        skills: jobsTable.skills,
+        source: jobsTable.source,
+        applyUrl: jobsTable.applyUrl,
+        isNew: jobsTable.isNew,
+        isHot: jobsTable.isHot,
+        matchScore: jobsTable.matchScore,
+        postedAt: jobsTable.postedAt,
+        expiresAt: jobsTable.expiresAt,
+        createdAt: jobsTable.createdAt,
+        isSaved: sql<boolean>`true`.as('isSaved')
+      })
       .from(savedJobsTable)
       .innerJoin(jobsTable, eq(savedJobsTable.jobId, jobsTable.id))
-      .where(eq(savedJobsTable.userId, user.id));
-    res.json(saved.map(r => ({ ...r.job, isSaved: true })));
+      .where(eq(savedJobsTable.userId, userId));
+    res.json(saved);
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -99,9 +149,33 @@ router.get("/saved", requireAuth, resolveUser, async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     const id = parseInt(req.params["id"] as string);
-    const [job] = await db.select().from(jobsTable).where(eq(jobsTable.id, id));
-    if (!job) { res.status(404).json({ error: "Not found" }); return; }
-    res.json({ ...job, isSaved: false });
+    const userId = (req as any).dbUser?.id || null; // Get user ID if authenticated
+
+    // First get the job
+    const [jobResult] = await db.select().from(jobsTable).where(eq(jobsTable.id, id));
+    if (!jobResult) { res.status(404).json({ error: "Not found" }); return; }
+
+    // Check if current user has saved this job
+    let isSaved = false;
+    if (userId) {
+      const [saved] = await db
+        .select({ id: savedJobsTable.id })
+        .from(savedJobsTable)
+        .where(
+          and(
+            eq(savedJobsTable.userId, userId),
+            eq(savedJobsTable.jobId, id)
+          )
+        );
+
+      isSaved = !!saved;
+    }
+
+    // Return job with isSaved property
+    res.json({
+      ...jobResult,
+      isSaved
+    });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -114,10 +188,36 @@ router.get("/:id/similar", async (req, res) => {
     const id = parseInt(req.params["id"] as string);
     const [job] = await db.select().from(jobsTable).where(eq(jobsTable.id, id));
     if (!job) { res.status(404).json({ error: "Not found" }); return; }
+    const userId = (req as any).dbUser?.id || null; // Get user ID if authenticated
+
     const similar = await db.select().from(jobsTable)
       .where(and(ilike(jobsTable.title, `%${job.title.split(" ")[0]}%`), sql`${jobsTable.id} != ${id}`))
       .limit(4);
-    res.json(similar.map(j => ({ ...j, isSaved: false })));
+
+    // For each similar job, check if the current user has saved it
+    const similarWithSaved = await Promise.all(
+      similar.map(async (similarJob) => {
+        let isSaved = false;
+        if (userId) {
+          const [saved] = await db
+            .select({ id: savedJobsTable.id })
+            .from(savedJobsTable)
+            .where(
+              and(
+                eq(savedJobsTable.userId, userId),
+                eq(savedJobsTable.jobId, similarJob.id)
+              )
+            );
+          isSaved = !!saved;
+        }
+        return {
+          ...similarJob,
+          isSaved
+        };
+      })
+    );
+
+    res.json(similarWithSaved);
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });

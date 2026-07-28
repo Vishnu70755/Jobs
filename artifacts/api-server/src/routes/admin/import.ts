@@ -10,7 +10,7 @@ const router = Router();
 // POST /admin/import/start - Start import process for a source or all sources
 router.post("/start", resolveUser, requireAdmin, async (req, res) => {
   try {
-    const { source } = req.body;
+    const { source } = req.body || {};
 
     if (source) {
       // Start import for specific source
@@ -30,7 +30,7 @@ router.post("/start", resolveUser, requireAdmin, async (req, res) => {
 // POST /admin/import/stop - Stop import process for a source or all sources
 router.post("/stop", resolveUser, requireAdmin, async (req, res) => {
   try {
-    const { source } = req.body;
+    const { source } = req.body || {};
 
     if (source) {
       // Stop import for specific source

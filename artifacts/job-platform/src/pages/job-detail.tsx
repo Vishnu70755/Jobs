@@ -42,6 +42,7 @@ export default function JobDetail() {
           queryClient.invalidateQueries({ queryKey: getGetJobQueryKey(id) });
           queryClient.invalidateQueries({ queryKey: getListApplicationsQueryKey() });
           queryClient.invalidateQueries({ queryKey: getGetApplicationBoardQueryKey() });
+          queryClient.invalidateQueries({ queryKey: ['analytics'] });
           toast({ title: "Job removed from saved list" });
         },
         onError: (error: any) => {
@@ -54,6 +55,7 @@ export default function JobDetail() {
           queryClient.invalidateQueries({ queryKey: getGetJobQueryKey(id) });
           queryClient.invalidateQueries({ queryKey: getListApplicationsQueryKey() });
           queryClient.invalidateQueries({ queryKey: getGetApplicationBoardQueryKey() });
+          queryClient.invalidateQueries({ queryKey: ['analytics'] });
           toast({ title: "Job saved successfully" });
         },
         onError: (error: any) => {
@@ -86,6 +88,7 @@ export default function JobDetail() {
           queryClient.invalidateQueries({ queryKey: getGetJobQueryKey(id) });
           queryClient.invalidateQueries({ queryKey: getListApplicationsQueryKey() });
           queryClient.invalidateQueries({ queryKey: getGetApplicationBoardQueryKey() });
+          queryClient.invalidateQueries({ queryKey: ['analytics'] });
           toast({ title: "Application tracked!", description: `${job.title} at ${job.company} added to your tracker.` });
         },
         onError: (error: any) => {
@@ -116,6 +119,7 @@ export default function JobDetail() {
           queryClient.invalidateQueries({ queryKey: getGetJobQueryKey(id) });
           queryClient.invalidateQueries({ queryKey: getListApplicationsQueryKey() });
           queryClient.invalidateQueries({ queryKey: getGetApplicationBoardQueryKey() });
+          queryClient.invalidateQueries({ queryKey: ['analytics'] });
           toast({ title: "Application untracked" });
         },
         onError: () => toast({ title: "Failed to untrack", variant: "destructive" }),

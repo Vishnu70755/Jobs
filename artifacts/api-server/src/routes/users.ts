@@ -22,8 +22,29 @@ router.get("/me", resolveUser, async (req, res) => {
     const user = (req as any).dbUser;
 
     // Fetch Clerk profile for avatar URL
-    const clerkUser = await clerkClient.users.getUser(user.clerkId);
-    const avatarUrl = clerkUser?.profileImageUrl ?? null;
+    let avatarUrl = null;
+    try {
+      const clerkUser = await clerkClient.users.getUser(user.clerkId);
+      avatarUrl = clerkUser?.profileImageUrl ?? null;
+    } catch (clerkError) {
+      // If Clerk API fails, we'll fall back to generated avatar
+      console.warn('Failed to fetch Clerk user:', clerkError.message);
+    }
+
+    // Implement image fallback chain: DB image → Clerk image → generated avatar
+    // Note: There's no avatar/image field in the users table, so DB image will always be null/undefined
+    // If we had a DB avatar field, we would check: user.avatar ?? avatarUrl ?? generateAvatarUrl(user)
+    if (!avatarUrl) {
+      // Generate avatar URL using initials from name or email
+      const name = user.name || user.email?.split('@')[0] || 'User';
+      const initials = name
+        .split(' ')
+        .map(part => part[0])
+        .slice(0, 2)
+        .join('')
+        .toUpperCase() || '??';
+      avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(initials)}&background=random`;
+    }
 
     // Fetch the user's resume (prefer default, otherwise most recent)
     const resume = await db.query.resumesTable.findFirst({
@@ -52,30 +73,52 @@ router.get("/me", resolveUser, async (req, res) => {
       );
     const trackedJobsCount = Number(trackedJobsCountResult.count) || 0;
 
+    // Calculate profile completion percentage
+    const profileFields = [
+      'name', 'title', 'location', 'phone', 'bio', 'dateOfBirth',
+      'gender', 'portfolio', 'skills', 'experience', 'targetRole',
+      'linkedinUrl', 'githubUrl'
+    ];
+
+    const filledFields = profileFields.filter(field => {
+      const value = (user as any)[field];
+      // For arrays, check if length > 0
+      if (Array.isArray(value)) {
+        return value.length > 0;
+      }
+      // For strings, check if not null, undefined, or empty
+      return value !== null && value !== undefined && value !== '';
+    });
+
+    const profileCompletionPercent = Math.round((filledFields.length / profileFields.length) * 100);
+
     res.json({
       id: user.id,
       clerkId: user.clerkId,
       email: user.email,
-      name: user.name,
-      title: user.title,
-      location: user.location,
+      name: user.name ?? null,
+      title: user.title ?? null,
+      location: user.location ?? null,
       phone: user.phone ?? null,
       bio: user.bio ?? null,
       dateOfBirth: user.dateOfBirth ?? null,
       gender: user.gender ?? null,
       portfolio: user.portfolio ?? null,
       skills: user.skills ?? [],
-      experience: user.experience,
-      targetRole: user.targetRole,
-      linkedinUrl: user.linkedinUrl,
-      githubUrl: user.githubUrl,
-      // New fields
-      avatarUrl,
+      experience: user.experience ?? null,
+      targetRole: user.targetRole ?? null,
+      linkedinUrl: user.linkedinUrl ?? null,
+      githubUrl: user.githubUrl ?? null,
+      // New fields as per requirements
+      avatarUrl, // Implements image fallback chain: DB image (null) → Clerk image → generated avatar
       resumeUrl,
       resumeFileName,
+      profileCompletionPercent,
+      joinedDate: user.createdAt?.toISOString() ?? null,
+      role: user.role,
+      emailVerified: user.emailVerified ?? false,
       savedJobsCount,
       trackedJobsCount,
-      role: user.role,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     });

@@ -1,6 +1,6 @@
 import { pgTable, serial, text, timestamp, integer } from "drizzle-orm/pg-core";
-import { usersTable } from "./users";
-import { jobsTable } from "./jobs";
+import { usersTable } from "./users.ts";
+import { jobsTable } from "./jobs.ts";
 
 export const aiChatsTable = pgTable("ai_chats", {
   id: serial("id").primaryKey(),

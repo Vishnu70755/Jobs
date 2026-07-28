@@ -1,351 +1,144 @@
-import { logger } from "../../lib/logger";
-import { db, importJobsTable, importJobStatsTable, importSourceConfigsTable, jobsTable } from "@workspace/db";
-import { eq, sql, desc } from "drizzle-orm";
-import { ImportSourceEnum } from "@workspace/db";
-import { mailService } from "../../lib/mail";
-import {
-  getImportCompletedEmailTemplate,
-  getImportFailedEmailTemplate
-} from "../../lib/email-templates";
+import { Job, Resume, ATSScore } from "@workspace/db";
+import { OpenAIService } from "../ai/openai";
+import { SauceService } from "../sauce";
+import { Logger } from "../../lib/logger";
+import { v4 as uuidv4 } from "uuid";
+import { db, importJobsTable, importSourceConfigsTable, importJobStatsTable, importSourcesTable } from "@workspace/db";
+import { and, eq, sql } from "drizzle-orm";
 
-/**
- * Base class for all import services
- */
-export abstract class BaseImportService {
-  protected source: ImportSourceEnum;
-  protected isRunning = false;
+export class BaseImportService {
+  protected serviceName: string;
+  protected logger: Logger;
 
-  constructor(source: ImportSourceEnum) {
-    this.source = source;
+  constructor(serviceName: string) {
+    this.serviceName = serviceName;
+    this.logger = new Logger(`import-${serviceName}`);
   }
 
-  /**
-   * Abstract method to be implemented by each source
-   * Should return array of job objects to be imported
-   */
-  abstract scrape(): Promise<Array<any>>;
-
-  /**
-   * Start the import process for this source
-   */
-  async startImport(): Promise<void> {
-    if (this.isRunning) {
-      logger.warn({ source: this.source }, "Import already running");
-      return;
-    }
-
-    this.isRunning = true;
+  async startImport() {
     const startTime = Date.now();
-
-    // Create import job record
-    const [importJob] = await db
-      .insert(importJobsTable)
-      .values({
-        source: this.source,
-        status: "running",
-        startedAt: new Date(),
-      })
-      .returning();
-
-    let success = false;
-    let errorMessage = "";
-
-    try {
-      logger.info({ source: this.source, importJobId: importJob.id }, "Starting import job");
-
-      // Scrape jobs from source
-      const jobs = await this.scrape();
-
-      // Process and save jobs
-      const { newJobs, duplicates, failed } = await this.processJobs(jobs);
-
-      // Update import job with results
-      const endTime = Date.now();
-      const durationMs = endTime - startTime;
-
-      await db
-        .update(importJobsTable)
-        .set({
-          status: "completed",
-          completedAt: new Date(),
-          totalJobsFound: jobs.length,
-          newJobsAdded: newJobs,
-          duplicateJobsSkipped: duplicates,
-          failedJobs: failed,
-          updatedAt: new Date(),
-        })
-        .where(eq(importJobsTable.id, importJob.id));
-
-      // Record stats
-      await db.insert(importJobStatsTable).values({
-        importJobId: importJob.id,
-        source: this.source,
-        jobsFound: jobs.length,
-        jobsAdded: newJobs,
-        jobsSkipped: duplicates,
-        jobsFailed: failed,
-        durationMs,
-      });
-
-      // Update source config last run
-      await db
-        .update(importSourceConfigsTable)
-        .set({
-          lastRun: new Date(),
-          updatedAt: new Date(),
-        })
-        .where(eq(importSourceConfigsTable.source, this.source));
-
-      logger.info(
-        {
-          source: this.source,
-          importJobId: importJob.id,
-          jobsFound: jobs.length,
-          newJobsAdded: newJobs,
-          duplicates,
-          failed,
-          durationMs,
-        },
-        "Import job completed"
-      );
-
-      success = true;
-    } catch (error) {
-      logger.error({ source: this.source, error }, "Import job failed");
-
-      // Update import job with error
-      await db
-        .update(importJobsTable)
-        .set({
-          status: "failed",
-          completedAt: new Date(),
-          lastError: error instanceof Error ? error.message : String(error),
-          updatedAt: new Date(),
-        })
-        .where(eq(importJobsTable.id, importJob.id));
-
-      // Record failed stats
-      await db.insert(importJobStatsTable).values({
-        importJobId: importJob.id,
-        source: this.source,
-        jobsFound: 0,
-        jobsAdded: 0,
-        jobsSkipped: 0,
-        jobsFailed: 1,
-        durationMs: Date.now() - startTime,
-        errorMessage: error instanceof Error ? error.message : String(error),
-      });
-
-      errorMessage = error instanceof Error ? error.message : String(error);
-    } finally {
-      this.isRunning = false;
-    }
-
-    // Send email notification to admin
-    try {
-      const adminEmail = process.env.ADMIN_EMAIL;
-      if (adminEmail) {
-        const startedAt = new Date(startTime).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
-        const completedAt = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
-
-        if (success) {
-          const emailTemplate = getImportCompletedEmailTemplate(
-            this.source,
-            startedAt,
-            completedAt,
-            // We need to get the stats from the importJob record or compute again.
-            // For simplicity, we can fetch the updated importJob.
-            // Let's fetch it.
-            0, 0, 0, 0 // placeholder, we will update after fetching
-          );
-
-          // Fetch the updated importJob to get actual numbers
-          const [jobRecord] = await db
-            .select()
-            .from(importJobsTable)
-            .where(eq(importJobsTable.id, importJob.id));
-
-          if (jobRecord) {
-            const finalTemplate = getImportCompletedEmailTemplate(
-              this.source,
-              startedAt,
-              completedAt,
-              jobRecord.totalJobsFound ?? 0,
-              jobRecord.newJobsAdded ?? 0,
-              jobRecord.duplicateJobsSkipped ?? 0,
-              jobRecord.failedJobs ?? 0
-            );
-            await mailService.sendTemplateEmail(adminEmail, finalTemplate);
-            logger.info({ to: adminEmail, subject: finalTemplate.subject }, "Import completion email sent successfully");
-          } else {
-            // fallback to placeholder
-            await mailService.sendTemplateEmail(adminEmail, emailTemplate);
-            logger.info({ to: adminEmail, subject: emailTemplate.subject }, "Import completion email sent (placeholder)");
-          }
-        } else {
-          const emailTemplate = getImportFailedEmailTemplate(
-            this.source,
-            errorMessage,
-            startedAt
-          );
-          await mailService.sendTemplateEmail(adminEmail, emailTemplate);
-          logger.info({ to: adminEmail, subject: emailTemplate.subject }, "Import failure email sent successfully");
-        }
-      } else {
-        logger.warn({ source: this.source }, "ADMIN_EMAIL not set; skipping import email notification");
-      }
-    } catch (emailError) {
-      logger.error({ error: emailError.message, to: process.env.ADMIN_EMAIL, subject: "Import Job Notification" }, "Failed to send import email notification");
-    }
-  }
-
-  /**
-   * Process scraped jobs: validate, deduplicate, and save to jobs table
-   * @param jobs Array of raw job objects from scraper
-   * @returns Object with counts of new jobs, duplicates, and failures
-   */
-  protected async processJobs(jobs: any[]): Promise<{
-    newJobs: number;
-    duplicates: number;
-    failed: number;
-  }> {
-    let newJobs = 0;
-    let duplicates = 0;
-    let failed = 0;
-
-    for (const job of jobs) {
-      try {
-        // Validate job data
-        const validatedJob = this.validateJob(job);
-        if (!validatedJob) {
-          failed++;
-          continue;
-        }
-
-        // Check for duplicates (based on source + applyUrl or title+company+location)
-                const existing = await db.query.jobsTable.findFirst({
-          where: (jobsTable, { eq, and, or }) => {
-            const conditions = [];
-            if (validatedJob.applyUrl) {
-              conditions.push(eq(jobsTable.applyUrl, validatedJob.applyUrl));
-            }
-            // Fallback to title+company+location if no applyUrl
-            conditions.push(
-              and(
-                eq(jobsTable.title, validatedJob.title),
-                eq(jobsTable.company, validatedJob.company),
-                eq(jobsTable.location, validatedJob.location)
-              )
-            );
-            return or(...conditions);
-          },
-        });
-
-        if (existing) {
-          duplicates++;
-          continue;
-        }
-
-        // Insert new job
-        await db.insert(jobsTable).values({
-          ...validatedJob,
-          source: this.source,
-          isNew: true,
-          isHot: false,
-        });
-
-        newJobs++;
-      } catch (error) {
-        logger.error({ source: this.source, job, error }, "Failed to process job");
-        failed++;
-      }
-    }
-
-    return { newJobs, duplicates, failed };
-  }
-
-  /**
-   * Validate and normalize job data
-   * Should be overridden by subclasses if needed
-   */
-  protected validateJob(job: any): any | null {
-    // Basic validation - must have title, company, location
-    if (!job.title || !job.company || !job.location) {
-      return null;
-    }
-
-    return {
-      title: String(job.title).trim(),
-      company: String(job.company).trim(),
-      companyLogo: job.companyLogo ? String(job.companyLogo) : null,
-      location: String(job.location).trim(),
-      workMode: job.workMode ? String(job.workMode) : "onsite",
-      experienceLevel: job.experienceLevel ? String(job.experienceLevel) : null,
-      salaryMin: job.salaryMin ? parseInt(job.salaryMin, 10) : null,
-      salaryMax: job.salaryMax ? parseInt(job.salaryMax, 10) : null,
-      salaryCurrency: job.salaryCurrency ? String(job.salaryCurrency) : "INR",
-      description: job.description ? String(job.description) : null,
-      skills: Array.isArray(job.skills) ? job.skills.map((s: any) => String(s).trim()) : [],
-      applyUrl: job.applyUrl ? String(job.applyUrl).trim() : null,
-      postedAt: job.postedAt ? new Date(job.postedAt) : null,
-      expiresAt: job.expiresAt ? new Date(job.expiresAt) : null,
+    let stats = {
+      jobsImported: 0,
+      durationMs: 0,
+      status: "running" as const,
+      errors: [] as string[],
     };
+
+    // Update import_sources to running
+    await db
+      .update(importSourcesTable)
+      .set({ status: "running", lastImport: new Date() })
+      .where(eq(importSourcesTable.name, this.serviceName));
+
+    try {
+      const jobs = await this.fetchJobs();
+      const validJobs = jobs.filter((job) => this.validateJob(job));
+
+      for (const job of validJobs) {
+        try {
+          await this.processJob(job);
+          stats.jobsImported++;
+        } catch (error) {
+          this.logger.error({ jobId: job.id, error: error.message }, `Failed to process job`);
+          stats.errors.push(`Job ${job.id}: ${error.message}`);
+        }
+      }
+
+      stats.status = "completed";
+    } catch (error) {
+      stats.status = "failed";
+      stats.errors.push(error.message);
+      this.logger.error({ error: error.message }, `Import failed for ${this.serviceName}`);
+    } finally {
+      stats.durationMs = Date.now() - startTime;
+
+      // Record import stats
+      await db.insert(importJobStatsTable).values({
+        source: this.serviceName,
+        timestamp: new Date(),
+        jobsImported: stats.jobsImported,
+        durationMs: stats.durationMs,
+        status: stats.status,
+        errors: stats.errors,
+      });
+
+      // Update import_sources with final stats
+      await db
+        .update(importSourcesTable)
+        .set({
+          status: stats.status,
+          today_imports: sql`today_imports + ${stats.jobsImported}`,
+          total_imports: sql`total_imports + ${stats.jobsImported}`,
+          lastSuccess: stats.status === "completed" ? new Date() : null,
+          lastFailure: stats.status === "failed" ? new Date() : null,
+          updatedAt: new Date(),
+        })
+        .where(eq(importSourcesTable.name, this.serviceName));
+    }
   }
 
-  /**
-   * Stop the import process (if applicable)
-   */
-  async stopImport(): Promise<void> {
-    if (!this.isRunning) {
-      logger.warn({ source: this.source }, "Import not running");
-      return;
+  async fetchJobs(): Promise<Job[]> {
+    throw new Error("fetchJobs not implemented");
+  }
+
+  async processJob(job: Job): Promise<void> {
+    throw new Error("processJob not implemented");
+  }
+
+  validateJob(job: Job): boolean {
+    if (!job.title || !job.company) {
+      return false;
     }
 
-    // For scrapers that support cancellation, implement here
-    // For now, we'll just mark as stopped in the database
-    logger.info({ source: this.source }, "Stopping import job");
+    // Basic validation
+    const currentDate = new Date();
+    if (
+      job.postedDate &&
+      job.postedDate > currentDate &&
+      job.postedDate > new Date(currentDate.getTime() + 30 * 24 * 60 * 60 * 1000)
+    ) {
+      return false;
+    }
 
-    // Update any running jobs for this source to stopped
-    await db
-      .update(importJobsTable)
-      .set({
-        status: "stopped",
-        completedAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(
-        sql`${importJobsTable.source} = ${this.source} AND ${importJobsTable.status} = 'running'`
-      );
+    // Skills validation
+    if (job.skills && !Array.isArray(job.skills)) {
+      return false;
+    }
 
-    this.isRunning = false;
+    // Salary validation
+    if (job.salaryRange) {
+      if (
+        typeof job.salaryRange.min !== "number" ||
+        typeof job.salaryRange.max !== "number" ||
+        job.salaryRange.min > job.salaryRange.max
+      ) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
-  /**
-   * Get current status of import for this source
-   */
-  async getStatus(): Promise<{
-    status: string;
-    lastRun: Date | null;
-    nextScheduledRun: Date | null;
-    isRunning: boolean;
-  }> {
-    const [config] = await db
-      .select()
-      .from(importSourceConfigsTable)
-      .where(eq(importSourceConfigsTable.source, this.source));
-
-    const [latestJob] = await db
-      .select()
-      .from(importJobsTable)
-      .where(eq(importJobsTable.source, this.source))
-      .orderBy(desc(importJobsTable.startedAt))
-      .limit(1);
-
+  sanitizeJobForDB(job: Job) {
     return {
-      status: latestJob?.status ?? "idle",
-      lastRun: config?.lastRun ?? null,
-      nextScheduledRun: config?.nextScheduledRun ?? null,
-      isRunning: this.isRunning,
+      id: job.id || uuidv4(),
+      source: this.serviceName,
+      externalId: job.externalId || null,
+      title: job.title.trim(),
+      company: job.company.trim(),
+      location: job.location?.trim() ?? null,
+      description: job.description?.trim() ?? null,
+      postedDate: job.postedDate ?? null,
+      url: job.url?.trim() ?? null,
+      applyUrl: job.applyUrl?.trim() ?? null,
+      salaryMin:
+        typeof job.salaryRange?.min === "number" ? job.salaryRange.min : null,
+      salaryMax:
+        typeof job.salaryRange?.max === "number" ? job.salaryRange.max : null,
+      salaryCurrency: job.salaryRange?.currency ?? null,
+      isRemote: job.isRemote ?? false,
+      isHybrid: job.isHybrid ?? false,
+      skills: Array.isArray(job.skills) ? job.skills.map((s: any) => String(s).trim()) : [],
     };
   }
 }
