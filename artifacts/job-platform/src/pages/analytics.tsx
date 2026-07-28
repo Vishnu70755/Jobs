@@ -372,7 +372,7 @@ export default function Analytics() {
               const bgColor = "bg-indigo-500"; // placeholder
               return (
                 <div key={state.state} className="flex flex-col gap-2 p-3 rounded-xl border border-border bg-muted/20">
-                  <div className={`w-3 h-3 rounded-full ${bgColor}`} />
+                  <div className={`w-3 h-3 rounded-full ${bgColor}`}></div>
                   <p className="text-xs font-semibold leading-tight">{state.state}</p>
                   <p className="text-xs text-muted-foreground">{state.city ?? '-'}</p>
                   <div className="w-full bg-border rounded-full h-1.5">
@@ -593,7 +593,7 @@ export default function Analytics() {
               const bgColor = "bg-indigo-500"; // placeholder
               return (
                 <div key={state.state} className="flex flex-col gap-2 p-3 rounded-xl border border-border bg-muted/20">
-                  <div className={`w-3 h-3 rounded-full ${bgColor}`} />
+                  <div className={`w-3 h-3 rounded-full ${bgColor}`}></div>
                   <p className="text-xs font-semibold leading-tight">{state.state}</p>
                   <p className="text-xs text-muted-foreground">{state.city ?? '-'}</p>
                   <div className="w-full bg-border rounded-full h-1.5">
