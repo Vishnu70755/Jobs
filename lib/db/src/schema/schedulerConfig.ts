@@ -16,6 +16,6 @@ export const schedulerConfigTable = pgTable("scheduler_config", {
 });
 
 // Insert schemas
-export const insertSchedulerConfigSchema = createInsertSchema(schedulerConfigTable).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertSchedulerConfigSchema = createInsertSchema(schedulerConfigTable).omit({ id: true, updatedAt: true });
 export type InsertSchedulerConfig = z.infer<typeof insertSchedulerConfigSchema>;
 export type SchedulerConfig = typeof schedulerConfigTable.$inferSelect;
