@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { clerkClient } from "@clerk/express";
 import { db, usersTable, applicationsTable, jobsTable, resumesTable, atsReportsTable, importJobsTable, importSourceConfigsTable, savedJobsTable } from "@workspace/db";
-import { eq, ilike, desc, sql, and } from "drizzle-orm";
+import { eq, ilike, desc, sql, and, inArray } from "drizzle-orm";
 import { resolveUser, requireAdmin } from "../middlewares/auth";
 import importRoutes from "./admin/import";
 import importSourcesRoutes from "./admin/import-sources";
@@ -138,8 +138,9 @@ router.get("/users", resolveUser, requireAdmin, async (req, res) => {
       let avatarUrl = null;
       try {
         const clerkUser = await clerkClient.users.getUser(u.clerkId);
-        avatarUrl = clerkUser?.profileImageUrl ?? null;
-      } catch (clerkError) {
+        avatarUrl = (clerkUser as any).profileImageUrl ?? null;
+      } catch (err) {
+        const clerkError = err as Error;
         req.log.warn({ clerkId: u.clerkId, err: clerkError.message }, "Failed to fetch Clerk user for admin endpoint");
       }
       if (!avatarUrl) {

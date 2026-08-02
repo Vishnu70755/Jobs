@@ -1,18 +1,19 @@
 import { Job, Resume, ATSScore } from "@workspace/db";
 import { OpenAIService } from "../ai/openai";
 import { SauceService } from "../sauce";
-import { Logger } from "../../lib/logger";
+import type { Logger as PinoLogger } from "pino";
+import { logger } from "../../lib/logger";
 import { v4 as uuidv4 } from "uuid";
 import { db, importJobsTable, importSourceConfigsTable, importJobStatsTable, importSourcesTable } from "@workspace/db";
 import { and, eq, sql } from "drizzle-orm";
 
 export class BaseImportService {
   protected serviceName: string;
-  protected logger: Logger;
+  protected logger: PinoLogger;
 
   constructor(serviceName: string) {
     this.serviceName = serviceName;
-    this.logger = new Logger(`import-${serviceName}`);
+    this.logger = logger.child({ service: `import-${serviceName}` });
   }
 
   async startImport() {
