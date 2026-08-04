@@ -639,7 +639,7 @@ export default function SourcesPage() {
                     <td>{formatDate(source.lastRun)}</td>
                     <td>{source.jobsImported ?? 0}</td>
                     <td className="flex items-center space-x-2">
-                      View Logs button */}
+                      {/* View Logs button */}
                       <button
                         onClick={() => {
                           setLogsDialogSourceId(source.id);
