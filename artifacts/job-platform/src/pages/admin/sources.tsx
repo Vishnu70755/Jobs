@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Form, FormControl, FormField } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Plus, Edit, Trash2, Check, X, Log, Loader2 } from "lucide-react";
+import { Search, Plus, Edit, Trash2, Check, X, Activity, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogTrigger,
@@ -639,7 +639,7 @@ export default function SourcesPage() {
                     <td>{formatDate(source.lastRun)}</td>
                     <td>{source.jobsImported ?? 0}</td>
                     <td className="flex items-center space-x-2">
-                      {/* View Logs button */}
+                      View Logs button */}
                       <button
                         onClick={() => {
                           setLogsDialogSourceId(source.id);
@@ -647,7 +647,7 @@ export default function SourcesPage() {
                         }}
                         className="btn btn-sm btn-outline"
                       >
-                        <Log className="h-3 w-3" /> Logs
+                        <Activity className="h-3 w-3" /> Logs
                       </button>
                       {/* Edit button */}
                       <button
