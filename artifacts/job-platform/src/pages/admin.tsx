@@ -90,18 +90,8 @@ export default function Admin() {
   const { toast } = useToast();
 
   // Import control hooks
-  const { data: importStatus, isLoading: loadingImportStatus } = useImportStatusQuery(undefined, {
-    // Poll every 5 seconds when an import is running, every 30 seconds when idle
-    refetchInterval: (data) => {
-      if (!data) return 30000; // 30 seconds when no data
-      const isAnyImportRunning = Array.isArray(data)
-        ? data.some(status => status.isRunning)
-        : false;
-      return isAnyImportRunning ? 5000 : 30000; // 5 seconds when running, 30 when idle
-    },
-    refetchIntervalInBackground: true,
-  });
-  const { data: importStats, isLoading: loadingImportStats } = useImportStatsQuery(undefined, {});
+  const { data: importStatus, isLoading: loadingImportStatus } = useImportStatusQuery();
+  const { data: importStats, isLoading: loadingImportStats } = useImportStatsQuery();
   const startImportMutation = useStartImportMutation();
   const stopImportMutation = useStopImportMutation();
 
@@ -130,6 +120,15 @@ export default function Admin() {
           .filter((date): date is Date => date !== null)
           .reduce((soonest, date) => (date < soonest ? date : soonest), new Date(8640000000000000)) // Far future
       : null;
+  }, [importStatus]);
+
+  // All logs flattened across every import source, most recent first
+  const recentLogs = useMemo(() => {
+    if (!Array.isArray(importStatus)) return [];
+    return importStatus
+      .flatMap(status => status.logs ?? [])
+      .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, 10);
   }, [importStatus]);
 
   const handleToggleImport = () => {
@@ -186,8 +185,8 @@ export default function Admin() {
 
     // Check for recent errors in logs
     if (Array.isArray(importStatus) && importStatus.length > 0) {
-      const recentLogs = importStatus.flatMap(status => status.logs || []);
-      const hasError = recentLogs.some(log => log.level === 'error');
+      const recentLogsFlat = importStatus.flatMap(status => status.logs || []);
+      const hasError = recentLogsFlat.some(log => log.level === 'error');
       if (hasError) return 'Failed';
     }
 
@@ -218,7 +217,7 @@ export default function Admin() {
   }, [importStatus, startImportMutation.isPending, stopImportMutation.isPending]);
 
   const getStatusColor = useMemo(() => {
-    const statusLower = getImportStatus().toLowerCase();
+    const statusLower = getImportStatus.toLowerCase();
     switch (statusLower) {
       case 'idle':
         return 'text-muted-foreground';
@@ -234,6 +233,27 @@ export default function Admin() {
         return 'text-destructive';
       default:
         return 'text-muted-foreground';
+    }
+  }, [getImportStatus]);
+
+  // Solid dot color (bg-*) that pairs with getStatusColor's text-* class,
+  // since inline style needs a real CSS color, not a Tailwind class name.
+  const getStatusDotColor = useMemo(() => {
+    const statusLower = getImportStatus.toLowerCase();
+    switch (statusLower) {
+      case 'idle':
+        return 'bg-muted-foreground';
+      case 'starting':
+      case 'stopping':
+      case 'stopped':
+        return 'bg-amber-600';
+      case 'importing':
+      case 'completed':
+        return 'bg-emerald-600';
+      case 'failed':
+        return 'bg-destructive';
+      default:
+        return 'bg-muted-foreground';
     }
   }, [getImportStatus]);
 
@@ -322,12 +342,8 @@ export default function Admin() {
             {/* Import Status and Statistics */}
             <div className="space-y-3 text-sm">
               <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full"
-                  style={{
-                    backgroundColor: getStatusColor
-                  }}
-                ></div>
-                <span className="font-medium">{getImportStatus}</span>
+                <div className={`h-2 w-2 rounded-full ${getStatusDotColor}`}></div>
+                <span className={`font-medium ${getStatusColor}`}>{getImportStatus}</span>
               </div>
 
               <div className="flex items-center gap-2">
@@ -442,9 +458,9 @@ export default function Admin() {
               <div className="text-center py-4">
                 <Skeleton className="h-4 w-32" />
               </div>
-            ) : (importStatus?.logs?.length ?? 0) > 0 ? (
+            ) : recentLogs.length > 0 ? (
               <>
-                {importStatus.logs.map((log: any) => (
+                {recentLogs.map((log: any) => (
                   <div key={log.id} className="text-sm text-muted-foreground">
                     <time className="mr-2">{new Date(log.timestamp).toLocaleTimeString()}</time>
                     <span>{log.message}</span>
