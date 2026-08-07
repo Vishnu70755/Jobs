@@ -81,7 +81,7 @@ function AccessDenied() {
 
 export default function Admin() {
   const { user, isLoaded } = useUser();
-  const { data: stats, isLoading: loadingStats } = useGetAdminStats(undefined, {});
+  const { data: stats, isLoading: loadingStats } = useGetAdminStats({});
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const { data: usersData, isLoading: loadingUsers } = useListAdminUsers({ search: search || undefined, page }, {});
